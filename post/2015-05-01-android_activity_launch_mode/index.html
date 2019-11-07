@@ -1,0 +1,180 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>关于Activity launch mode的理解 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              关于Activity launch mode的理解
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-05-01
+              </span>
+              <span>
+                2 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="launch-mode">Launch Mode</h2>
+<p>Task,我的理解就是一个存放Activity的stack,表现形式是当我们长按&quot;Home&quot;键出现的正在运行的程序中的一个,即一个APP可以在这里显示多个视图.</p>
+<ul>
+<li>&quot;standard&quot;</li>
+<li>&quot;singleTop&quot;</li>
+<li>&quot;singleTask&quot;</li>
+<li>&quot;singleInstance&quot;</li>
+</ul>
+<p>默认的是standard,&quot;singleTop&quot;和&quot;standard&quot;都是在同一Task中打开,&quot;singleTask&quot;和&quot;singleInstance&quot;是在新的Task中打开,并且Activity时单实例(相对所有Task).</p>
+<blockquote>
+<p>&quot;singleTop&quot;:如果要打开MainActivity,而恰好MainActivity又在当前Task的顶端,则不用重新实例化一个MainActivity,而是调用onNewInstance()方法,如果不是在顶端,则重建MainActivty<br>
+&quot;singleTask&quot;:首先该模式下的Activity始终出现在root   Activity,如果一个Task(不一定是当前Task)中已经存在该Activity(MainActivity),并且该Task中的某个Activity要启动MainActivty,则不会重新创建MainActivity的实例,而是调用MainActivity的onNewInstance(),并把MainActivity所在Task的其他Activity remove掉该Task现在只有一个MianActivity 这就同MainActivity不存在时处于几乎相同的状态<br>
+&quot;singleInstance&quot;:首先该模式下的Activity始终出现在root Activity,并且该Task只会存在该Activity(MainActivity),在该MainActivity中启动非MainActivity都会重新创建Task(并不一定重新创建Activity,可能只是执行onNewInstance())</p>
+</blockquote>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="http://developer.android.com/guide/components/tasks-and-back-stack.html">Android Developer</a></li>
+<li><a href="http://www.intridea.com/blog/2011/6/16/android-understanding-activity-launchmode">intridea</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#launch-mode">Launch Mode</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

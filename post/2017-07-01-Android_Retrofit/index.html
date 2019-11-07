@@ -1,0 +1,218 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Retrofit 原理分析 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Retrofit 原理分析
+            </h2>
+            <div class="post-info">
+              <span>
+                2017-07-01
+              </span>
+              <span>
+                6 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/SvZNQDrTBT" class="post-tag">
+                  # Retrofit
+                </a>
+              
+                <a href="https://kutear.github.io/tag/xNlEobg7Bc" class="post-tag">
+                  # OkHttp
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>注:本文不会涉及<code>retrofit</code>的使用</p>
+<h1 id="前言">前言</h1>
+<p>目前Android开发主流的网络请求框架要数<code>OKHTTP</code>了,<code>retrofit</code>就是在<code>OKHTTP</code>的基础之上进行了一层封装,使得开发者使用更加的方便.如果你要问具体方便在哪里?其实就是对于请求参数的构建这一块更加的方便.使用<code>OKHTTP</code>的时候需要我们自己去构建一个<code>Request</code>对象,而<code>Retrofit</code>直接使用注解声明的方式自动帮助我们创建<code>Request</code>对象.还有一方面就是对于请求的返回值,<code>Retrofit</code>可以使用<code>Converter</code>去把返回值直接返回为具体的实例.如果结合<code>RxJava</code>使用效果更加的好.</p>
+<p>说明:以下分析基于retrofit版本2.1.0</p>
+<h1 id="分析">分析</h1>
+<h2 id="retrofit实例构建部分">Retrofit实例构建部分</h2>
+<p><code>Retrofit</code>的构建使用常用的Builder模式,其中构建的参数包括<code>OkHttpClient</code>,<code>Converter.Factory</code>,以及<code>CallAdapter.Factory</code>,他们的作用分别是<code>OkHttp</code>请求的Client,转换请求得到的数据为具体的类型,以及根据接口申明调用的不用的构建<code>Request</code>的工厂.其中<code>Converter.Factory</code>和<code>CallAdapter.Factory</code>的数量可以是多个.</p>
+<p>构建好<code>Retrofit</code>的实例之后我们就可以使用它来创建网络接口.</p>
+<p>在<code>Retrofit#create(...)</code>中,会使用java动态代理实现对网络接口类的访问.下面部分将会分析如何根据注解生成一个<code>Request</code>对象提供给<code>OKHTTP</code>模块使用,如何处理返回的数据转换为我们期望的类型.</p>
+<h2 id="接口创建过程">接口创建过程</h2>
+<p>动态代理相关的知识这里就不多说,我们把焦点集中在<code>Retrifit#create(...)</code>上,在第一行对接口类进行验证,要求必须是接口,并且没有继承至别的接口.紧接着是<code>validateEagerly</code>条件判断,这个字段是构建<code>Retrofit</code>的过程中外部赋值,如果为<code>true</code>表示在构建API接口的时候就行预先加载,可以看成是单例模式中的饿汉实现,然后就是一个动态代理,在对方法的代理时,会过滤掉默认方法,比如<code>Object</code>的相关方法,以及Java8所支持的默认接口实现方法,也就是说这些方法不是一个真正的接口的实现.代理内部最后三行代码才是我们分析的核心.</p>
+<pre><code class="language-java">ServiceMethod serviceMethod = loadServiceMethod(method);
+OkHttpCall okHttpCall = new OkHttpCall&lt;&gt;(serviceMethod, args);
+return serviceMethod.callAdapter.adapt(okHttpCall);
+</code></pre>
+<p>先概括的描述其各自的作用,第一行根据<code>method</code>解析他的注解得到一个<code>ServiceMethod</code>,<code>ServiceMethod</code>包含了请求所需要的字段,链接,类型等信息,第二行根据调用时的具体参数赋予上文构建出来的<code>ServiceMethod</code>,从而得到一个<code>Call</code>对象.该对象和<code>okhttpclient.newCall(...)</code>得到的效果一致(不是同一个接口,只是名字都是<code>Call</code>罢了),而最后行就是处理这个<code>Call</code>,<code>Retrofit</code>默认是没有做任何的处理</p>
+<h2 id="servicemethod的构建">ServiceMethod的构建</h2>
+<p><code>serviceMethod</code>的构建也是使用builder模式,<code>new ServiceMethod.Builder(retrofit, method).build()</code>.其核心的内容就在这个<code>build()</code>方法之中.</p>
+<p>在<code>build()</code>开始先是获取到一个<code>CallAdapter</code>,这个值怎么来的呢?其实是创建<code>Retrofit</code>时设置的<code>CallAdapter.Factory</code>进行创建的,规则是根据method的返回值和注解来查找构建具体的<code>CallAdapter</code>,具体的可以查看<code>Factory#get(...)</code>函数,例如<code>DefaultCallAdapterFactory#get(...)</code>只会判断method的返回类型是否为<code>Call</code>.基于同样的原理,有创建一个<code>Converter&lt;ResponseBody, T&gt;</code>用来将<code>OKHTTP</code>返回的<code>ResponseBody</code>转化为具体的类型<code>T</code>,在<code>build()</code>方法的后面部分,就是将method上的所用的注解都映射成为请求时的参数.其中method的每个参数都会对应到一个<code>ParameterHandler&lt;?&gt;</code>上,根据不同的注解,会用不同类型的<code>ParameterHandler&lt;?&gt;</code>,比如<code>Field</code>注解就对应上一个<code>ParameterHandler.Field&lt;?&gt;</code>,这样的目的就是后续对请求参数进行赋值的时候,各个<code>ParameterHandler&lt;?&gt;</code>只需要处理一种类型的数据格式.</p>
+<h2 id="okhttpcall作用">OkHttpCall作用</h2>
+<p><code>OkHttpCall</code>实现了<code>Call</code>接口,本质上这个<code>Call</code>和<code>okhttp3.Call</code>没有任何关系,但是他们的用法几乎一直,使用过<code>OKHTTP</code>的同学都知道,<code>Response response = client.newCall(request).execute();</code>,从<code>OkHttpClient#newCall(...)</code>得到的就是一个<code>okhttp3.Call</code>对象,通过这个对象我们可以执行同步或异步请求.既然是这样,那我们的<code>OkHttpCall</code>必定和<code>OkHttpClient</code>会有关联,果不其然,在<code>OkHttpCall</code>内部存在一个真正的<code>okhttp3.Call</code>,而这个<code>okhttp3.Call</code>代理了<code>OkHttpCall</code>的所用方法,那么这个<code>okhttp3.Call</code>是从哪里来的?</p>
+<pre><code class="language-java">  private okhttp3.Call createRawCall() throws IOException {
+    Request request = serviceMethod.toRequest(args);
+    okhttp3.Call call = serviceMethod.callFactory.newCall(request); //构建retrofit时传入
+    if (call == null) {
+      throw new NullPointerException(&quot;Call.Factory returned null.&quot;);
+    }
+    return call;
+  }
+</code></pre>
+<p>我们发现这里的逻辑就是我们直接使用<code>OKHTTP</code>时的获取<code>okhttp3.Call</code>的逻辑,第一行进行构建<code>Request</code>,因为开始我们的<code>serviceMethod</code>已经有了所用的请求的基本字段信息,就差每个请求的具体值,在这里就是把具体的值进行设置,而赋值的过程就是使用上文提及的<code>ParameterHandler&lt;?&gt;#apply(...)</code>方法,赋完值之后得到一个<code>Request</code>对象.从而获得一个可用的<code>Call</code>对象.</p>
+<h2 id="数据解析">数据解析</h2>
+<p>得到上文的<code>Call</code>后使用同步或异步的方式进行请求,<code>OkHttpCall</code>内部先接收到响应,对数据进行处理之后在抛给调用者,而这里的处理过程就是数据解析的过程.在<code>OkHttpCall#parseResponse()</code>中就是这个过程的处理,这里面使用了<code>ServiceMethod</code>构建时的<code>Converter&lt;ResponseBody, T&gt;</code>对象进行装换,也就是将<code>ResponseBody</code>转为具体的<code>T</code>类型,具体可以参考<code>GsonResponseBodyConverter</code></p>
+<h1 id="尾声">尾声</h1>
+<p>通过上面的说明,应该大体上了解了<code>Retrofit</code>的工作流程,当然很多时候我们会将他和<code>RxJava</code>结合在一起使用,我会在下一篇文章中说明一下.</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#%E5%88%86%E6%9E%90">分析</a>
+<ul>
+<li><a href="#retrofit%E5%AE%9E%E4%BE%8B%E6%9E%84%E5%BB%BA%E9%83%A8%E5%88%86">Retrofit实例构建部分</a></li>
+<li><a href="#%E6%8E%A5%E5%8F%A3%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B">接口创建过程</a></li>
+<li><a href="#servicemethod%E7%9A%84%E6%9E%84%E5%BB%BA">ServiceMethod的构建</a></li>
+<li><a href="#okhttpcall%E4%BD%9C%E7%94%A8">OkHttpCall作用</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E8%A7%A3%E6%9E%90">数据解析</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B0%BE%E5%A3%B0">尾声</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2017-05-30-Android_Leakcanary">
+              <h3 class="post-title">
+                LeakCanary 原理分析
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

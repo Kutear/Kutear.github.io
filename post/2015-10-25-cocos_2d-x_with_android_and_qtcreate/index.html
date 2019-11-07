@@ -1,0 +1,216 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cocos 2d-x 3.8 在ubuntu下使用QtCreator和Android Studio开发环境搭建 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Cocos 2d-x 3.8 在ubuntu下使用QtCreator和Android Studio开发环境搭建
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-10-25
+              </span>
+              <span>
+                2 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/gILhVUT7Ko" class="post-tag">
+                  # Cocos 2d-x
+                </a>
+              
+                <a href="https://kutear.github.io/tag/CKosjv0ytl" class="post-tag">
+                  # 环境搭建
+                </a>
+              
+                <a href="https://kutear.github.io/tag/2bhUImQpoP" class="post-tag">
+                  # Android
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>最近想学习cocos 2d-x游戏开发,昨天搭建环境花费了一点时间,下面说说遇到的问题.</p>
+<p>1.Android sdk与Android studio的安装<br>
+因为我是做Android开发的,这一块很熟练了,没问题.<br>
+2.NDK的安装<br>
+在Android Studio中<code>Files-&gt;other settings-&gt;default Settings-&gt;System Setting-&gt;Android SDK-&gt;SDK Tools</code>选择<em>Android NDK</em>下载,需要科学上网.下载完成后在SDK的根目录下.<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/275aff1661d45b2d0cb63fd9c9130260.png" alt="Android Studio"><br>
+3.Cocos 2d-x的安装<br>
+在官网<a href="http://www.cocos2d-x.org/download">Cocos.org</a>下载,下载Ant构建工具<br>
+在cocos目录下运行download-deps.py下载 ****.zip<br>
+运行setup.py 根据提示设置ANDROID_SDK_ROOT NDK_ROOT ANT_ROOT,也可以直接写入环境变量.<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/5466e88c6a1a5d53b4f77320ce461954.png" alt="目录与安装"><br>
+4.新建项目<br>
+运行 cocos new -h可以看到帮助<br>
+主要指定 -p PACKAGE_NAME -l cpp</p>
+<blockquote>
+<p>cocos new -p cm.kutear -l cpp &quot;MyCppGame&quot;</p>
+</blockquote>
+<p>运行后得到下面目录<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/5466e88c6a1a5d53b4f77320ce461954.png" alt="新工程"><br>
+QtCreator引入<br>
+下载qtcreate:官网下比较麻烦,命令sudo apt-get install qtcreator<br>
+运行qtcreator,FIles -&gt; open file or project选择CMakeLists.txt<br>
+在Run CMake步骤直接Run CMake,不需要参数.<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/275aff1661d45b2d0cb63fd9c9130260.png" alt=""><br>
+完成后就导入完成,运行,时间第一次时间有点久<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/096c9930ef3690a96609ac4bce1ae933.png" alt="运行效果"><br>
+Android Studio引入<br>
+运行Android Studio,导入proj.android-studio<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/9396fc7559613eabf49e3a46816a1493.png" alt="AS"><br>
+如果你是在模拟器测试,请更改下面部分<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/900f1372ea5e5f39eb64eb43b882ed80.png" alt="Modify"><br>
+现在在工程目录下,也就是MyCppGame下运行</p>
+<blockquote>
+<p>cocos compile -p android --android-studio</p>
+</blockquote>
+<p>主要作用是编译c文件成*.so<br>
+现在在Android Studio的libs下会有x86文件夹,下面包含了*.so<br>
+现在可以运行App了,可以在Android下运行,也可以直接命令</p>
+<blockquote>
+<p>cocos run -p android --android-studio</p>
+</blockquote>
+<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2016/03/21/d8bf58b4556530075c90146140878344.png" alt="Android 运行效果"></figure>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2015-09-05-Android_Desigin_Library">
+              <h3 class="post-title">
+                Android Desigin Library
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

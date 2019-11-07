@@ -1,0 +1,207 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android背景设置 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android背景设置
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-08-15
+              </span>
+              <span>
+                2 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>在安卓开发的过程中,我们很多时候都需要设置背景的颜色,比如<strong>ListView</strong>的item的颜色在选中与不选中时候会是不同的.又如我们需要我<strong>Button</strong>的背景图设置圆角以及不同的状态颜色.</p>
+<h3 id="selector">selector</h3>
+<p>最简单的用法就是下面这样,给不同的状态设置不同的颜色</p>
+<pre><code class="language-xml">    &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+    &lt;selector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;&gt;
+        &lt;item android:state_pressed=&quot;false&quot; android:drawable=&quot;@color/color_fffafafa&quot;/&gt;
+        &lt;item android:state_pressed=&quot;true&quot; android:drawable=&quot;@color/color_ffe9e9e9&quot;/&gt;
+    &lt;/selector&gt;
+</code></pre>
+<p>有的时候我们不仅要设置颜色还要设置圆角等属性,就需要下面的方式</p>
+<pre><code class="language-xml">    &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;  
+    &lt;selector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;&gt;
+       &lt;item  android:state_pressed=&quot;true&quot;&gt;
+           &lt;shape android:shape=&quot;rectangle&quot;&gt;
+               &lt;corners android:radius=&quot;@dimen/ui_radius&quot; /&gt;
+               &lt;solid android:color=&quot;@color/teal_900&quot;/&gt;
+           &lt;/shape&gt;
+       &lt;/item&gt;
+       &lt;item android:state_pressed=&quot;false&quot;&gt;
+           &lt;shape android:shape=&quot;rectangle&quot;&gt;
+               &lt;corners android:radius=&quot;@dimen/ui_radius&quot; /&gt;
+               &lt;solid android:color=&quot;@color/teal_500&quot;/&gt;
+           &lt;/shape&gt;
+       &lt;/item&gt;
+    &lt;/selector&gt;
+</code></pre>
+<h3 id="动态设置背景与圆角度数">动态设置背景与圆角度数</h3>
+<p>有的时候需要动态设置背景颜色与圆角度数,就需要在Java里面添加,在SDK中有这样一个类<a href="http://developer.android.com/reference/android/graphics/drawable/GradientDrawable.html">GradientDrawable</a>,他可以动态的设置.</p>
+<pre><code class="language-java">	GradientDrawable gdDefault = new GradientDrawable();
+	gdDefault.setColor(Color.BLUE);
+	gdDefault.setCornerRadius(14);
+	view.setBackground(gdDefault);
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#selector">selector</a></li>
+<li><a href="#%E5%8A%A8%E6%80%81%E8%AE%BE%E7%BD%AE%E8%83%8C%E6%99%AF%E4%B8%8E%E5%9C%86%E8%A7%92%E5%BA%A6%E6%95%B0">动态设置背景与圆角度数</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2015-06-10-android_developer_details">
+              <h3 class="post-title">
+                Android开发的小细节
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

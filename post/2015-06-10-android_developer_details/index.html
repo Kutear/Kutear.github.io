@@ -1,0 +1,194 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android开发的小细节 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android开发的小细节
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-06-10
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="intent隐式启动">Intent隐式启动</h2>
+<p>Intent隐式启动Activity时必须在<intent-filter>指定</p>
+<pre><code class="language-xml">    &lt;category android:name=&quot;android.intent.category.DEFAULT&quot; /&gt;
+</code></pre>
+<p>否则异常ActivityNotFoundException</p>
+<h2 id="service调用过程">Service调用过程</h2>
+<blockquote>
+<p>如果 Service 组件是执行长时间运行的操作，则一般采用启动模式。通过调用应用组件对象（如 Activity）的 startService 方法将启动一个 Service 对象实例。如果当前指定的Service 实例没有被创建，则会调用 Service 的 onCreate()方法来创建一个实例；否则直接调用 Service 的 onStartCommand()方法来运行 Service。。因此，Service 的 onStartcommand()方法<br>
+可能会重复调用多次。所以在 onStartcommand()方法中要注意线程同步的问题。采用启动模式的 Service 一般持续执行一个单一的操作，而且并不会向调用者返回任何结果</p>
+</blockquote>
+<blockquote>
+<p>如果 Servise 组件提供一种封装的功能供其他组件使用，则一般采用绑定模式。通过调用应用组件对象的 bindService 方法启动 Service 对象实例，如果当前没有指定的 Service 实例被创建，则该方法会调用 Service 的 onCreate()方法来创建一个实例；实例启动后，将调用 onBind()方法。onBind 将返回给客户端一个 IBinder 接口实例，IBinder 允许客户端回调Service 的方法，比如得到 Service 运行的状态或其他操作。只要连接建立， Service 就会一直运行（不管客户是否保留 Service 的 IBinder 的引用）。通常 IBinder 是一个使用 AIDL 写成的复杂接口。</p>
+</blockquote>
+<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2016/03/21/995c641096c182856af4b685559de553.png" alt="QQ截图20150607192646.png"></figure>
+<blockquote>
+<ol>
+<li>START_NOT_STICKY:如果Sevice在启动后，被kill掉，并且没有新启动的Intent传给它，那么将Service移出启动状态并且不重新生成，知道再次显示调用Context.startService。适用场景：网上下载数据。</li>
+<li>START_REDELIVER_INTENT:如果Service进程在启动后kill掉，那么它将会被重启，并且最后传给他的Intent通过onStartCommand(Intent ,int,int)会被重新传给他，这种模式保证了传给它Intent一定会被处理完毕，适用场景：关键业务处理。</li>
+<li>START_STICKY:如果Service在它启动后被kill掉，那么Android将让Service继续保持started状态，但是不保留启动它的Intent，Android将重新创建Service实例，并执行onStartCommand方法，如果此时没有新的Intent请求，此时Intent的参数是null，这一点要特别注意。适用场景：后台播放音乐。这种运行模式的特点是需要显示启动并停止Service。</li>
+</ol>
+</blockquote>
+<h2 id="广播接收者的相关问题">广播接收者的相关问题</h2>
+<figure data-type="image" tabindex="2"><img src="http://kutear.qiniudn.com/2016/03/21/18bc9aa7746b79334a4c227e759c8a55.png" alt="QQ截图20150608163423.png"></figure>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#intent%E9%9A%90%E5%BC%8F%E5%90%AF%E5%8A%A8">Intent隐式启动</a></li>
+<li><a href="#service%E8%B0%83%E7%94%A8%E8%BF%87%E7%A8%8B">Service调用过程</a></li>
+<li><a href="#%E5%B9%BF%E6%92%AD%E6%8E%A5%E6%94%B6%E8%80%85%E7%9A%84%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98">广播接收者的相关问题</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2015-05-26-bug_for_android">
+              <h3 class="post-title">
+                Android开发中遇到的坑
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

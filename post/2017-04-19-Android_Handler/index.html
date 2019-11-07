@@ -1,0 +1,192 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>抛开源码讲流程-Handler | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              抛开源码讲流程-Handler
+            </h2>
+            <div class="post-info">
+              <span>
+                2017-04-19
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/mmA5SnGI5e" class="post-tag">
+                  # 源码分析
+                </a>
+              
+                <a href="https://kutear.github.io/tag/x98QVmYRl6" class="post-tag">
+                  # Handler
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="基本原理">基本原理</h2>
+<p>Handler在构造函数中会通过Looper.myLooper()获取到当前线程的Looper对象,以及获取到Looper的MessageQueue对象。当Handler发送一个消息的时候，其实就是向这个MessageQueue中存放一个Message对象，这个Message对象引用了Handler，在Looper的loop函数中，会从MessageQueue的next()函数中不断的获取Message对象，前面说过，Message含有Handler对象，这里对于Message的处理也是转交给Handler的diapatchMessage函数处理。对于一个Message的处理有三种方式，优先级从高到低依次是Message的calllBack,然后是Handler的callback，最后才是Handler的handlerMessage()方法。</p>
+<h2 id="关于线程切换">关于线程切换</h2>
+<p>对于线程的切换其实就是A线程(Looper所在线程)持有一个MessageQueue，B线程（Handler发送消息的线程）引用A线程中的MessageQueue对象，并向这个MessageQueue中插入Message对象，然后在A线程的Looper.loop()中取出这个Message对象，并对这个Message进行处理。所以对于消息的处理就由B线程切换到了A线程。</p>
+<h2 id="单一线程looper唯一性">单一线程Looper唯一性</h2>
+<p>在一个线程中只能存在Looper对象，Android主线程在ActivityThread的main函数中其实已经创建了,所以我们不能再在主线程进行Looper的创建。线程Looper唯一性的保证是ThreadLocal类实现。在Looper中含有ThreadLocal的静态字段，在创建Looper的之前会先检查是否当前线程已经存在Looper，存在的话会抛出异常。可以正常创建的话就创建对象，然后通过ThreadLocal使创建了的Looper对象绑定到当前线程的localValues中。后续获取当前线程的Looper对象是通过Looper.myLooper()，这个函数的实现就是通过ThreadLocal在当前线程中的localValues中取出Looper对象。</p>
+<h2 id="message对象池">Message对象池</h2>
+<p>官方推荐使用Message#obtain()来创建Message对象，原因就是Message存在一个对象池(static)，这个对象池的数据结构其实是Message为节点的一条链表。这个对象池的大小最大可为50。使用obtain()获取Message对象的时候是先从Message对象池中读取链表的头节点，并将读的对象相关标记位(正在使用)制空，如果链表节点数目为0，就只能创建新对象了。</p>
+<h2 id="其他小细节">其他小细节</h2>
+<p>MessageQueue的实现其实是通过链表来实现的，而链表的节点就是上文的Message对象。</p>
+<p>Handler的removeCallbacks实现原理其实就是把MessageQueue链表中的某些节点移除掉。具体实现参见链表移除某个节点。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86">基本原理</a></li>
+<li><a href="#%E5%85%B3%E4%BA%8E%E7%BA%BF%E7%A8%8B%E5%88%87%E6%8D%A2">关于线程切换</a></li>
+<li><a href="#%E5%8D%95%E4%B8%80%E7%BA%BF%E7%A8%8Blooper%E5%94%AF%E4%B8%80%E6%80%A7">单一线程Looper唯一性</a></li>
+<li><a href="#message%E5%AF%B9%E8%B1%A1%E6%B1%A0">Message对象池</a></li>
+<li><a href="#%E5%85%B6%E4%BB%96%E5%B0%8F%E7%BB%86%E8%8A%82">其他小细节</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2017-04-17-Android_Advanced">
+              <h3 class="post-title">
+                Android知识点总结
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,255 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android开发中遇到的坑 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android开发中遇到的坑
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-05-26
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="dialog-theme">Dialog Theme</h2>
+<p>一般App都含有至少两套主题,因此需要在代码中动态切换,</p>
+<pre><code class="language-java">    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        setTheme(isLight?R.style.AppTheme.Light:R.style.AppTheme.dark);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main_activity2);
+    }
+</code></pre>
+<p>就好像上面的代码,但是对于一个Activity Dailog貌似有了点问题</p>
+<blockquote>
+<p>Dialog之外的部分是黑色..需求是要半透明啊,不管如何调整style的属性都没有用..</p>
+</blockquote>
+<p>解决方案:先在mainifest中声明一个主题(light or Dark都 ok)</p>
+<pre><code class="language-xml">       &lt;activity
+            android:theme=&quot;@style/AppTheme.Light&quot;
+            android:name=&quot;.MainActivity2Activity&quot;
+            android:label=&quot;@string/title_activity_main_activity2&quot; /&gt;
+</code></pre>
+<p>然后运行就会有半透明的效果了</p>
+<hr>
+<h2 id="background和windowbackground">Background和WindowBackground</h2>
+<p>windowbackground是用来设置Activity或者Dialog的背景颜色,而Background是设置视图组件的背景,view的背景会覆盖掉activity/dialog的背景.默认View的背景是透明的,即显示效果就是windowbackground</p>
+<blockquote>
+<p>当给Dialog设置一个圆角背景时,同时也需要修改自定义的Title部分的背景,导致title部分的背景覆盖掉了圆角效果.</p>
+</blockquote>
+<p>解决方案:为Title部分设置同样的圆角背景</p>
+<hr>
+<h2 id="crunching-cruncher-png-failed-see-logs">Crunching Cruncher ###.png failed, see logs</h2>
+<p>在<em>Android Studio</em>中编译后始终出现该错误</p>
+<blockquote>
+<p>Error:Execution failed for task ':app:mergeDebugResources'.<br>
+Crunching Cruncher ic_launcher.png failed, see logs</p>
+</blockquote>
+<p>开始尝试<em>StackOverflow</em>中讲的Clean And Rebuild,Restart AS,都没有效果,后来在AS中查看对应的图片,竟然提示</p>
+<blockquote>
+<p>try to open it externally to fix format problem</p>
+</blockquote>
+<p>所以导致这个问题的原因就是图片的格式不对,也许你就仅仅把.jpg的后缀改为了.png,但是图片的格式实际仍是.jpg</p>
+<hr>
+<h2 id="listviewaddfooterview没有效果">ListView#addFooterView()没有效果</h2>
+<pre><code class="language-java">        mListView.addFooterView(btn_more, null, false);
+		mListView.setAdapter(mBlogListAdapter);
+</code></pre>
+<p>在Android 4.4之前的版本,只有在<code>addFooterView(..)</code>之后再调<code>setAdapter(...)</code>才有效.</p>
+<hr>
+<h2 id="linearlayout-weightsum和子view的layout_weight显示不对">LinearLayout <code>weightSum</code>和子View的<code>layout_weight</code>显示不对</h2>
+<p>今天在动态布局的时候动态使用了<code>weightSum</code>和<code>layout_weight</code>,页面看起来正常,仔细一看并没有等分.是因为没有将<code>width</code>设为0</p>
+<pre><code class="language-java">container.setWeightSum(getChildSize());
+        List&lt;T&gt; data = getData();
+        for (T item : data) {
+            View childView = getChildView(vh, item);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            params.weight = 1;
+            params.width = 0;
+            childView.setLayoutParams(params);
+            container.addView(childView);
+        }
+</code></pre>
+<h2 id="dashpatheffect绘制虚线无效"><code>DashPathEffect</code>绘制虚线无效</h2>
+<p>对应<code>View</code>调用下面函数</p>
+<pre><code class="language-java">setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+</code></pre>
+<h2 id="startactivity需要flag_activity_new_task"><code>startActivity（）</code>需要FLAG_ACTIVITY_NEW_TASK</h2>
+<p>我已经为<code>Intent</code>设置了该Flag,但是还是报错。</p>
+<p>原因是使用了<code>Intent.createChooser(intent,cxt.getResources().getString(R.string.share))</code>，通过源码 我们可以发现这里返回的<code>Intent</code>并没有把<code>FLAG_ACTIVITY_NEW_TASK</code>复制到新的<code>Intent</code>上面。</p>
+<p>解决方法</p>
+<pre><code class="language-java">		Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setAction(Intent.ACTION_SEND);
+        intent.putExtra(Intent.EXTRA_TEXT, text);
+        intent.setType(&quot;text/plain&quot;);
+        intent = Intent.createChooser(intent,
+                cxt.getResources().getString(R.string.share));
+		//为返回的Intent设置flag
+        if (!(cxt instanceof Activity)) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        cxt.startActivity(intent);
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#dialog-theme">Dialog Theme</a></li>
+<li><a href="#background%E5%92%8Cwindowbackground">Background和WindowBackground</a></li>
+<li><a href="#crunching-cruncher-png-failed-see-logs">Crunching Cruncher ###.png failed, see logs</a></li>
+<li><a href="#listviewaddfooterview%E6%B2%A1%E6%9C%89%E6%95%88%E6%9E%9C">ListView#addFooterView()没有效果</a></li>
+<li><a href="#linearlayout-weightsum%E5%92%8C%E5%AD%90view%E7%9A%84layout_weight%E6%98%BE%E7%A4%BA%E4%B8%8D%E5%AF%B9">LinearLayout <code>weightSum</code>和子View的<code>layout_weight</code>显示不对</a></li>
+<li><a href="#dashpatheffect%E7%BB%98%E5%88%B6%E8%99%9A%E7%BA%BF%E6%97%A0%E6%95%88"><code>DashPathEffect</code>绘制虚线无效</a></li>
+<li><a href="#startactivity%E9%9C%80%E8%A6%81flag_activity_new_task"><code>startActivity（）</code>需要FLAG_ACTIVITY_NEW_TASK</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2015-05-01-android_activity_launch_mode">
+              <h3 class="post-title">
+                关于Activity launch mode的理解
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

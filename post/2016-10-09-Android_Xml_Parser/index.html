@@ -1,0 +1,806 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android中View,Drawable,Animation从XML中解析生成的过程 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android中View,Drawable,Animation从XML中解析生成的过程
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-10-10
+              </span>
+              <span>
+                18 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h1 id="view">View</h1>
+<p>对于<code>View</code>我们常见的使用就是两种，一种是<code>setContent(int)</code>，另一种为<code>LayoutInflater.inflate()</code>,其本质都是一样的。皆为<code>LayoutInflater.inflate()</code>,我们分析一下这里的具体实现。</p>
+<pre><code class="language-java">public View inflate(@LayoutRes int resource, @Nullable ViewGroup root, boolean attachToRoot) {
+    final Resources res = getContext().getResources();
+    final XmlResourceParser parser = res.getLayout(resource); //根据xml返回一个解析器
+    try {
+        return inflate(parser, root, attachToRoot);
+
+    } finally {
+        parser.close();
+    }
+}
+</code></pre>
+<p>接着就是函数<code>inflate()</code>.</p>
+<pre><code class="language-java">public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean attachToRoot) {
+    synchronized (mConstructorArgs) {
+      final String name = parser.getName();
+      if (TAG_MERGE.equals(name)) { //如果是&lt;merge /&gt;标签
+          if (root == null || !attachToRoot) {
+              throw new InflateException(&quot;&lt;merge /&gt; can be used only with a valid &quot;
+                      + &quot;ViewGroup root and attachToRoot=true&quot;);
+          }
+          //内部也是通过函数createViewFromTag()生成View,并调用rInflateChildren()递归解析
+         rInflate(parser, root, inflaterContext, attrs, false);
+    } else {
+        // Temp is the root view that was found in the xml
+        //根据当前标签tag创建View
+        final View temp = createViewFromTag(root, name, inflaterContext, attrs);
+        ViewGroup.LayoutParams params = null;
+        if (root != null) {
+          //获取xml中的属性，如宽高，待为view设置layoutparams
+            params = root.generateLayoutParams(attrs);  
+            if (!attachToRoot) {
+                // Set the layout params for temp if we are not
+                // attaching. (If we are, we use addView, below)
+                temp.setLayoutParams(params);
+            }
+        }
+
+        // Inflate all children under temp against its context.
+        //把当前解析的view作为parent,继续递归解析她的child View         
+        rInflateChildren(parser, temp, attrs, true);
+        // We are supposed to attach all the views we found (int temp)
+        // to root. Do that now.
+        if (root != null &amp;&amp; attachToRoot) {
+          //最后把当前解析的view添加到他的parent中
+            root.addView(temp, params);      
+        }
+
+        // Decide whether to return the root that was passed in or the
+        // top view found in xml.
+        if (root == null || !attachToRoot) {
+            result = temp;
+        }
+      }
+      return result;
+    }
+}
+</code></pre>
+<p>上面的函数非常容易理解，我们现在要看的函数就是<code>createViewFromTag()</code></p>
+<pre><code class="language-java">View createViewFromTag(View parent, String name, Context context, AttributeSet attrs,
+        boolean ignoreThemeAttr) {
+    if (name.equals(&quot;view&quot;)) {
+        name = attrs.getAttributeValue(null, &quot;class&quot;);
+    }
+    //原来xml还可以写成
+    //&lt;view class=&quot;TextView&quot; ...&gt;的形式
+    //&lt;blink&gt;标签  实现闪烁的如&lt;blink&gt;&lt;TextView text=&quot;AA&quot; ...&gt;&lt;/blink&gt; 那么AA会闪烁
+    if (name.equals(TAG_1995)) {
+        // Let's party like it's 1995!
+        return new BlinkLayout(context, attrs);
+    }
+
+    try {
+        View view;
+        ...
+        //这里有一些Factory创建方式，但是他的逻辑和下面一样，不多说
+        ...
+        if (view == null) {
+            final Object lastContext = mConstructorArgs[0];
+            mConstructorArgs[0] = context;
+            try {
+                if (-1 == name.indexOf('.')) {
+                    view = onCreateView(parent, name, attrs); //不含. 一定是系统的View,如TextView
+                } else {
+                    view = createView(name, null, attrs);  //非系统VIew 如支持库的View,自定义的View
+                }
+            } finally {
+                mConstructorArgs[0] = lastContext;
+            }
+        }
+
+        return view;
+    } catch (InflateException e) {
+      ...
+    }
+}
+</code></pre>
+<p>通过源码，我们发现<code>onCreateView(..)</code>其实是调用<code>createView(name, &quot;android.view.&quot;, attrs)</code>,只是人为的加上View的前缀。</p>
+<pre><code class="language-java">public final View createView(String name, String prefix, AttributeSet attrs)
+        throws ClassNotFoundException, InflateException {
+    Constructor&lt;? extends View&gt; constructor = sConstructorMap.get(name);  //构造函数缓存
+    Class&lt;? extends View&gt; clazz = null;
+
+    try {
+
+        if (constructor == null) {
+            // Class not found in the cache, see if it's real, and try to add it
+            clazz = mContext.getClassLoader().loadClass(
+                    prefix != null ? (prefix + name) : name).asSubclass(View.class);
+            ...
+            //    static final Class&lt;?&gt;[] mConstructorSignature = new Class[] {
+            //                                Context.class, AttributeSet.class};
+            constructor = clazz.getConstructor(mConstructorSignature);//这里我们就可以看到为什么View在xml实例时调用两个参数的构造函数
+            constructor.setAccessible(true);
+            sConstructorMap.put(name, constructor);
+        } else {
+            // If we have a filter, apply it to cached constructor
+            if (mFilter != null) {
+                // Have we seen this name before?
+                Boolean allowedState = mFilterMap.get(name);
+                if (allowedState == null) {
+                    // New class -- remember whether it is allowed
+                    clazz = mContext.getClassLoader().loadClass(
+                            prefix != null ? (prefix + name) : name).asSubclass(View.class);
+
+                    boolean allowed = clazz != null &amp;&amp; mFilter.onLoadClass(clazz);
+                    mFilterMap.put(name, allowed);
+                    if (!allowed) {
+                        failNotAllowed(name, prefix, attrs);
+                    }
+                } else if (allowedState.equals(Boolean.FALSE)) {
+                    failNotAllowed(name, prefix, attrs);
+                }
+            }
+        }
+
+        Object[] args = mConstructorArgs;
+        args[1] = attrs;
+
+        final View view = constructor.newInstance(args); //实例化View对象
+        if (view instanceof ViewStub) {
+            // Use the same context when inflating ViewStub later.
+            final ViewStub viewStub = (ViewStub) view;
+            //对于ViewStub,现在还没解析其内部结构，待调用函数inflate()时才解析替换为内部的View。
+            viewStub.setLayoutInflater(cloneInContext((Context) args[0]));
+        }
+        return view;
+
+    } catch (NoSuchMethodException e) {
+      ...
+    }
+}
+</code></pre>
+<p>到此View的解析就算完了。</p>
+<h1 id="drawable">Drawable</h1>
+<p>这里以Background为例说明，在View的构造哈数中存在这样一段代码</p>
+<pre><code class="language-java">//View.java
+final TypedArray a = context.obtainStyledAttributes(
+                attrs, com.android.internal.R.styleable.View, defStyleAttr, defStyleRes);
+int attr = a.getIndex(i);
+switch (attr) {
+    case com.android.internal.R.styleable.View_background:
+        background = a.getDrawable(attr);
+        break;
+    case ..
+}        
+</code></pre>
+<pre><code class="language-java">//TypedArray.java
+@Nullable
+public Drawable getDrawable(int index) {
+  ...
+  return mResources.loadDrawable(value, value.resourceId, mTheme);
+}
+</code></pre>
+<p>在<code>loadDrawable()</code>当中，做了一些判断，比如当前要的<code>Drawable</code>是否已经加载过了，即判断是否已经在缓存中，如果在就不需要从xml中加载，反之就需要加载，并保存在缓存中。而加载就是调用函数<code>loadDrawableForCookie()</code>,下面看看具体的实现。</p>
+<pre><code class="language-java">private Drawable loadDrawableForCookie(TypedValue value, int id, Theme theme) {
+    if (value.string == null) {
+        throw new NotFoundException(&quot;Resource \&quot;&quot; + getResourceName(id) + &quot;\&quot; (&quot;
+                + Integer.toHexString(id) + &quot;) is not a Drawable (color or path): &quot; + value);
+    }
+
+    final String file = value.string.toString(); //这里是文件的路径 如res/drawable/xxx.png
+    final Drawable dr;
+    try {
+        if (file.endsWith(&quot;.xml&quot;)) {
+            final XmlResourceParser rp = loadXmlResourceParser(
+                    file, id, value.assetCookie, &quot;drawable&quot;);
+            dr = Drawable.createFromXml(this, rp, theme);
+            rp.close();
+        } else {
+            final InputStream is = mAssets.openNonAsset(
+                    value.assetCookie, file, AssetManager.ACCESS_STREAMING);
+            dr = Drawable.createFromResourceStream(this, value, is, file, null);
+            is.close();
+        }
+    } catch (Exception e) {
+
+    }
+    return dr;
+}
+</code></pre>
+<p>很容易看到，这里以xml结尾的文件和其他如png结尾的文件做了分别处理，先看看简单的普通的图片格式，也就是<code>else</code>中的代码。可以看见是很简单的实现，就是把图片转换为数据流，在通过数据流构建Drawable对象。重点看看xml类型Drawable的生成吧。跟入进去，我们发现有个特别的函数<code>createFromXmlInner()</code>，为什么说特别？因为它就是创建具体<code>Drawable</code>的函数。</p>
+<pre><code class="language-java">public static Drawable createFromXmlInner(Resources r, XmlPullParser parser, AttributeSet attrs,
+        Theme theme) throws XmlPullParserException, IOException {
+    final Drawable drawable;
+
+    final String name = parser.getName();
+    switch (name) {
+        case &quot;selector&quot;:
+            drawable = new StateListDrawable();
+            break;
+        case &quot;animated-selector&quot;:
+            drawable = new AnimatedStateListDrawable();
+            break;
+        case &quot;level-list&quot;:
+            drawable = new LevelListDrawable();
+            break;
+        case &quot;layer-list&quot;:
+            drawable = new LayerDrawable();
+            break;
+        case &quot;transition&quot;:
+            drawable = new TransitionDrawable();
+            break;
+        case &quot;ripple&quot;:
+            drawable = new RippleDrawable();
+            break;
+        case &quot;color&quot;:
+            drawable = new ColorDrawable();
+            break;
+        case &quot;shape&quot;:
+            drawable = new GradientDrawable();
+            break;
+        case &quot;vector&quot;:
+            drawable = new VectorDrawable();
+            break;
+        case &quot;animated-vector&quot;:
+            drawable = new AnimatedVectorDrawable();
+            break;
+        case &quot;scale&quot;:
+            drawable = new ScaleDrawable();
+            break;
+        case &quot;clip&quot;:
+            drawable = new ClipDrawable();
+            break;
+        case &quot;rotate&quot;:
+            drawable = new RotateDrawable();
+            break;
+        case &quot;animated-rotate&quot;:
+            drawable = new AnimatedRotateDrawable();
+            break;
+        case &quot;animation-list&quot;:
+            drawable = new AnimationDrawable();
+            break;
+        case &quot;inset&quot;:
+            drawable = new InsetDrawable();
+            break;
+        case &quot;bitmap&quot;:
+            drawable = new BitmapDrawable();
+            break;
+        case &quot;nine-patch&quot;:
+            drawable = new NinePatchDrawable();
+            break;
+        default:
+            throw new XmlPullParserException(parser.getPositionDescription() +
+                    &quot;: invalid drawable tag &quot; + name);
+
+    }
+    drawable.inflate(r, parser, attrs, theme);
+    return drawable;
+}
+</code></pre>
+<p>前面的<code>switch</code>就是简单的根据标签tag创建具体的对象，最后调用<code>drawable.inflate()</code>来配置具体的参数。这里我们一帧动画<code>AnimationDrawable</code>来说明。</p>
+<pre><code class="language-java">@Override
+public void inflate(Resources r, XmlPullParser parser, AttributeSet attrs, Theme theme)
+        throws XmlPullParserException, IOException {
+    final TypedArray a = obtainAttributes(r, theme, attrs, R.styleable.AnimationDrawable);
+    super.inflateWithAttributes(r, parser, a, R.styleable.AnimationDrawable_visible);
+    updateStateFromTypedArray(a);
+    a.recycle();
+    inflateChildElements(r, parser, attrs, theme);
+}
+
+private void inflateChildElements(Resources r, XmlPullParser parser, AttributeSet attrs,
+        Theme theme) throws XmlPullParserException, IOException {
+    int type;
+
+    final int innerDepth = parser.getDepth()+1;
+    int depth;
+    //循环获取每一帧动画信息
+    while ((type=parser.next()) != XmlPullParser.END_DOCUMENT
+            &amp;&amp; ((depth = parser.getDepth()) &gt;= innerDepth || type != XmlPullParser.END_TAG)) {
+        if (type != XmlPullParser.START_TAG) {
+            continue;
+        }
+
+        if (depth &gt; innerDepth || !parser.getName().equals(&quot;item&quot;)) {
+            continue;
+        }
+        //取得每个名为item的tag结点
+        final TypedArray a = obtainAttributes(r, theme, attrs,
+                R.styleable.AnimationDrawableItem);
+
+        final int duration = a.getInt(R.styleable.AnimationDrawableItem_duration, -1);
+        if (duration &lt; 0) {
+            throw new XmlPullParserException(parser.getPositionDescription()
+                    + &quot;: &lt;item&gt; tag requires a 'duration' attribute&quot;);
+        }
+
+        Drawable dr = a.getDrawable(R.styleable.AnimationDrawableItem_drawable); //按照解析png的方式解析
+
+        a.recycle();
+
+        if (dr == null) {
+            while ((type=parser.next()) == XmlPullParser.TEXT) {
+                // Empty
+            }
+            if (type != XmlPullParser.START_TAG) {
+                throw new XmlPullParserException(parser.getPositionDescription()
+                        + &quot;: &lt;item&gt; tag requires a 'drawable' attribute or child tag&quot;
+                        + &quot; defining a drawable&quot;);
+            }
+            dr = Drawable.createFromXmlInner(r, parser, attrs, theme);  //item内部再嵌xml类型的Drawable
+        }
+
+        mAnimationState.addFrame(dr, duration); //添加到存储每一帧的容器，带播放时使用
+        if (dr != null) {
+            dr.setCallback(this);
+        }
+    }
+}
+</code></pre>
+<p>对于<code>Drawable</code>的解析大体就这些。</p>
+<h1 id="animation">Animation</h1>
+<p>我们知道，Android动画大体分为三类，帧动画，View 动画，和属性动画。帧动画在上面Drawable已经说过了。而View动画和属性动画基本一样的解析。下面以属性动画为例看一下。我们选择从函数<code>loadAnimator(Context context, @AnimatorRes int id)</code>入手。</p>
+<pre><code class="language-java">public static Animator loadAnimator(Resources resources, Theme theme, int id,
+            float pathErrorScale) throws NotFoundException {
+        final ConfigurationBoundResourceCache&lt;Animator&gt; animatorCache = resources
+                .getAnimatorCache();
+        Animator animator = animatorCache.getInstance(id, theme); //优先缓存读取
+        if (animator != null) {
+            return animator;
+        } else if (DBG_ANIMATOR_INFLATER) {
+            Log.d(TAG, &quot;cache miss for animator &quot; + resources.getResourceName(id));
+        }
+        //缓存中不存在，需要解析
+        XmlResourceParser parser = null;
+        try {
+            parser = resources.getAnimation(id);
+            animator = createAnimatorFromXml(resources, theme, parser, pathErrorScale);//动画的创建
+            if (animator != null) {
+                animator.appendChangingConfigurations(getChangingConfigs(resources, id));
+                final ConstantState&lt;Animator&gt; constantState = animator.createConstantState();
+                if (constantState != null) {
+                    if (DBG_ANIMATOR_INFLATER) {
+                        Log.d(TAG, &quot;caching animator for res &quot; + resources.getResourceName(id));
+                    }
+                    animatorCache.put(id, theme, constantState);
+                    // create a new animator so that cached version is never used by the user
+                    // 这里的注释说明每次从缓存中读取的cache其实也是通过这种方式创建的。
+                    animator = constantState.newInstance(resources, theme);
+                }
+            }
+            return animator;
+        } catch (XmlPullParserException ex) {
+            ...
+        } finally {
+            if (parser != null) parser.close();
+        }
+    }
+</code></pre>
+<p>毕竟这不是我们这里需要主要关注的，下面我们看看创建的函数<code>createAnimatorFromXml()</code>.</p>
+<pre><code class="language-java">private static Animator createAnimatorFromXml(Resources res, Theme theme, XmlPullParser parser,
+        AttributeSet attrs, AnimatorSet parent, int sequenceOrdering, float pixelSize)
+        throws XmlPullParserException, IOException {
+    Animator anim = null;
+    ArrayList&lt;Animator&gt; childAnims = null;
+
+    // Make sure we are on a start tag.
+    int type;
+    int depth = parser.getDepth();
+
+    while (((type = parser.next()) != XmlPullParser.END_TAG || parser.getDepth() &gt; depth)
+            &amp;&amp; type != XmlPullParser.END_DOCUMENT) {
+
+        if (type != XmlPullParser.START_TAG) {
+            continue;
+        }
+
+        String name = parser.getName();
+        boolean gotValues = false;
+
+        if (name.equals(&quot;objectAnimator&quot;)) {  //生成objectAnimator
+            anim = loadObjectAnimator(res, theme, attrs, pixelSize);
+        } else if (name.equals(&quot;animator&quot;)) { //ValueAnimator
+            anim = loadAnimator(res, theme, attrs, null, pixelSize);  //递归过程
+        } else if (name.equals(&quot;set&quot;)) {  //AnimatorSet
+            //我们知道，AnimatorSet是个容器，这里的逻辑就是把它作为parent,在递归解析子元素
+            anim = new AnimatorSet();
+            TypedArray a;
+            if (theme != null) {
+                a = theme.obtainStyledAttributes(attrs, R.styleable.AnimatorSet, 0, 0);
+            } else {
+                a = res.obtainAttributes(attrs, R.styleable.AnimatorSet);
+            }
+            anim.appendChangingConfigurations(a.getChangingConfigurations());
+            int ordering = a.getInt(R.styleable.AnimatorSet_ordering, TOGETHER);
+            createAnimatorFromXml(res, theme, parser, attrs, (AnimatorSet) anim, ordering,
+                    pixelSize); //递归调用
+            a.recycle();
+        } else if (name.equals(&quot;propertyValuesHolder&quot;)) {  //这里面还会解析keyframe标签
+            PropertyValuesHolder[] values = loadValues(res, theme, parser,
+                    Xml.asAttributeSet(parser));
+            if (values != null &amp;&amp; anim != null &amp;&amp; (anim instanceof ValueAnimator)) {
+                ((ValueAnimator) anim).setValues(values);
+            }
+            gotValues = true;
+        } else {
+            throw new RuntimeException(&quot;Unknown animator name: &quot; + parser.getName());
+        }
+
+        if (parent != null &amp;&amp; !gotValues) {
+            if (childAnims == null) {
+                childAnims = new ArrayList&lt;Animator&gt;();
+            }
+            childAnims.add(anim);
+        }
+    }
+    //生成完毕，考虑添加到Parent
+    if (parent != null &amp;&amp; childAnims != null) {
+        Animator[] animsArray = new Animator[childAnims.size()];
+        int index = 0;
+        for (Animator a : childAnims) {
+            animsArray[index++] = a;
+        }
+        if (sequenceOrdering == TOGETHER) {
+            parent.playTogether(animsArray);
+        } else {
+            parent.playSequentially(animsArray);
+        }
+    }
+    return anim;
+}
+</code></pre>
+<p>有点抽象，下面我们先写一个小例子看看动画的所有结构。</p>
+<pre><code class="language-xml">&lt;set android:ordering=&quot;sequentially&quot;&gt;
+      &lt;animator
+            android:duration=&quot;1000&quot;
+            android:repeatCount=&quot;1&quot;
+            android:repeatMode=&quot;reverse&quot;&gt;
+      &lt;propertyValuesHolder&gt;
+          &lt;keyframe android:fraction=&quot;0&quot; android:value=&quot;1&quot;/&gt;
+          &lt;keyframe android:fraction=&quot;.2&quot; android:value=&quot;.4&quot;/&gt;
+          &lt;keyframe android:fraction=&quot;1&quot; android:value=&quot;0&quot;/&gt;
+      &lt;/propertyValuesHolder&gt;
+    &lt;/animator&gt;
+    &lt;objectAnimator
+        android:duration=&quot;500&quot;
+        android:valueTo=&quot;1f&quot;&gt;
+          &lt;propertyValuesHolder android:propertyName=&quot;x&quot; &gt;
+                &lt;keyframe android:fraction=&quot;0&quot; android:value=&quot;800&quot; /&gt;
+                &lt;keyframe android:fraction=&quot;.2&quot;
+                          android:interpolator=&quot;@android:anim/accelerate_interpolator&quot;
+                          android:value=&quot;1000&quot; /&gt;
+                &lt;keyframe android:fraction=&quot;1&quot;
+                          android:interpolator=&quot;@android:anim/accelerate_interpolator&quot;
+                          android:value=&quot;400&quot; /&gt;
+          &lt;/propertyValuesHolder&gt;
+          &lt;propertyValuesHolder android:propertyName=&quot;y&quot; &gt;
+                &lt;keyframe/&gt;
+                &lt;keyframe android:fraction=&quot;.2&quot;
+                          android:interpolator=&quot;@android:anim/accelerate_interpolator&quot;
+                          android:value=&quot;300&quot;/&gt;
+                &lt;keyframe android:interpolator=&quot;@android:anim/accelerate_interpolator&quot;
+                          android:value=&quot;1000&quot; /&gt;
+          &lt;/propertyValuesHolder&gt;
+      &lt;/objectAnimator&gt;
+&lt;/set&gt;
+</code></pre>
+<p>我们接下来以<code>&lt;propertyValuesHolder/&gt;</code>的解析为例来说明。</p>
+<pre><code class="language-java">private static PropertyValuesHolder[] loadValues(Resources res, Theme theme,
+            XmlPullParser parser, AttributeSet attrs) throws XmlPullParserException, IOException {
+        ArrayList&lt;PropertyValuesHolder&gt; values = null;
+
+        int type;
+        while ((type = parser.getEventType()) != XmlPullParser.END_TAG &amp;&amp;
+                type != XmlPullParser.END_DOCUMENT) {
+
+            if (type != XmlPullParser.START_TAG) {
+                parser.next();
+                continue;
+            }
+
+            String name = parser.getName();
+
+            if (name.equals(&quot;propertyValuesHolder&quot;)) {
+                TypedArray a;
+                if (theme != null) {
+                    a = theme.obtainStyledAttributes(attrs, R.styleable.PropertyValuesHolder, 0, 0);
+                } else {
+                    a = res.obtainAttributes(attrs, R.styleable.PropertyValuesHolder);
+                }
+                String propertyName = a.getString(R.styleable.PropertyValuesHolder_propertyName);
+                int valueType = a.getInt(R.styleable.PropertyValuesHolder_valueType,
+                        VALUE_TYPE_UNDEFINED);
+
+                PropertyValuesHolder pvh = loadPvh(res, theme, parser, propertyName, valueType);
+                if (pvh == null) {
+                    pvh = getPVH(a, valueType,
+                            R.styleable.PropertyValuesHolder_valueFrom,
+                            R.styleable.PropertyValuesHolder_valueTo, propertyName);
+                }
+                if (pvh != null) {
+                    if (values == null) {
+                        values = new ArrayList&lt;PropertyValuesHolder&gt;();
+                    }
+                    values.add(pvh);
+                }
+                a.recycle();
+            }
+
+            parser.next();
+        }
+
+        PropertyValuesHolder[] valuesArray = null;
+        if (values != null) {
+            int count = values.size();
+            valuesArray = new PropertyValuesHolder[count];
+            for (int i = 0; i &lt; count; ++i) {
+                valuesArray[i] = values.get(i);
+            }
+        }
+        return valuesArray;
+    }
+</code></pre>
+<p>上面代码没什么可说的，唯一要看的就是<code>PropertyValuesHolder</code>的创建函数<code>loadPvh()</code>。</p>
+<pre><code class="language-java">private static PropertyValuesHolder loadPvh(Resources res, Theme theme, XmlPullParser parser,
+        String propertyName, int valueType)
+        throws XmlPullParserException, IOException {
+
+    PropertyValuesHolder value = null;
+    ArrayList&lt;Keyframe&gt; keyframes = null;
+
+    int type;
+    while ((type = parser.next()) != XmlPullParser.END_TAG &amp;&amp;
+            type != XmlPullParser.END_DOCUMENT) {
+        String name = parser.getName();
+        if (name.equals(&quot;keyframe&quot;)) {
+            if (valueType == VALUE_TYPE_UNDEFINED) {
+                valueType = inferValueTypeOfKeyframe(res, theme, Xml.asAttributeSet(parser));
+            }
+            //解析keyframe
+            Keyframe keyframe = loadKeyframe(res, theme, Xml.asAttributeSet(parser), valueType);  
+            if (keyframe != null) {
+                if (keyframes == null) {
+                    keyframes = new ArrayList&lt;Keyframe&gt;();
+                }
+                keyframes.add(keyframe);
+            }
+            parser.next();
+        }
+    }
+
+    int count;
+    if (keyframes != null &amp;&amp; (count = keyframes.size()) &gt; 0) {
+        ...对keyframes的调整
+        value = PropertyValuesHolder.ofKeyframe(propertyName, keyframeArray); //设置keyframe
+        if (valueType == VALUE_TYPE_COLOR) {
+            value.setEvaluator(ArgbEvaluator.getInstance());//设置估值器
+        }
+    }
+
+    return value;
+}
+</code></pre>
+<p>卧槽，一层一层何时能到头。</p>
+<pre><code class="language-java">private static Keyframe loadKeyframe(Resources res, Theme theme, AttributeSet attrs,
+        int valueType)
+        throws XmlPullParserException, IOException {
+
+    TypedArray a;
+    if (theme != null) {
+        a = theme.obtainStyledAttributes(attrs, R.styleable.Keyframe, 0, 0);
+    } else {
+        a = res.obtainAttributes(attrs, R.styleable.Keyframe);
+    }
+
+    Keyframe keyframe = null;
+
+    float fraction = a.getFloat(R.styleable.Keyframe_fraction, -1);
+
+    TypedValue keyframeValue = a.peekValue(R.styleable.Keyframe_value);
+    boolean hasValue = (keyframeValue != null);
+    if (valueType == VALUE_TYPE_UNDEFINED) {
+        // When no value type is provided, check whether it's a color type first.
+        // If not, fall back to default value type (i.e. float type).
+        if (hasValue &amp;&amp; isColorType(keyframeValue.type)) {
+            valueType = VALUE_TYPE_COLOR;
+        } else {
+            valueType = VALUE_TYPE_FLOAT;
+        }
+    }
+
+    if (hasValue) {
+        switch (valueType) {
+            case VALUE_TYPE_FLOAT:
+                float value = a.getFloat(R.styleable.Keyframe_value, 0);
+                keyframe = Keyframe.ofFloat(fraction, value);
+                break;
+            case VALUE_TYPE_COLOR:
+            case VALUE_TYPE_INT:
+                int intValue = a.getInt(R.styleable.Keyframe_value, 0);
+                keyframe = Keyframe.ofInt(fraction, intValue);
+                break;
+        }
+    } else {
+        keyframe = (valueType == VALUE_TYPE_FLOAT) ? Keyframe.ofFloat(fraction) :
+                Keyframe.ofInt(fraction);
+    }
+
+    final int resID = a.getResourceId(R.styleable.Keyframe_interpolator, 0);
+    if (resID &gt; 0) {
+        final Interpolator interpolator = AnimationUtils.loadInterpolator(res, theme, resID); //插值器，和View动画一致
+        keyframe.setInterpolator(interpolator);
+    }
+    a.recycle();
+
+    return keyframe;
+}
+</code></pre>
+<p>上面函数很简单，就是根据不同的type生成不同的keyframe,而type我们从上面知道是从TypedValue.type来判断的。TypedValue中持有很多的type声明</p>
+<pre><code class="language-java">...
+public static final int TYPE_DIMENSION = 0x05;
+/** The &lt;var&gt;data&lt;/var&gt; field holds a complex number encoding a fraction
+ *  of a container. */
+public static final int TYPE_FRACTION = 0x06;
+...
+</code></pre>
+<p>好了，到这里就算分析完了,里面有很多代码现在还是不太清楚具体的逻辑。但是我们流程还是算清楚的了。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#view">View</a></li>
+<li><a href="#drawable">Drawable</a></li>
+<li><a href="#animation">Animation</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2016-10-08-Android_Property_Animator">
+              <h3 class="post-title">
+                Android属性动画原理
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,726 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EventBus源码分析 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              EventBus源码分析
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-08-22
+              </span>
+              <span>
+                16 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/m8i70eBHPt" class="post-tag">
+                  # Thinking In Java
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h1 id="最简单的例子说起">最简单的例子说起</h1>
+<p>先从一个简单的栗子出发，看看<code>EventBus</code>的功能是什么。</p>
+<pre><code class="language-java">@Override
+protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        EventBus.getDefault().register(this);
+        findViewById(R.id.say_hello).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                EventBus.getDefault().post(new EventBean(1,&quot;Hello&quot;));
+            }
+        });
+}
+
+@Subscribe(threadMode = ThreadMode.MAIN) //在ui线程执行
+public void onEvent(EventBean event) {
+        System.out.println(Thread.currentThread().getName());
+}
+
+@Override
+protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
+}
+</code></pre>
+<p>上面的代码是最简单的一个事件，当点击按钮之后回调<code>onEvent()</code>方法。下面就着重看看这个过程的实现。类似的代码我们见得很多，比如App存在一个<code>UserManager</code>,有一个用户状态的分发，很多类在这里注册了用户状态的监听回调，当用户登陆，所有的注册了监听的类都会收到这个消息。其实<code>EventBus</code>的实现也是类似的，只是不存在接口。<br>
+看看上面的代码，我们可能会对是怎样回调<code>onEvent()</code>感到一丝的困惑。下面进入源码的世界。</p>
+<h1 id="eventbus-源码分析">EventBus 源码分析</h1>
+<p>先看看一些有用的字段</p>
+<pre><code class="language-java">    //K-&gt;方法参数的类型   V-&gt;K的所有父类的结合（包括本身） 用作缓存
+    private static final Map&lt;Class&lt;?&gt;, List&lt;Class&lt;?&gt;&gt;&gt; eventTypesCache = new HashMap&lt;&gt;();
+    //K-&gt;方法参数的类型   V-&gt;所有参数类型的K的订阅函数的集合  主要是消息发送使用
+    private final Map&lt;Class&lt;?&gt;, CopyOnWriteArrayList&lt;Subscription&gt;&gt; subscriptionsByEventType;
+    //K-&gt;注册的类，如Activity  V-&gt; 注册类的注册函数的参数的集合  主要是注册/解绑使用
+    private final Map&lt;Object, List&lt;Class&lt;?&gt;&gt;&gt; typesBySubscriber;
+    //粘性事件 K-&gt;发出的事件的参数类型  V-&gt;事件的值
+    private final Map&lt;Class&lt;?&gt;, Object&gt; stickyEvents;
+</code></pre>
+<h2 id="一切的开始-事件的订阅">一切的开始-事件的订阅</h2>
+<pre><code class="language-java">//EventBus
+public void register(Object subscriber) {
+        Class&lt;?&gt; subscriberClass = subscriber.getClass();
+        //获取该类的所有的能接受事件的函数，也就是上面说的`onEvent(...)`
+        List&lt;SubscriberMethod&gt; subscriberMethods = subscriberMethodFinder.findSubscriberMethods(subscriberClass);
+        synchronized (this) {
+            for (SubscriberMethod subscriberMethod : subscriberMethods) {
+                subscribe(subscriber, subscriberMethod);
+            }
+        }
+}
+</code></pre>
+<p>如何才能找到注册的方法呢,这就要看看<code>SubscriberMethodFinder</code>的具体实现了.</p>
+<pre><code class="language-java">//SubscriberMethodFinder
+List&lt;SubscriberMethod&gt; findSubscriberMethods(Class&lt;?&gt; subscriberClass) {
+        //提升速度，优先重缓存中取,支持并发操作
+        //声明为 Map&lt;Class&lt;?&gt;, List&lt;SubscriberMethod&gt;&gt; METHOD_CACHE = new ConcurrentHashMap&lt;&gt;();
+        List&lt;SubscriberMethod&gt; subscriberMethods = METHOD_CACHE.get(subscriberClass);
+        if (subscriberMethods != null) {
+            return subscriberMethods;
+        }
+        if (ignoreGeneratedIndex) { //默认为false
+            subscriberMethods = findUsingReflection(subscriberClass);
+        } else {
+            subscriberMethods = findUsingInfo(subscriberClass);
+        }
+
+        if (subscriberMethods.isEmpty()) {
+            throw new EventBusException(&quot;Subscriber &quot; + subscriberClass
+                    + &quot; and its super classes have no public methods with the @Subscribe annotation&quot;);
+        } else {
+            METHOD_CACHE.put(subscriberClass, subscriberMethods);
+            return subscriberMethods;
+        }
+}
+
+private List&lt;SubscriberMethod&gt; findUsingInfo(Class&lt;?&gt; subscriberClass) {
+        //从复用池中取回一个FindState
+        FindState findState = prepareFindState();
+        //为findState设置clazz等参数
+        findState.initForSubscriber(subscriberClass);
+        while (findState.clazz != null) {
+            findState.subscriberInfo = getSubscriberInfo(findState);
+            //通常为NULL
+            if (findState.subscriberInfo != null) {
+                SubscriberMethod[] array = findState.subscriberInfo.getSubscriberMethods();
+                for (SubscriberMethod subscriberMethod : array) {
+                    if (findState.checkAdd(subscriberMethod.method, subscriberMethod.eventType)) {
+                        findState.subscriberMethods.add(subscriberMethod);
+                    }
+                }
+            } else {
+                findUsingReflectionInSingleClass(findState);
+            }
+            //设置findState.clazz为刚刚clazz的父类
+            findState.moveToSuperclass();
+        }
+        //获取findState.subscriberMethods
+        return getMethodsAndRelease(findState);
+}
+</code></pre>
+<p>再看<code>findUsingReflectionInSingleClass()</code>之前,线看看<code>FindState</code>的一部分实现</p>
+<pre><code class="language-java">//FindState
+static class FindState {
+  	//订阅者的方法的列表
+	final List&lt;SubscriberMethod&gt; subscriberMethods = new ArrayList&lt;&gt;();
+  	//以EventType为key，method为value
+	final Map&lt;Class, Object&gt; anyMethodByEventType = new HashMap&lt;&gt;();
+	//以method的名字生成一个methodKey为key，该method的类(订阅者)为value
+        final Map&lt;String, Class&gt; subscriberClassByMethodKey = new HashMap&lt;&gt;();
+        //构建methodKey的StringBuilder
+	final StringBuilder methodKeyBuilder = new StringBuilder(128);
+	//订阅者
+	Class&lt;?&gt; subscriberClass;
+        //当前类
+	Class&lt;?&gt; clazz;
+        //是否跳过父类
+	boolean skipSuperClasses;
+       //SubscriberInfo
+	SubscriberInfo subscriberInfo;
+
+	void initForSubscriber(Class&lt;?&gt; subscriberClass) {
+      	//clazz为当前类
+		this.subscriberClass = clazz = subscriberClass;
+		skipSuperClasses = false;
+		subscriberInfo = null;
+	}
+  	
+        boolean checkAdd(Method method, Class&lt;?&gt; eventType) { //带检测方法，和他的参数类型
+            // 2 level check: 1st level with event type only (fast), 2nd level with complete signature when required.
+            // Usually a subscriber doesn't have methods listening to the same event type.
+            Object existing = anyMethodByEventType.put(eventType, method);
+            if (existing == null) {
+                return true;
+            } else {
+                if (existing instanceof Method) {
+                    if (!checkAddWithMethodSignature((Method) existing, eventType)) { //检测函数的签名
+                        // Paranoia check
+                        throw new IllegalStateException();
+                    }
+                    // Put any non-Method object to &quot;consume&quot; the existing Method
+                    anyMethodByEventType.put(eventType, this);
+                }
+                return checkAddWithMethodSignature(method, eventType);
+            }
+       }
+    
+       private boolean checkAddWithMethodSignature(Method method, Class&lt;?&gt; eventType) {
+            methodKeyBuilder.setLength(0);
+            methodKeyBuilder.append(method.getName());
+            methodKeyBuilder.append('&gt;').append(eventType.getName());
+
+            String methodKey = methodKeyBuilder.toString();
+            Class&lt;?&gt; methodClass = method.getDeclaringClass();  //找到声明该方法的类
+            Class&lt;?&gt; methodClassOld = subscriberClassByMethodKey.put(methodKey, methodClass);
+            if (methodClassOld == null || methodClassOld.isAssignableFrom(methodClass)) {
+                //判断old是否为methodClass的父类
+                // Only add if not already found in a sub class
+                return true;
+            } else {
+                // Revert the put, old class is further down the class hierarchy
+                subscriberClassByMethodKey.put(methodKey, methodClassOld);
+                return false;
+            }
+      	}
+}
+</code></pre>
+<p>Ok,下面看看<code>findUsingReflectionInSingleClass()</code>的实现吧.</p>
+<pre><code class="language-java">private void findUsingReflectionInSingleClass(FindState findState) {
+        Method[] methods;
+        try {
+            // This is faster than getMethods, especially when subscribers are fat classes like Activities
+            methods = findState.clazz.getDeclaredMethods();//返回该类的所有方法，但是不包括继承得来的
+        } catch (Throwable th) {
+            // Workaround for java.lang.NoClassDefFoundError, see https://github.com/greenrobot/EventBus/issues/149
+            methods = findState.clazz.getMethods();
+            findState.skipSuperClasses = true;
+        }
+        for (Method method : methods) {
+            int modifiers = method.getModifiers(); //方法的修饰符 public|protected|private|default(package)
+            if ((modifiers &amp; Modifier.PUBLIC) != 0 &amp;&amp; (modifiers &amp; MODIFIERS_IGNORE) == 0) { //大体上就是要求public,非static|abstract
+                Class&lt;?&gt;[] parameterTypes = method.getParameterTypes(); //获取参数类型数组
+                if (parameterTypes.length == 1) {  //只允许有一个参数
+                    Subscribe subscribeAnnotation = method.getAnnotation(Subscribe.class);
+                    if (subscribeAnnotation != null) { //函数必须包含注解
+                        Class&lt;?&gt; eventType = parameterTypes[0];
+                        if (findState.checkAdd(method, eventType)) {
+                            ThreadMode threadMode = subscribeAnnotation.threadMode();
+                            findState.subscriberMethods.add(new SubscriberMethod(method, eventType, threadMode,
+                                    subscribeAnnotation.priority(), subscribeAnnotation.sticky()));
+                        }
+                    }
+                } else if (strictMethodVerification &amp;&amp; method.isAnnotationPresent(Subscribe.class)) {
+                    String methodName = method.getDeclaringClass().getName() + &quot;.&quot; + method.getName();
+                    throw new EventBusException(&quot;@Subscribe method &quot; + methodName +
+                            &quot;must have exactly 1 parameter but has &quot; + parameterTypes.length);
+                }
+            } else if (strictMethodVerification &amp;&amp; method.isAnnotationPresent(Subscribe.class)) {
+                String methodName = method.getDeclaringClass().getName() + &quot;.&quot; + method.getName();
+                throw new EventBusException(methodName +
+                        &quot; is a illegal @Subscribe method: must be public, non-static, and non-abstract&quot;);
+            }
+        }
+}
+
+</code></pre>
+<p>现在函数调用栈退回到了最开始的<code>register()</code>,接着看<code>subscribe(...)</code>方法。</p>
+<pre><code class="language-java">// Must be called in synchronized block
+private void subscribe(Object subscriber, SubscriberMethod subscriberMethod) {
+        Class&lt;?&gt; eventType = subscriberMethod.eventType; //参数类型
+        //将注册类和方法打包为Subscription
+        Subscription newSubscription = new Subscription(subscriber, subscriberMethod);
+        CopyOnWriteArrayList&lt;Subscription&gt; subscriptions = subscriptionsByEventType.get(eventType);
+        if (subscriptions == null) {
+            subscriptions = new CopyOnWriteArrayList&lt;&gt;();
+            subscriptionsByEventType.put(eventType, subscriptions);
+        } else {
+            //同一个事件不再多次注册，所以每次使用后一定要解绑，不解绑还会内存泄露
+            if (subscriptions.contains(newSubscription)) {
+                throw new EventBusException(&quot;Subscriber &quot; + subscriber.getClass() + &quot; already registered to event &quot;
+                        + eventType);
+            }
+        }
+
+        int size = subscriptions.size();
+        for (int i = 0; i &lt;= size; i++) {
+            //根据优先级放入合适的位置
+            if (i == size || subscriberMethod.priority &gt; subscriptions.get(i).subscriberMethod.priority) {
+                subscriptions.add(i, newSubscription);
+                break;
+            }
+        }
+        //typesBySubscriber  K-&gt;注册的类，如Activity  V-&gt; 注册类的注册函数的参数的集合
+        List&lt;Class&lt;?&gt;&gt; subscribedEvents = typesBySubscriber.get(subscriber);
+        if (subscribedEvents == null) {
+            subscribedEvents = new ArrayList&lt;&gt;();
+            typesBySubscriber.put(subscriber, subscribedEvents);
+        }
+        subscribedEvents.add(eventType);
+        //注册的时候判断是否有粘性事件，如有就执行咯
+        if (subscriberMethod.sticky) {
+            if (eventInheritance) {  //Default true
+                // Existing sticky events of all subclasses of eventType have to be considered.
+                // Note: Iterating over all events may be inefficient with lots of sticky events,
+                // thus data structure should be changed to allow a more efficient lookup
+                // (e.g. an additional map storing sub classes of super classes: Class -&gt; List&lt;Class&gt;).
+                Set&lt;Map.Entry&lt;Class&lt;?&gt;, Object&gt;&gt; entries = stickyEvents.entrySet();
+                for (Map.Entry&lt;Class&lt;?&gt;, Object&gt; entry : entries) {
+                    Class&lt;?&gt; candidateEventType = entry.getKey();
+                    //判断eventType是否为candidateEventType的父类，即所有的子类都能收到消息
+                    if (eventType.isAssignableFrom(candidateEventType)) {
+                        Object stickyEvent = entry.getValue();
+                        //发送消息，这里先不讲，在后面也会说的
+                        checkPostStickyEventToSubscription(newSubscription, stickyEvent);
+                    }
+                }
+            } else {
+                Object stickyEvent = stickyEvents.get(eventType);
+                checkPostStickyEventToSubscription(newSubscription, stickyEvent);
+            }
+        }
+}
+</code></pre>
+<p>上面注册的过程基本已经说完，下面将讲事件的发送过程。根据最上面的栗子，我们知道入口是<code>post()</code>函数，下面就入手<code>post()</code>函数。</p>
+<h2 id="事件的发送">事件的发送</h2>
+<pre><code class="language-java">//保证每个线程取得的PostingThreadState不同，但是相同线程取得的相同，本质就是HashMap&lt;Thread,PostingThreadState&gt;
+private final ThreadLocal&lt;PostingThreadState&gt; currentPostingThreadState = new ThreadLocal&lt;PostingThreadState&gt;() {
+        @Override
+        protected PostingThreadState initialValue() {
+            return new PostingThreadState();
+        }
+};
+
+final static class PostingThreadState {
+        final List&lt;Object&gt; eventQueue = new ArrayList&lt;Object&gt;();
+        boolean isPosting;
+        boolean isMainThread;
+        Subscription subscription;
+        Object event;
+        boolean canceled;
+}
+
+public void post(Object event) {
+        PostingThreadState postingState = currentPostingThreadState.get();
+        List&lt;Object&gt; eventQueue = postingState.eventQueue;
+        //添加到队列
+        eventQueue.add(event);
+        //如果队列没有在分发事件就开始分发
+        if (!postingState.isPosting) {
+            postingState.isMainThread = Looper.getMainLooper() == Looper.myLooper();
+            postingState.isPosting = true;
+            if (postingState.canceled) {
+                throw new EventBusException(&quot;Internal error. Abort state was not reset&quot;);
+            }
+            try {
+                //循环执行分发
+                while (!eventQueue.isEmpty()) {
+                    postSingleEvent(eventQueue.remove(0), postingState);
+                }
+            } finally {
+                postingState.isPosting = false;
+                postingState.isMainThread = false;
+            }
+        }
+}
+
+private void postSingleEvent(Object event, PostingThreadState postingState) throws Error {
+        Class&lt;?&gt; eventClass = event.getClass(); //事件参数类型
+        boolean subscriptionFound = false;
+        if (eventInheritance) {  //default true
+            List&lt;Class&lt;?&gt;&gt; eventTypes = lookupAllEventTypes(eventClass);
+            int countTypes = eventTypes.size();
+            for (int h = 0; h &lt; countTypes; h++) {
+                Class&lt;?&gt; clazz = eventTypes.get(h);
+                //只要有一个成功就返回成功
+                subscriptionFound |= postSingleEventForEventType(event, postingState, clazz);
+            }
+        } else {
+            subscriptionFound = postSingleEventForEventType(event, postingState, eventClass);
+        }
+        //对错误的处理，可以自己注册`NoSubscriberEvent`来捕获
+        if (!subscriptionFound) {
+            if (logNoSubscriberMessages) {
+                Log.d(TAG, &quot;No subscribers registered for event &quot; + eventClass);
+            }
+            if (sendNoSubscriberEvent &amp;&amp; eventClass != NoSubscriberEvent.class &amp;&amp;
+                    eventClass != SubscriberExceptionEvent.class) {
+                post(new NoSubscriberEvent(this, event));
+            }
+        }
+}
+
+private static List&lt;Class&lt;?&gt;&gt; lookupAllEventTypes(Class&lt;?&gt; eventClass) {
+        //eventTypesCache  K-&gt;事件参数的类型   V-&gt;K的所有父类的结合（包括本身）
+        //发送一个子类型的事件，父类型的也要求收到该事件
+        synchronized (eventTypesCache) {
+            List&lt;Class&lt;?&gt;&gt; eventTypes = eventTypesCache.get(eventClass);
+            if (eventTypes == null) {
+                eventTypes = new ArrayList&lt;&gt;();
+                Class&lt;?&gt; clazz = eventClass;
+                while (clazz != null) {
+                    eventTypes.add(clazz);
+                    //递归添加所有的父类/接口
+                    addInterfaces(eventTypes, clazz.getInterfaces());
+                    clazz = clazz.getSuperclass();
+                }
+                eventTypesCache.put(eventClass, eventTypes);
+            }
+            return eventTypes;
+        }
+}
+</code></pre>
+<p>根据上面的代码查看，知道所有的事件发送都是通过函数<code>postSingleEventForEventType()</code>发送。下面看看具体的实现。</p>
+<pre><code class="language-java">/**
+ * 
+ * @param event  事件数据
+ * @param postingState
+ * @param eventClass  事件参数类型
+ * @return
+ */
+private boolean postSingleEventForEventType(Object event, PostingThreadState postingState, Class&lt;?&gt; eventClass) {
+        CopyOnWriteArrayList&lt;Subscription&gt; subscriptions;
+        synchronized (this) {
+	    //subscriptionsByEventType K-&gt;方法参数的类型   V-&gt;所有参数类型的K的订阅函数的集合
+            subscriptions = subscriptionsByEventType.get(eventClass);
+        }
+        if (subscriptions != null &amp;&amp; !subscriptions.isEmpty()) {
+            for (Subscription subscription : subscriptions) {
+                postingState.event = event;
+                postingState.subscription = subscription;
+                boolean aborted = false;
+                try {
+                    postToSubscription(subscription, event, postingState.isMainThread);
+                    aborted = postingState.canceled;
+                } finally {
+                    postingState.event = null;
+                    postingState.subscription = null;
+                    postingState.canceled = false;
+                }
+                if (aborted) {
+                    break;
+                }
+            }
+            return true;
+        }
+        return false;
+}
+
+/**
+ * @param subscription 订阅者
+ * @param event        数据
+ * @param isMainThread 当前线程是否为主线程
+ */
+private void postToSubscription(Subscription subscription, Object event, boolean isMainThread) {
+        switch (subscription.subscriberMethod.threadMode) {
+            case POSTING:
+                invokeSubscriber(subscription, event);
+                break;
+            case MAIN:
+                if (isMainThread) {
+                    invokeSubscriber(subscription, event);
+                } else {
+                    //mainThreadPoster = new HandlerPoster(this/*eventBus*/, Looper.getMainLooper(), 10);
+                    // HandlerPoster extends Handler
+                    mainThreadPoster.enqueue(subscription, event);
+                }
+                break;
+            case BACKGROUND:
+                if (isMainThread) {
+                    backgroundPoster.enqueue(subscription, event);
+                } else {
+                    invokeSubscriber(subscription, event);
+                }
+                break;
+            case ASYNC:
+                asyncPoster.enqueue(subscription, event);
+                break;
+            default:
+                throw new IllegalStateException(&quot;Unknown thread mode: &quot; + subscription.subscriberMethod.threadMode);
+        }
+}
+
+</code></pre>
+<p>这里就是<code>EventBus</code>对四种线程模式的不同处理，这里只拿出其中一个来讲。对于<code>MAIN</code>，如果当前<code>POST</code>线程就是主线程，那么当然就是直接调对应的函数就OK,如果当前<code>POST</code>不是主线程，那么就要用<code>Handler</code>发送到主线程。下面看看实现。</p>
+<pre><code class="language-java">void enqueue(Subscription subscription, Object event) {
+        //类似android源码中的Message的获取方式
+        PendingPost pendingPost = PendingPost.obtainPendingPost(subscription, event);
+        synchronized (this) {
+            //待发送的消息加入队列
+            queue.enqueue(pendingPost);
+            if (!handlerActive) {
+                handlerActive = true;
+                if (!sendMessage(obtainMessage())) {
+                    throw new EventBusException(&quot;Could not send handler message&quot;);
+                }
+            }
+        }
+}
+
+@Override
+public void handleMessage(Message msg) {
+        boolean rescheduled = false;
+        try {
+            long started = SystemClock.uptimeMillis();
+            while (true) {
+                PendingPost pendingPost = queue.poll();
+                if (pendingPost == null) {
+                    synchronized (this) {
+                        // Check again, this time in synchronized
+                        pendingPost = queue.poll();
+                        if (pendingPost == null) {
+                            handlerActive = false;
+                            return;
+                        }
+                    }
+                }
+                eventBus.invokeSubscriber(pendingPost); //使用EventBus回调方法
+                long timeInMethod = SystemClock.uptimeMillis() - started;
+                if (timeInMethod &gt;= maxMillisInsideHandleMessage) {
+                    if (!sendMessage(obtainMessage())) {
+                        throw new EventBusException(&quot;Could not send handler message&quot;);
+                    }
+                    rescheduled = true;
+                    return;
+                }
+            }
+        } finally {
+            handlerActive = rescheduled;
+        }
+}
+</code></pre>
+<p>在<code>EventBus</code>中，调用注册的方法。</p>
+<pre><code class="language-java">void invokeSubscriber(PendingPost pendingPost) {
+        Object event = pendingPost.event;
+        Subscription subscription = pendingPost.subscription;
+        PendingPost.releasePendingPost(pendingPost);
+        if (subscription.active) {
+            invokeSubscriber(subscription, event);
+        }
+}
+
+void invokeSubscriber(Subscription subscription, Object event) {
+        try {
+            subscription.subscriberMethod.method.invoke(subscription.subscriber, event);
+        } catch (InvocationTargetException e) {
+            handleSubscriberException(subscription, event, e.getCause());
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException(&quot;Unexpected exception&quot;, e);
+        }
+}
+</code></pre>
+<p>可以看出，只是很简单用反射调用了要调了方法，到此对普通事件的分析就完了，下面看看粘性事件。</p>
+<pre><code class="language-java">//EventBus
+public void postSticky(Object event) {
+        synchronized (stickyEvents) {
+            stickyEvents.put(event.getClass(), event);
+        }
+        // Should be posted after it is putted, in case the subscriber wants to remove immediately
+        post(event);
+}
+</code></pre>
+<p>结合上面注册的时候的代码分析，我们知道<code>postSticky()</code>的事件会在<code>postSticky()</code>的时候发送一次，并在有新注册粘性事件的时候会再次匹配,最后就是看看事件的解绑。</p>
+<h2 id="事件的解绑">事件的解绑</h2>
+<pre><code class="language-java">/**
+ * Unregisters the given subscriber from all event classes.
+ */
+ public synchronized void unregister(Object subscriber) {
+        //注册类的注册函数的参数的集合
+        List&lt;Class&lt;?&gt;&gt; subscribedTypes = typesBySubscriber.get(subscriber);
+        if (subscribedTypes != null) {
+            for (Class&lt;?&gt; eventType : subscribedTypes) {
+                unsubscribeByEventType(subscriber, eventType);
+            }
+            typesBySubscriber.remove(subscriber);
+        } else {
+            Log.w(TAG, &quot;Subscriber to unregister was not registered before: &quot; + subscriber.getClass());
+        }
+}
+
+/**
+ * Only updates subscriptionsByEventType, not typesBySubscriber! Caller must update typesBySubscriber.
+ *
+ * @param subscriber 注册类
+ * @param eventType  参数Type
+ */
+private void unsubscribeByEventType(Object subscriber, Class&lt;?&gt; eventType) {
+        //取得参数类型为eventType的所有注册函数的集合
+        List&lt;Subscription&gt; subscriptions = subscriptionsByEventType.get(eventType);
+        if (subscriptions != null) {
+            int size = subscriptions.size();
+            for (int i = 0; i &lt; size; i++) {
+                Subscription subscription = subscriptions.get(i);
+                if (subscription.subscriber == subscriber) {
+                    subscription.active = false;
+                    subscriptions.remove(i);
+                    i--;
+                    size--;
+                }
+            }
+        }
+}
+</code></pre>
+<p>通过上面的代码，可以看出，其实事件的移除就是把它重<code>List</code>/<code>HashMap</code>中<code>remove</code>掉。</p>
+<h1 id="参考">参考</h1>
+<ul>
+<li><a href="http://liuguoquan727.github.io/2016/04/18/Android%20EventBus3.0%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/">Android EventBus3.0源码解析</a></li>
+<li><a href="http://yydcdut.com/2016/03/07/eventbus3-code-analyse/">EventBus3.0源码解析 by yydcdut</a></li>
+<li><a href="http://yaohepeng.com/2016/03/11/Eventbus3-0%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/">Eventbus3.0源码解析 by yaohepeng</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E6%9C%80%E7%AE%80%E5%8D%95%E7%9A%84%E4%BE%8B%E5%AD%90%E8%AF%B4%E8%B5%B7">最简单的例子说起</a></li>
+<li><a href="#eventbus-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90">EventBus 源码分析</a>
+<ul>
+<li><a href="#%E4%B8%80%E5%88%87%E7%9A%84%E5%BC%80%E5%A7%8B-%E4%BA%8B%E4%BB%B6%E7%9A%84%E8%AE%A2%E9%98%85">一切的开始-事件的订阅</a></li>
+<li><a href="#%E4%BA%8B%E4%BB%B6%E7%9A%84%E5%8F%91%E9%80%81">事件的发送</a></li>
+<li><a href="#%E4%BA%8B%E4%BB%B6%E7%9A%84%E8%A7%A3%E7%BB%91">事件的解绑</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2016-07-28_Android_WebView_Comication_With_Js">
+              <h3 class="post-title">
+                Android WebView同Js的交互方案
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

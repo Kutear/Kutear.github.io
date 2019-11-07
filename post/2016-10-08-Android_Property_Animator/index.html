@@ -1,0 +1,476 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android属性动画原理 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android属性动画原理
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-10-09
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <div class=wsd wsd_style="default">
+  <pre>
+      title Animator调用时序图API 23
+<pre><code>  ObjectAnimator-&gt;+ValueAnimator: start()
+  ValueAnimator-&gt;+AnimationHandler:start(false)
+  AnimationHandler-&gt;+Choreographer:scheduleAnimation()
+  Choreographer-&gt;+Runnable:postCallback()
+  Runnable-&gt;AnimationHandler:run()
+  AnimationHandler-&gt;ValueAnimator:doAnimationFrame(long)
+  AnimationHandler-&gt;+Choreographer:scheduleAnimation()
+  note over AnimationHandler,Choreographer: 循环执行
+  ValueAnimator-&gt;ValueAnimator:doAnimationFrame(long)
+  ValueAnimator-&gt;ObjectAnimator:【重载#1】animationFrame(long)
+  # note left of ObjectAnimator:ObjectAnimator时调用为target设置属性值
+  ValueAnimator-&gt;ValueAnimator:【重载#1】animationFrame(long)
+  ValueAnimator-&gt;ValueAnimator:【重载#2】animateValue(fraction)
+  note right of ValueAnimator:ValueAnimator时调用分发给Listener
+  ObjectAnimator-&gt;+PropertyValuesHolder:【重载#2】animateValue(fraction)
+  PropertyValuesHolder-&gt;+Target:setAnimatedValue(target)
+  note right of PropertyValuesHolder:属性设置
+  Target-&gt;Target:setter()
+</code></pre>
+  </pre>
+</div>
+<script type="text/javascript" src="http://www.websequencediagrams.com/service.js"></script>
+<h1 id="valueanimator">ValueAnimator</h1>
+<p>本身不会产生任何的动画,它的作用是根据输入的值区间,产生一个在某个时间点的具体值。下面用个通俗的例子来说明。</p>
+<blockquote>
+<p>假设A,B两地相距1000km,一辆汽车要以均匀速度由A到B,假设我们要求在10小时必须到达B。</p>
+</blockquote>
+<p>有了以上的条件我们可以求得任何时刻汽车的具体位置。下面先从一个基本的例子开始</p>
+<pre><code class="language-java">ValueAnimator valueAnimator = ValueAnimator.ofInt(0, 100);
+valueAnimator.setDuration(3000);
+valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+    @Override
+    public void onAnimationUpdate(ValueAnimator animation) {
+        int currentValue = (Integer) animation.getAnimatedValue(); //在PropertyValuesHolder中取值
+        setX(currentValue);
+    }
+});
+valueAnimator.start();
+</code></pre>
+<p>类比上面的问题，0~100是区间，时间是3000ms,可以求得<code>start()</code>后的3000ms中的变化。取得某个时刻的值，然后设置，连续起来就成了动画。</p>
+<pre><code class="language-java">public static ValueAnimator ofInt(int... values) {
+    ValueAnimator anim = new ValueAnimator();
+    anim.setIntValues(values);
+    return anim;
+}
+
+public void setIntValues(int... values) {
+    if (values == null || values.length == 0) {
+        return;
+    }
+    if (mValues == null || mValues.length == 0) {
+        setValues(PropertyValuesHolder.ofInt(&quot;&quot;, values)); //注意这里属性名字为空，在ObjectAnimator就必须为带有setter和getter的方法
+    } else {
+        PropertyValuesHolder valuesHolder = mValues[0];
+        valuesHolder.setIntValues(values);
+    }
+    // New property/values/target should cause re-initialization prior to starting
+    mInitialized = false;
+}
+
+//PropertyValuesHolder.ofInt(&quot;&quot;, values)内部调用
+@Override
+public void setIntValues(int... values) {
+    super.setIntValues(values);
+    mIntKeyframes = (Keyframes.IntKeyframes) mKeyframes;
+}
+</code></pre>
+<p><code>Keyframe</code>类表示动画的关键时刻(这里例子这有起始点和终止点)包括关键时间和该时间点对应的值以及插值器等，也就是我们设置的特殊点，比如<code>ValueAnimator.ofInt(0, 100, 200)</code>，这样特殊点的数量就是3个了，当只有1个特殊点时，内部会处理为2个，其中第一个的值默认设为0。接下来分析<code>start()</code>方法</p>
+<pre><code class="language-java">private void start(boolean playBackwards){
+    ...对于重复播放、反转播放的处理
+    animationHandler.mPendingAnimations.add(this);
+    if (mStartDelay == 0) {
+        // This sets the initial value of the animation, prior to actually starting it running
+        if (prevPlayingState != SEEKED) {
+            setCurrentPlayTime(0);
+        }
+        mPlayingState = STOPPED;
+        mRunning = true;
+        notifyStartListeners();
+    }
+    animationHandler.start();
+}
+</code></pre>
+<p>我们发现这里的主要功能是把待播放动画加入到<code>animationHandler.mPendingAnimations</code>，表示该动画待播放。接着启动这个动画队列。</p>
+<pre><code class="language-java">public void start() {
+    scheduleAnimation();
+}
+
+private void scheduleAnimation() {
+    if (!mAnimationScheduled) {
+        mChoreographer.postCallback(Choreographer.CALLBACK_ANIMATION, mAnimate, null);
+        mAnimationScheduled = true;
+    }
+}
+
+final Runnable mAnimate = new Runnable() {
+    @Override
+    public void run() {
+        mAnimationScheduled = false;
+        doAnimationFrame(mChoreographer.getFrameTime());
+    }
+};
+</code></pre>
+<p><code>mChoreographer.postCallback()</code>执行一个<code>Runnable</code>，在<code>Runnable</code>中执行<code>doAnimationFrame()</code>，这个函数比较容易理解，就是执行动画的一帧，把满足条件的待执行的动画启动起来，已经执行的执行下一帧。</p>
+<pre><code class="language-java">//AnimationHandler
+void doAnimationFrame(long frameTime) {
+    mLastFrameTime = frameTime;
+
+    // mPendingAnimations holds any animations that have requested to be started
+    // We're going to clear mPendingAnimations, but starting animation may
+    // cause more to be added to the pending list (for example, if one animation
+    // starting triggers another starting). So we loop until mPendingAnimations
+    // is empty.
+    while (mPendingAnimations.size() &gt; 0) {
+        ArrayList&lt;ValueAnimator&gt; pendingCopy =
+                (ArrayList&lt;ValueAnimator&gt;) mPendingAnimations.clone();
+        mPendingAnimations.clear();
+        int count = pendingCopy.size();
+        for (int i = 0; i &lt; count; ++i) {
+            ValueAnimator anim = pendingCopy.get(i);
+            // If the animation has a startDelay, place it on the delayed list
+            if (anim.mStartDelay == 0) {
+                anim.startAnimation(this); //初始化，加入handler.mAnimations
+            } else {
+                mDelayedAnims.add(anim);
+            }
+        }
+    }
+
+    // Next, process animations currently sitting on the delayed queue, adding
+    // them to the active animations if they are ready
+    int numDelayedAnims = mDelayedAnims.size();
+    for (int i = 0; i &lt; numDelayedAnims; ++i) {
+        ValueAnimator anim = mDelayedAnims.get(i);
+        if (anim.delayedAnimationFrame(frameTime)) {
+            mReadyAnims.add(anim);
+        }
+    }
+    int numReadyAnims = mReadyAnims.size();
+    if (numReadyAnims &gt; 0) {
+        for (int i = 0; i &lt; numReadyAnims; ++i) {
+            ValueAnimator anim = mReadyAnims.get(i);
+            anim.startAnimation(this);
+            anim.mRunning = true;
+            mDelayedAnims.remove(anim);
+        }
+        mReadyAnims.clear();
+    }
+
+    // Now process all active animations. The return value from animationFrame()
+    // tells the handler whether it should now be ended
+    int numAnims = mAnimations.size(); //上面添加进来的
+    for (int i = 0; i &lt; numAnims; ++i) {
+        mTmpAnimations.add(mAnimations.get(i));
+    }
+    for (int i = 0; i &lt; numAnims; ++i) {
+        ValueAnimator anim = mTmpAnimations.get(i);
+        if (mAnimations.contains(anim) &amp;&amp; anim.doAnimationFrame(frameTime)) { //执行动画
+            mEndingAnims.add(anim);
+        }
+    }
+    mTmpAnimations.clear();
+    if (mEndingAnims.size() &gt; 0) {                    //已经执行完的动画
+        for (int i = 0; i &lt; mEndingAnims.size(); ++i) {
+            mEndingAnims.get(i).endAnimation(this);
+        }
+        mEndingAnims.clear();
+    }
+
+    // Schedule final commit for the frame.
+    mChoreographer.postCallback(Choreographer.CALLBACK_COMMIT, mCommit, null);
+
+    // If there are still active or delayed animations, schedule a future call to
+    // onAnimate to process the next frame of the animations.
+    if (!mAnimations.isEmpty() || !mDelayedAnims.isEmpty()) {
+        scheduleAnimation();                           //请求执行下一帧，循环请求，所以才有动画效果
+    }
+}
+</code></pre>
+<p>好的，很顺利，下面看看<code>anim.doAnimationFrame(frameTime)</code>,动画的执行过程。</p>
+<pre><code class="language-java">final boolean doAnimationFrame(long frameTime) {
+    ...
+    return animationFrame(currentTime);
+}
+</code></pre>
+<p>方法核心就是执行<code>animationFrame()</code>,接着看看到底是个什么。</p>
+<pre><code class="language-java">boolean animationFrame(long currentTime) {
+    boolean done = false;
+    switch (mPlayingState) {
+    case RUNNING:
+    case SEEKED:
+        float fraction = mDuration &gt; 0 ? (float)(currentTime - mStartTime) / mDuration : 1f;
+        if (mDuration == 0 &amp;&amp; mRepeatCount != INFINITE) {
+            // Skip to the end
+            mCurrentIteration = mRepeatCount;
+            if (!mReversing) {
+                mPlayingBackwards = false;
+            }
+        }
+        if (fraction &gt;= 1f) {
+            if (mCurrentIteration &lt; mRepeatCount || mRepeatCount == INFINITE) {
+                // Time to repeat
+                if (mListeners != null) {
+                    int numListeners = mListeners.size();
+                    for (int i = 0; i &lt; numListeners; ++i) {
+                        mListeners.get(i).onAnimationRepeat(this);
+                    }
+                }
+                if (mRepeatMode == REVERSE) {
+                    mPlayingBackwards = !mPlayingBackwards;
+                }
+                mCurrentIteration += (int) fraction;
+                fraction = fraction % 1f;
+                mStartTime += mDuration;
+                // Note: We do not need to update the value of mStartTimeCommitted here
+                // since we just added a duration offset.
+            } else {
+                done = true;
+                fraction = Math.min(fraction, 1.0f);
+            }
+        }
+        if (mPlayingBackwards) {
+            fraction = 1f - fraction;
+        }
+        animateValue(fraction);
+        break;
+    }
+
+    return done;
+}
+</code></pre>
+<p>就是计算当前时间占总时间的百分比，另外处理反转重复时时间的相对位置，用来我们以后计算在这个事件点我们动画应该执行到什么位置。下面看看<code>animateValue()</code>吧。</p>
+<pre><code class="language-java">@CallSuper
+void animateValue(float fraction) {
+    fraction = mInterpolator.getInterpolation(fraction); //根据插值器取得具体的值
+    mCurrentFraction = fraction;
+    int numValues = mValues.length;
+    for (int i = 0; i &lt; numValues; ++i) {
+        mValues[i].calculateValue(fraction);  //计算mAnimatedValue，在回调中使用
+    }
+    if (mUpdateListeners != null) {
+        int numListeners = mUpdateListeners.size();
+        for (int i = 0; i &lt; numListeners; ++i) {
+            mUpdateListeners.get(i).onAnimationUpdate(this); //回调给Listener
+        }
+    }
+}
+//PropertyValuesHolder
+void calculateValue(float fraction) {
+    Object value = mKeyframes.getValue(fraction);
+    mAnimatedValue = mConverter == null ? value : mConverter.convert(value);
+}
+</code></pre>
+<p>这里我们看看<code>mKeyframes.getValue(fraction)</code>的实现，前面说过“关键点”，这里主要看一下两个关键点的情况。</p>
+<pre><code class="language-java">public Object getValue(float fraction) {
+    // Special-case optimization for the common case of only two keyframes
+    if (mNumKeyframes == 2) {
+        if (mInterpolator != null) {
+            fraction = mInterpolator.getInterpolation(fraction);
+        }
+        return mEvaluator.evaluate(fraction, mFirstKeyframe.getValue(),
+                mLastKeyframe.getValue());
+    }
+    //....其他数量的关键点情况
+}
+</code></pre>
+<p>这里又有一个插值器，默认为空，下面就是根据比列获取正式值。然后赋值给<code>mAnimatedValue</code>，在<code>AnimatorUpdateListener</code>中取得该值即可。</p>
+<h1 id="objectanimator">ObjectAnimator</h1>
+<p>我们知道<code>ObjectAnimator</code>是<code>ValueAnimator</code>的子类，所以很多逻辑实际都是一样的，就是多了步把动画的值主动设置给某个对象。下面看看不同部分。</p>
+<pre><code class="language-java">@CallSuper
+@Override
+void animateValue(float fraction) {
+    final Object target = getTarget();
+    if (mTarget != null &amp;&amp; target == null) {
+        // We lost the target reference, cancel and clean up.
+        cancel();
+        return;
+    }
+
+    super.animateValue(fraction); //调用父类的计算方法
+    int numValues = mValues.length;
+    for (int i = 0; i &lt; numValues; ++i) {
+        mValues[i].setAnimatedValue(target); //赋值给指定的对象
+    }
+}
+
+//PropertyValuesHolder
+void setAnimatedValue(Object target) {
+    if (mProperty != null) {
+        mProperty.set(target, getAnimatedValue());
+    }
+    if (mSetter != null) {
+        try {
+            mTmpValueArray[0] = getAnimatedValue();
+            mSetter.invoke(target, mTmpValueArray);//反射调用
+        } catch (InvocationTargetException e) {
+            Log.e(&quot;PropertyValuesHolder&quot;, e.toString());
+        } catch (IllegalAccessException e) {
+            Log.e(&quot;PropertyValuesHolder&quot;, e.toString());
+        }
+    }
+}
+</code></pre>
+<p>还有部分不同就是需要获取<code>setter</code>和<code>getter</code>方法，这个利用java反射很容易取得，这里就不多讲了，大家可以看看<code>PropertyValuesHolder#setupSetterAndGetter(obj)</code>。</p>
+<h1 id="参考">参考</h1>
+<p><a href="http://blog.csdn.net/wuyuxing24/article/details/51520943">Android属性动画ValueAnimator源码简单分析</a></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#valueanimator">ValueAnimator</a></li>
+<li><a href="#objectanimator">ObjectAnimator</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2016-10-05-Android_Animation_Principle">
+              <h3 class="post-title">
+                Android View动画实现绘制原理
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

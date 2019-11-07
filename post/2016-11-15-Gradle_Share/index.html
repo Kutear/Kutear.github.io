@@ -1,0 +1,248 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gradle分享 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Gradle分享
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-11-15
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/rLx6fFtM0X" class="post-tag">
+                  # Gradle
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>作为Android开发者，我们都知道Android Studio的构建是使用Gradle,但是平时我们都是点击运行编译按钮就开始构建程序，并没有深入的理解究竟是怎样打包出一个APK的，下面我们一起来看一下使用Gradle来构建APK的过程。</p>
+<h2 id="gradle在哪里">Gradle在哪里？</h2>
+<p>刚开始使用gradle来构建项目的时候，我们都可能困惑，我又没有安装gradle,那么gradle是怎样运行的?考虑到用户可能使用不同的gradle版本，所以gradle没用使用传统的先安装在使用的方式，而是采取通过用户配置的版本在首次运行是下载对应的gradle版本的方式，从而避开了版本不一致导致的构建问题。</p>
+<p>我们知道新建工程的的目录结构如下</p>
+<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2016/11/09/b5ebe24ce713e9b6890c856870704f59.png" alt="Android Studio项目结构"></figure>
+<p>我们发现这里包含一个<code>gradle/wrapper</code>的目录,这个目录包含两个文件，一个是gradle-wrapper.properties，另一个是gradle-wrapper.jar，其中<code>gradle-wrapper.properties</code>指定需要下载的gradle的版本号，这里这个文件的内容如下,这里就是指定gradle的版本为<code>2.14.1</code> ，而<code>gradle-wrapper.jar</code> 就是执行并运行具体的下载任务。</p>
+<figure data-type="image" tabindex="2"><img src="http://kutear.qiniudn.com/2016/11/09/86d3076cc3fc5429757d25ae102145d0.png" alt="gradle-wrapper.properties"></figure>
+<p>另外这里还有一个脚本文件，在Linux/Mac下是<code>gradlew</code>，在window下是<code>gradlew.bat</code>，那么这个脚本文件又是做什么的呢？通过阅读其代码，我们可以发现它的作用其实有两个点：</p>
+<ol>
+<li>
+<p>开发环境检测</p>
+</li>
+<li>
+<p>执行上文提及的<code>gradle-wrapper.jar</code></p>
+</li>
+</ol>
+<p>对于第一点其实主要就是检测<code>java</code>环境。第二点就是上文提及的下载对应版本的<code>gradle</code>,然后执行传入的命令。下载的后的默认存储位置是用户目录下的<code>.gradle</code>，这点可以在<a href="https://github.com/gradle/gradle/blob/master/subprojects/wrapper/src/main/java/org/gradle/wrapper/GradleUserHomeLookup.java">GradleUserHomeLookup</a>中看见。</p>
+<figure data-type="image" tabindex="3"><img src="http://kutear.qiniudn.com/2016/11/09/31426c2346e0228578ed4b39171d331d.png" alt="GradleUserHomeLookup"></figure>
+<p>对于传入的参数最终就由指定的版本的<code>gradle</code>命令执行，这个命令的位置在<code>userhome/.gradle/wrapper/dists/gradle-2.14.1-all/***********/gradle-2.14.1/bin</code>下面。到这里我们就明白了为什么没有安装<code>gradle</code>都能正常运行。</p>
+<h1 id="当点击运行按钮android-studio到底做了什么">当点击运行按钮Android Studio到底做了什么？</h1>
+<p>当我们点击运行按钮是，Android Studio首先进行App的编译过程，然后就是把编译输出App安装到手机。</p>
+<h2 id="编译过程">编译过程</h2>
+<p>通过Android Studio 的右侧栏目或者这行<code>gradlew tasks</code>可以看见当前项目依赖插件以及自定义的所有的<code>task</code>。</p>
+<figure data-type="image" tabindex="4"><img src="http://kutear.qiniudn.com/2016/11/15/1165bc6a1a59f7c212c8cb70782f2d3c.png" alt=""></figure>
+<figure data-type="image" tabindex="5"><img src="http://kutear.qiniudn.com/2016/11/15/d9393a53b81d023009eb8765b10e0d58.png" alt=""></figure>
+<p>我们知道gradle编译项目是基于task,也就是说编译其实就是执行一系列的task,那么编译的过程中到底会执行哪些task呢？</p>
+<p>我们可以通过在命令行或者点击Android Studio右侧的栏目中具体的任务执行来查看。比如执行<code>assembleDebug</code>任务</p>
+<figure data-type="image" tabindex="6"><img src="http://kutear.qiniudn.com/2016/11/15/1579f98e4777cd2e53bd573a1111ad1c.png" alt=""></figure>
+<p>其中的<code>UP-TO-DATE</code>的标记说明这个部分的Task不需要执行，因为这部分没有被更改过。</p>
+<p><code>assemble</code>是组装的意思，也就是Gradle打包Android项目成为APK的主要Task。</p>
+<p><code>assemble</code> 只是标记性<code>Task</code>，本身不会执行任意的动作，它依赖于其他的<code>Task</code>,<code>assembleDebug</code>和<code>assembleRelease</code> ,一个是生成Debug包，另一个是生成<code>Release</code>包。<br>
+从上文的图中，我们可以看见一个名为<code>build</code>的<code>Task</code>,那么这个<code>Task</code>又是做什么的呢?其实它也是一个标记性的<code>Task</code>,它包含两个<code>Task</code>,<code>assemble</code>和<code>check</code>,而<code>check</code>个<code>Task</code>就是执行<code>lint</code>等操作.</p>
+<p>我们知道Android打包的流程</p>
+<ol>
+<li>打包资源文件，生成R.java文件</li>
+<li>处理aidl文件，生成相应java 文件</li>
+<li>编译工程源代码，生成相应class 文件</li>
+<li>转换所有class文件，生成classes.dex文件</li>
+<li>打包生成apk</li>
+<li>对apk文件进行签名</li>
+<li>对签名后的apk文件进行对其处理</li>
+</ol>
+<p>将其对应于上面执行的<code>Task</code>。</p>
+<h2 id="安装过程">安装过程</h2>
+<p>我们知道手动安装是使用<code>adb</code>命令，那么这里的安装会是怎样的操作？通过<code>com.android.application</code>插件的源码，我们发现其实这里就是简单的这行<code>adb install -r xxx.apk</code>命令。</p>
+<pre><code class="language-java">public class InstallTask extends DefaultTask {
+    @InputFile
+    File adbExe
+
+    @InputFile
+    File packageFile
+
+    @TaskAction
+    void generate() {
+        project.exec {
+            executable = getAdbExe()
+            args 'install'
+            args '-r'
+            args getPackageFile()
+        }
+    }
+}
+</code></pre>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://docs.gradle.org/current/userguide/gradle_wrapper.html">Chapter 5. The Gradle Wrapper</a></li>
+<li><a href="http://tools.android.com/tech-docs/new-build-system/user-guide">Gradle Plugin User Guide</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#gradle%E5%9C%A8%E5%93%AA%E9%87%8C">Gradle在哪里？</a></li>
+</ul>
+</li>
+<li><a href="#%E5%BD%93%E7%82%B9%E5%87%BB%E8%BF%90%E8%A1%8C%E6%8C%89%E9%92%AEandroid-studio%E5%88%B0%E5%BA%95%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88">当点击运行按钮Android Studio到底做了什么？</a>
+<ul>
+<li><a href="#%E7%BC%96%E8%AF%91%E8%BF%87%E7%A8%8B">编译过程</a></li>
+<li><a href="#%E5%AE%89%E8%A3%85%E8%BF%87%E7%A8%8B">安装过程</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2016-10-27-PMS-1">
+              <h3 class="post-title">
+                PackageManagerService学习--上
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

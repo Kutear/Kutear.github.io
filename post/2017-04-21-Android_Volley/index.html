@@ -1,0 +1,231 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>抛开源码讲流程-Volley | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              抛开源码讲流程-Volley
+            </h2>
+            <div class="post-info">
+              <span>
+                2017-04-21
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/WjwZNZu6nH" class="post-tag">
+                  # Volley
+                </a>
+              
+                <a href="https://kutear.github.io/tag/mmA5SnGI5e" class="post-tag">
+                  # 源码分析
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="基本实现">基本实现</h2>
+<p>创建单例RequestQueue来同一调度所有的Request,RequestQueue内部包含一个CacheQueue和一个NetworkQueue,分别存储缓存请求和网络请求序列。通过RequestQueue的add()函数向RequestQueue中添加请求。如果该请求应该被缓存那么就将他添加到CacheQueue，而CacheDispatcher(Thread)会处理CacheQueue中的请求事件，当这个请求在以前已经请求过，并且缓存的内容还没有过期，就会使用ResponseDelivery将缓存的结果通过Handler发送到主线程，如果缓存不存在或者已经过期就会将这个请求添加到NetworkQueue。如果该请求不允许被缓存，那么就会直接将这个请求添加到NetworkQueue，会有一个NetworkDispatcher(Thread，他的实例存在多个)来处理NetworkQueue中的请求事件，通过网络请求得到数据，如果是可以被缓存的请求，就先把返回的数据缓存后再利用ResponseDelivery将缓存的结果通过Handler发送到主线程。</p>
+<h2 id="谈谈阻塞队列">谈谈阻塞队列</h2>
+<p>上文中的RequestQueue和NetworkQueue的数据类型都是PriorityBlockingQueue，PriorityBlockingQueue 是一个支持优先级排序的无界阻塞队列。使用它的原因是因为Volley是支持并发的，NetworkQueue实例只有一个，但是却有多个NetworkDispatcher从中读取请求并执行请求，因此需要使用并发支持。</p>
+<blockquote>
+<p>阻塞队列（BlockingQueue）是一个支持两个附加操作的队列。这两个附加的操作是：在队列为空时，获取元素的线程会等待队列变为非空。当队列满时，存储元素的线程会等待队列可用。阻塞队列常用于生产者和消费者的场景，生产者是往队列里添加元素的线程，消费者是从队列里拿元素的线程。阻塞队列就是生产者存放元素的容器，而消费者也只从容器里拿元素。</p>
+</blockquote>
+<p>在我们Volley框架中，显然以我们发送请求作为生产者，多个NetworkDispatcher(Thread)作为消费者。当队列中没有请求的时候，所有的NetworkDispatcher都会因为不能从队列中读到数据而进入阻塞状态。当队列中的请求数量达到队列的最大值时，我们发送请求的线程会进入阻塞，而发送请求的线程通常就是我们我的主线程，当然不允许阻塞，故选用队列要求是无界队列(容量不会满，主线程不会阻塞)</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">方法\处理方式</th>
+<th style="text-align:center">抛出异常</th>
+<th style="text-align:center">返回特殊值</th>
+<th style="text-align:center">一直阻塞</th>
+<th style="text-align:center">超时退出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">插入方法</td>
+<td style="text-align:center">add(e)</td>
+<td style="text-align:center">offer(e)</td>
+<td style="text-align:center">put(e)</td>
+<td style="text-align:center">offer(e,time,unit)</td>
+</tr>
+<tr>
+<td style="text-align:center">移除方法</td>
+<td style="text-align:center">remove()</td>
+<td style="text-align:center">poll()</td>
+<td style="text-align:center">take()</td>
+<td style="text-align:center">poll(time,unit)</td>
+</tr>
+<tr>
+<td style="text-align:center">检查方法</td>
+<td style="text-align:center">element()</td>
+<td style="text-align:center">peek()</td>
+<td style="text-align:center">不可用</td>
+<td style="text-align:center">不可用</td>
+</tr>
+</tbody>
+</table>
+<p>在Volley的实现中，向队列添加Request就是通过put(e)进行的，而NetworkDispatcher从队列中获取Request就是通过take()进行的。</p>
+<p>更多关于并发阻塞队列可以参考<a href="http://www.infoq.com/cn/articles/java-blocking-queue">infoQ</a></p>
+<h2 id="网络请求部分">网络请求部分</h2>
+<p>在没有特别指明的情况下，Volley在API&gt;=9时是使用HttpUrlConnect(封装为HurlStack),当API&lt;9时是使用HttpClient(封装为HttpClientStack)，并将HurlStack或HttpClientStack在封装到Network对象中去。上文提到网络请求最终会在NetworkDispatcher这个线程中执行，其执行的逻辑就是从队列中获取到Request，然后交给Network对象去做真正的请求，上文说过Network包含了HurlStack或HttpClientStack，对于不用的Android版本就分别委托不同的HttpStack去做请求，请求部分的代码平时大家都有写过，就跳过了。最终在NetworkDispatcher中拿到了请求回来的数据的封装NetworkResponse。</p>
+<h2 id="数据解析">数据解析</h2>
+<p>由于不同的请求会返回不同的数据类型，比如文件的二进制，普通的字符等等，所以把数据的解析委托给对应的Request，在NetworkDispatcher中拿到了NetworkResponse(content数据格式为字节数组)之后，通过Request#parseNetworkResponse(NetworkResponse)解析得到不同类型的Response&lt;?&gt;，比如Json就是将NetworkResponse持有的字节数组转化为对应的JsonBean。</p>
+<h2 id="其他细节">其他细节</h2>
+<p>重试机制，在每个Request中持有有个RetryPolicy，用于控制在什么情况下会进行重试，实现非常简单，就是在Network做网络请求时，如果遇到错误，但是RetryPolicy还满足条件，就会继续重新请求，直到不再满足RetryPolicy或者请求成功为止。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E5%AE%9E%E7%8E%B0">基本实现</a></li>
+<li><a href="#%E8%B0%88%E8%B0%88%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97">谈谈阻塞队列</a></li>
+<li><a href="#%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82%E9%83%A8%E5%88%86">网络请求部分</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E8%A7%A3%E6%9E%90">数据解析</a></li>
+<li><a href="#%E5%85%B6%E4%BB%96%E7%BB%86%E8%8A%82">其他细节</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2017-04-20-Android_AsyncTask">
+              <h3 class="post-title">
+                抛开源码讲流程-AsyncTask
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

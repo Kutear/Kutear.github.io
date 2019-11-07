@@ -1,0 +1,182 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>抛开源码讲流程-AsyncTask | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              抛开源码讲流程-AsyncTask
+            </h2>
+            <div class="post-info">
+              <span>
+                2017-04-20
+              </span>
+              <span>
+                2 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/mmA5SnGI5e" class="post-tag">
+                  # 源码分析
+                </a>
+              
+                <a href="https://kutear.github.io/tag/H7r8uDF7ao" class="post-tag">
+                  # AsyncTask
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="基本原理">基本原理</h2>
+<p>其实AsyncTask的原理非常的简单，就是通过线程池执行一个异步任务并将异步任务的结果通过Handler抛到主线程。</p>
+<h2 id="实现方式">实现方式</h2>
+<p>在构造函数中创建了一个WorkerRunnable(并不是继承至Runnable而是Callable)对象和 一个FutureTask(继承至Runnable)对象，并且引用了WorkerRunnable对象。在执行AsyncTask#execute(...)时，其实就是先执行一个onPreExecute()函数，然后把我们的参数放进WorkerRunnable，并把FutureTask对象再封装到一个Runnable中放入一个待执行的队列(static)，如果当前没有任务在执行，就从队列中提取出这个FutureTask对应的Runnable，否则等待正在执行的任务执行完毕之后在提取下一个待执行任务(封装了FutureTask的Runnable)。到此，不管怎样，任务已经到队列中了，始终会轮到他执行。那怎么执行会干什么呢?上文说过使用Runnable封装的FutureTask其实也是一个Runnable,并且持有WorkerRunnable对象的引用。在FutureTask#run()中就是调用了WorkerRunnable#call()方法，而这个call()方法会调用doInBackground()函数并取得后台计算的结果，在call()的最后通过postResult()函数使用Handler发送消息到主线程，在主线程中执行了finish()，而finish()调用了我们很关心的onPostExecute()或onCancelled()(当调用了AsyncTask的cancel()方法的时候)方法，到此，三个重要的方法onPreExecute(),doInBackground(),onPostExecute()的调用逻辑就理清楚了。另外，有时在doInBackground()会使用publishProgress()来更新进度,publishProgress()内部也是使用Handler发送消息到主线程达到在主线程调用onProgressUpdate()的目的。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86">基本原理</a></li>
+<li><a href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F">实现方式</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2017-04-19-Android_Handler">
+              <h3 class="post-title">
+                抛开源码讲流程-Handler
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

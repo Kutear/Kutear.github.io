@@ -1,0 +1,272 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>React和ReactNative基础 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              React和ReactNative基础
+            </h2>
+            <div class="post-info">
+              <span>
+                2017-04-17
+              </span>
+              <span>
+                2 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/MjYP1A4ov" class="post-tag">
+                  # react
+                </a>
+              
+                <a href="https://kutear.github.io/tag/bvSYFypAkg" class="post-tag">
+                  # react native
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <ul>
+<li>
+<p>React-Router</p>
+<pre><code class="language-javascript">&lt;Router&gt;
+    &lt;Route path=&quot;/&quot; component={App}&gt;
+      {/*http://host/*/}
+      &lt;IndexRoute component={Dashboard} /&gt;
+      {/*http://host/#//about*/}
+      &lt;Route path=&quot;about&quot; component={About} /&gt;
+      {/*http://host/#/inbox */}
+      &lt;Route path=&quot;inbox&quot; component={Inbox}&gt;
+        {/*http://host/#/inbox/message/id */}
+        &lt;Route path=&quot;messages/:id&quot; component={Message} /&gt;
+        {/*http://host/#/messages/id */}
+        &lt;Route path=&quot;messages/:id&quot; component={Message} /&gt;
+        {/*重定向*/}
+        &lt;Redirect from=&quot;messages/:id&quot; to=&quot;/messages/:id&quot; /&gt;
+      &lt;/Route&gt;
+    &lt;/Route&gt;
+ &lt;/Router&gt;
+</code></pre>
+</li>
+<li>
+<p>Redux</p>
+<ul>
+<li>
+<p>Action</p>
+<p>是普通的对象，可以通过具体的函数(Action Creator)来返回</p>
+</li>
+<li>
+<p>Reducer</p>
+<p>通过Action返回state,在React中实际就是重置组件的state</p>
+<p>多个reducer可以通过函数<code>combineReducer({reducer1,reducer2})</code>绑定。</p>
+<pre><code class="language-javascript">const todoApp = combineReducers({
+  todos,
+  visibilityFilter
+})
+</code></pre>
+</li>
+<li>
+<p>Store</p>
+<pre><code class="language-javascript">const store = createStore(reducer)
+
+//使用
+render(
+  &lt;Provider store={store}&gt;
+    &lt;App /&gt;
+  &lt;/Provider&gt;,
+  document.getElementById('root')
+)
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>React-Redux</p>
+<ul>
+<li>
+<p>函数<code>connect()</code>的使用。</p>
+<pre><code class="language-javascript">const newComponent = connect(
+  /*映射state到component的props*/
+  stateToComponentsProps,
+  /*component触发外部state变化的action*/
+  mapDispatchToProps
+)(Component)
+</code></pre>
+</li>
+<li>
+<p>Provider</p>
+<pre><code class="language-javascript">&lt;Provider store={store}&gt;
+    {Route}
+&lt;/Provider&gt;
+</code></pre>
+</li>
+<li>
+<p>store</p>
+<pre><code class="language-javascript">
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Navigator</p>
+</li>
+</ul>
+<pre><code class="language-javascript">render(){
+    let defaultName = 'FirstPageComponent';
+    let defaultComponent = GFirst; //第一个显示的组件
+    return(
+          &lt;Navigator
+              initialRoute = {{name:{defaultName},component:defaultComponent}}
+              renderScene = {(router,navigator) =&gt; {
+                  return &lt;router.component {...router.params} navigator={navigator}/&gt;
+              }}
+              configureScene={(router) =&gt; {
+                  //页面启动动画
+                  return Navigator.SceneConfigs.FloatFromBottom;
+              }}
+          /&gt;
+      );
+  }
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2017-04-13-Android_RecyclerView">
+              <h3 class="post-title">
+                Android RecyclerView使用中的问题记录
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

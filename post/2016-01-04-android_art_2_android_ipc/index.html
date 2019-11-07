@@ -1,0 +1,529 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android开发艺术探索-第二章-Android常用进程间通信 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android开发艺术探索-第二章-Android常用进程间通信
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-01-04
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="21-android-ipc">2.1 Android IPC</h2>
+<p>Android常用进程间通信</p>
+<ol>
+<li>Binder</li>
+<li>Socket</li>
+<li>ContentProvider</li>
+<li>文件共享(SharePreference/普通文件/数据库) 对同步要求不是很高才使用,不建议使用SharePreference.</li>
+</ol>
+<h2 id="22-android多进程">2.2 Android多进程</h2>
+<ol>
+<li>
+<p>开启方式</p>
+<p>在AndroidMenifest中为四大组件指定android:process=&quot;&quot;属性 <br /><br>
+默认进程名字为包名,指定 android:process=&quot;:##&quot; 的进程名为 包名:##,该进程为当前App的私有进程,其他应用的组件不可以和他跑在同一进程中.其他类型的进程可以通过ShareUID共享(签名相同)</p>
+</li>
+<li>
+<p>多进程的运行</p>
+<p>在不同进程中的四大组件,不能通过内存来共享数据.静态字段在不同的进程有不同的副本,且互不影响.不同进程含有不同的Application引用(开启进程会为该进程创建Application).</p>
+</li>
+</ol>
+<h2 id="23-ipc基础介绍">2.3 IPC基础介绍</h2>
+<h3 id="序列化">序列化</h3>
+<h4 id="serializable">Serializable</h4>
+<p>静态成员变量属于类而不属于对象,不会参与序列化过程,其次使用transient(短暂)标志的成员变量也不会参与序列化过程.<br>
+序列化到本地</p>
+<pre><code class="language-java">                User user = new User(1, &quot;hello world&quot;, false);
+                File cachedFile = new File(MyConstants.CACHE_FILE_PATH);
+                ObjectOutputStream objectOutputStream = null;
+                try {
+                    objectOutputStream = new ObjectOutputStream(
+                            new FileOutputStream(cachedFile));
+                    objectOutputStream.writeObject(user);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    //数据流关闭
+                }
+</code></pre>
+<p>从本地恢复序列化</p>
+<pre><code class="language-java">                User user = null;
+                File cachedFile = new File(MyConstants.CACHE_FILE_PATH);
+                if (cachedFile.exists()) {
+                    ObjectInputStream objectInputStream = null;
+                    try {
+                        objectInputStream = new ObjectInputStream(
+                                new FileInputStream(cachedFile));
+                        user = (User) objectInputStream.readObject();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    } finally {
+                        //数据流关闭
+                    }
+                }
+</code></pre>
+<h4 id="parcelable">Parcelable</h4>
+<p>在Android Studio中可以利用插件自动生成.注意boolean转化为int/byte存储</p>
+<pre><code class="language-java">           @Override
+           public void writeToParcel(Parcel dest, int flags) {
+                dest.writeInt(this.id);
+                dest.writeByte(isFirst ? (byte) 1 : (byte) 0);
+           }
+           protected Demo(Parcel in) {
+                this.id = in.readInt();
+                this.isFirst = in.readByte() != 0;
+           }
+</code></pre>
+<p>相比Serializable,Parcelable的性能更好,Serializable需要大量的I/O操作<br>
+​</p>
+<h4 id="binder">Binder</h4>
+<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2016/05/12/f8a086e82139b5acee7e4f43b35f66cb.png" alt="实例"></figure>
+<h2 id="24-android中的ipc">2.4 Android中的IPC</h2>
+<h3 id="bundle">Bundle</h3>
+<p>在Service,Activity,Receiver中使用Intent传递Bundle对象,在日常开发的过程中,对同一线程的通信也使用的比较多.前面说过,支持基本的类型和实现序列化的类</p>
+<h3 id="文件共享">文件共享</h3>
+<p>在A进程向文件xxx写入,在B进程从文件xxx读出内容,需要注意的就是同步问题,前面说过不要使用SharePreference.</p>
+<h3 id="messenger">Messenger</h3>
+<p>Messenger实质上还是AIDL,不过使用变得相当的简单.<br>
+下面是一个栗子:<br>
+创建一个Service(MessengerService.java),并指定进程,其主要代码为:</p>
+<pre><code class="language-java">                //接收客户端的数据并做出反馈
+                private static class MessengerHandler extends Handler {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        super.handleMessage(msg);
+                        Log.v(TAG, msg.what + &quot;&quot;);
+                        Messenger reply = msg.replyTo;
+                        Message replymsg = Message.obtain();
+                        replymsg.what = msg.what * 2;
+                        try {
+                            reply.send(replymsg);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            
+                private Messenger messenger = new Messenger(new MessengerHandler());
+            
+                @Override
+                public IBinder onBind(Intent intent) {
+                    return messenger.getBinder();
+                }
+</code></pre>
+<p>在Activity中链接该服务</p>
+<pre><code class="language-java">                //处理服务端返回的数据
+                private static class MessagerHandler extends Handler {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        super.handleMessage(msg);
+                        Log.v(TAG, msg.what + &quot;&quot;);
+                    }
+                }
+            
+                private ServiceConnection connection = new ServiceConnection() {
+                    @Override
+                    public void onServiceConnected(ComponentName name, IBinder service) {
+                        Messenger messenger = new Messenger(service);
+                        Message msg = Message.obtain();
+                        msg.what = 1024;
+                        //指定接收服务端返回的数据的处理者
+                        msg.replyTo = new Messenger(new MessagerHandler());
+                        try {
+                        //向服务端发送数据    
+                            messenger.send(msg);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            
+                    @Override
+                    public void onServiceDisconnected(ComponentName name) {
+            
+                    }
+                };
+            
+                @Override
+                protected void onCreate(Bundle savedInstanceState) {
+                    super.onCreate(savedInstanceState);
+                    setContentView(R.layout.activity_messager);
+            
+                    Intent intent = new Intent(this, MessengerService.class);
+                    bindService(intent, connection, BIND_AUTO_CREATE);
+                }
+</code></pre>
+<p>Messenger串行处理客户端的消息,Message的object不能在跨进程中来传递非系统自定义的Parcelable数据,只能在Bundle中传递.</p>
+<h3 id="aidl">AIDL</h3>
+<p>注意点:需要在AIDl中使用的已经序列化好了的对象必须编写对应的aidl文件声明(Book.java--&gt;Book.aidl)</p>
+<pre><code class="language-java">            // Book.aidl
+            package com.kutear.studydemo.android.art.aidl;
+            // Declare any non-default types here with import statements
+            parcelable Book;
+</code></pre>
+<p>aidl中使用到的类必须按全路径导入.即使在同包下</p>
+<pre><code class="language-java">            // IBookManager.aidl
+            package com.kutear.studydemo.android.art.aidl;
+            //同路径任导入
+            import com.kutear.studydemo.android.art.aidl.Book;
+            import com.kutear.studydemo.android.art.aidl.IListener;
+            
+            // Declare any non-default types here with import statements
+            
+            interface IBookManager {
+                void addBook(in Book book);
+                List&lt;Book&gt; getBookList();
+                void registerListener(IListener listener);
+                void unregisterListener(IListener listener);
+            }
+</code></pre>
+<p>创建Service(服务端)</p>
+<pre><code class="language-java">            public class AidlService extends Service {
+        
+                private static final String TAG = &quot;AidlService&quot;;
+                
+                private CopyOnWriteArrayList&lt;Book&gt; books = new CopyOnWriteArrayList&lt;&gt;();
+                private ArrayList&lt;IListener&gt; mListeners = new ArrayList&lt;&gt;();
+                private Binder mBinder = new IBookManager.Stub() {
+                
+                        @Override
+                        public void addBook(Book book) throws RemoteException {
+                            books.add(book);
+                            displayListener(book);
+                        }
+                
+                        @Override
+                        public List&lt;Book&gt; getBookList() throws RemoteException {
+                            return books;
+                        }
+                
+                        @Override
+                        public void registerListener(IListener listener) throws RemoteException {
+                            //listener--&gt;com.kutear.studydemo.android.art.aidl.IListener$Stub$Proxy@41895598
+                            //同加进来的对象类型都变了
+                            if (listener != null) {
+                                    Log.v(TAG, listener.toString());
+                                    mListeners.add(listener);
+                            }
+                        }
+                
+                        @Override
+                        public void unregisterListener(IListener listener) throws RemoteException {
+                            if (listener != null) {
+                                    mListeners.remove(listener);
+                            }
+                        }
+                };
+                
+                public AidlService() {
+                }
+                
+                //观察者模式分发
+                private void displayListener(Book book) {
+                    for (IListener listener : mListeners) {
+                        try {
+                                listener.newBookArrived(book);
+                        } catch (RemoteException e) {
+                                e.printStackTrace();
+                        }
+                    }
+                }
+                
+                @Override
+                public IBinder onBind(Intent intent) {
+                        return mBinder;
+                }
+                
+                @Override
+                public void onCreate() {
+                        super.onCreate();
+                        books.add(new Book(1, &quot;HTTP&quot;));
+                        books.add(new Book(2, &quot;TCP&quot;));
+                }
+            }
+</code></pre>
+<p>在Activity中进行绑定(客户端)</p>
+<pre><code class="language-java">            //注意这里不能直接new IListener(),因为跨进程过程中对象的还原是基于序列化
+            //,也就是说还原后的对象已经不是原本的对象
+            //在AidlService#mBinder#registerListener(IListener listener)中的
+            //listener实际是不等于直接创建的mListener的
+            //导致在分发的时候本地无法回调
+            private IListener mListener = new IListener.Stub() {
+        
+                @Override
+                public void newBookArrived(Book book) throws RemoteException {
+                    Log.v(TAG,&quot;NewBook&quot;+book.toString());
+                    //运行在客户端的Binder线程池中,非UI线程,不能操作UI,
+                    //使用Hanlder切换至主线程
+                }
+            };
+        
+            private ServiceConnection connection = new ServiceConnection() {
+                @Override
+                public void onServiceConnected(ComponentName name, IBinder service) {
+                    IBookManager bookManager = IBookManager.Stub.asInterface(service);
+                    try {
+                        Log.v(TAG, bookManager.getBookList().toString());
+                        //mListener = com.kutear.studydemo.android.art.demo2.AidlActivity$1@41900c48
+                        bookManager.registerListener(mListener);
+                        bookManager.addBook(new Book(100, &quot;Android&quot;));
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }
+        
+                @Override
+                public void onServiceDisconnected(ComponentName name) {
+        
+                }
+            };
+        
+            @Override
+            protected void onCreate(Bundle savedInstanceState) {
+                super.onCreate(savedInstanceState);
+                setContentView(R.layout.activity_aidl);
+        
+                Intent intent = new Intent(this, AidlService.class);
+                bindService(intent, connection, BIND_AUTO_CREATE);
+            }
+</code></pre>
+<p>在客户端调用服务端的函数,运行在服务端的Binder线程池中,若该函数是耗时操作,则需要在客户端开启异步线程来操作.否则ANR<br>
+注意使用类<a href="http://developer.android.com/reference/android/os/RemoteCallbackList.html">RemoteCallbackList</a>来实现注册与解除注册,原因就是代码中的注释部分,对象重新生成过<br>
+<b>权限控制</b></p>
+<pre><code class="language-java">                @Override
+                public IBinder onBind(Intent intent) {
+                    int check = checkCallingOrSelfPermission(&quot;permission_name&quot;);
+                    if(check == PackageManager.PERMISSION_DENIED){
+                        //授权失败
+                        //TODO
+                    }else{
+                        //授权成功
+                        //TODO
+                    }
+                    return mBinder;
+                }
+</code></pre>
+<h3 id="contentprovider">ContentProvider</h3>
+<p>主要的类就是ContentProvider(提供内容),ContentResolver(解析内容).自定义类继承至ContentProvider,实现基本的CURL方法.注意SQLiteDatabase本身是处理了同步的.<br>
+ContentProvider的onCreate在主线程执行,其余函数在Binder线程池中执行,需要注意的是同步问题.<br>
+除了基本的增删改之外,还可以调用自定义的方法.下面是个栗子.</p>
+<pre><code class="language-java">                //ContentProvider
+                public String customMethod(){
+                    Log.v(TAG,&quot;function customMethod&quot;);
+                    return &quot;Hello&quot;;
+                }
+            
+                @Nullable
+                @Override
+                public Bundle call(String method, String arg, Bundle extras) {
+                    if(method.equals(&quot;customMethod&quot;)){
+                        customMethod();
+                        //TODO 封装Bundle返回 
+                        //returm bundle;
+                    }
+                    return super.call(method, arg, extras);
+                }
+</code></pre>
+<p>在需要的地方调用</p>
+<pre><code class="language-java">Bundle bundle =    getContentResolver().call(uri,&quot;customMethod&quot;,null/*arg*/,null/*extras*/);
+</code></pre>
+<h3 id="socket">Socket</h3>
+<p>利用Socket来进程间的通信同在java中利用Socket通信是一模一样的,只是需要注意的就是一定不要在主线程通信.<br>
+​</p>
+<h2 id="25-binder线程池">2.5 Binder线程池</h2>
+<h3 id="多个aidl绑定在一个service上">多个AIDL绑定在一个Service上</h3>
+<p>实现过程为在IBinderPool中绑定Service,获取到AIDL实现的一个IBinder(暂命名iquery,在service中返回的.包含一个查询其他AIDL的IBinder的方法)<br>
+在IBinderPool中实现查询的方法,实现部分通过iquery的方法.</p>
+<h2 id="26-选择合适的ipc">2.6 选择合适的IPC</h2>
+<figure data-type="image" tabindex="2"><img src="http://kutear.qiniudn.com/2016/01/07/a977ae2b062bd21c17de14e3fd2c9f82.png" alt="选择合适的IPC"></figure>
+<h2 id="参考">参考</h2>
+<p><a href="http://hujiaweibujidao.github.io/blog/2015/12/05/Art-of-Android-Development-Reading-Notes-2/">Art of Android Development Reading Notes 2</a></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#21-android-ipc">2.1 Android IPC</a></li>
+<li><a href="#22-android%E5%A4%9A%E8%BF%9B%E7%A8%8B">2.2 Android多进程</a></li>
+<li><a href="#23-ipc%E5%9F%BA%E7%A1%80%E4%BB%8B%E7%BB%8D">2.3 IPC基础介绍</a>
+<ul>
+<li><a href="#%E5%BA%8F%E5%88%97%E5%8C%96">序列化</a>
+<ul>
+<li><a href="#serializable">Serializable</a></li>
+<li><a href="#parcelable">Parcelable</a></li>
+<li><a href="#binder">Binder</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#24-android%E4%B8%AD%E7%9A%84ipc">2.4 Android中的IPC</a>
+<ul>
+<li><a href="#bundle">Bundle</a></li>
+<li><a href="#%E6%96%87%E4%BB%B6%E5%85%B1%E4%BA%AB">文件共享</a></li>
+<li><a href="#messenger">Messenger</a></li>
+<li><a href="#aidl">AIDL</a></li>
+<li><a href="#contentprovider">ContentProvider</a></li>
+<li><a href="#socket">Socket</a></li>
+</ul>
+</li>
+<li><a href="#25-binder%E7%BA%BF%E7%A8%8B%E6%B1%A0">2.5 Binder线程池</a>
+<ul>
+<li><a href="#%E5%A4%9A%E4%B8%AAaidl%E7%BB%91%E5%AE%9A%E5%9C%A8%E4%B8%80%E4%B8%AAservice%E4%B8%8A">多个AIDL绑定在一个Service上</a></li>
+</ul>
+</li>
+<li><a href="#26-%E9%80%89%E6%8B%A9%E5%90%88%E9%80%82%E7%9A%84ipc">2.6 选择合适的IPC</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2015-12-28-activity_and_fragment">
+              <h3 class="post-title">
+                单一Activity与多个Fragment
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

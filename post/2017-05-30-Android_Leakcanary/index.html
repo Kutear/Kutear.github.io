@@ -1,0 +1,315 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LeakCanary 原理分析 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              LeakCanary 原理分析
+            </h2>
+            <div class="post-info">
+              <span>
+                2017-05-30
+              </span>
+              <span>
+                5 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/yjo-Qhu8H_" class="post-tag">
+                  # LeakCanary
+                </a>
+              
+                <a href="https://kutear.github.io/tag/o7M4f4U-RH" class="post-tag">
+                  # 内存泄露
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="reference-与-referencequeue">Reference 与 ReferenceQueue</h2>
+<p>关于强软弱虚四种引用类型这里不会多说,但是多数时候我们都是最简单的使用这些类,很少涉及到其中的<code>ReferenceQueue</code> ,在所以引用的基类<code>Reference</code>中有一个构造函数<code>Reference(T referent, ReferenceQueue&lt;? super T&gt; queue)</code>,其中传入了一个<code>ReferenceQueue</code>,他的作用就是当被观察(使用引用的对象)的对象被JVM GC之后会将其加入到这个队列.</p>
+<h2 id="leakcanary-分析">LeakCanary 分析</h2>
+<p>通过上文的描述,当我们观察一个对象被回收之后,我们是可以知道的(通过读取<code>ReferenceQueue</code>中的值),放到Android上面来讲,内存泄露问题主要是发生在<code>Activity</code>上,当一个<code>Activity</code>被destory之后,就应该被回收,但是由于错误的引用,导致并不能被正常的回收.基于上面的描述,我们可以实现当<code>Activity</code>被destory之后,就开始观察他的回收,如果发生了GC,但是这个<code>Activity</code>依旧没有被回收,那么他就有可能发生了泄露.下面看看<code>LeakCanary</code>具体是怎么做的.</p>
+<p>根据<code>LeakCanary</code>使用指南,我们知道入口函数</p>
+<pre><code class="language-java">  public static RefWatcher install(Application application) {
+    return refWatcher(application).listenerServiceClass(DisplayLeakService.class)
+        .excludedRefs(AndroidExcludedRefs.createAppDefaults().build())
+        .buildAndInstall();
+  }
+</code></pre>
+<p>这里我们不细细分析具体过程,直接看看<code>buildAndInstall</code>函数.</p>
+<pre><code class="language-java">  public RefWatcher buildAndInstall() {
+    RefWatcher refWatcher = build();
+    if (refWatcher != DISABLED) {
+      LeakCanary.enableDisplayLeakActivity(context);
+      ActivityRefWatcher.install((Application) context, refWatcher);
+    }
+    return refWatcher;
+  }
+</code></pre>
+<p>在<code>ActivityRefWatcher.install(...)</code>中最终调用了下面的代码</p>
+<pre><code class="language-java">  public void watchActivities() {
+    // Make sure you don't get installed twice.
+    stopWatchingActivities();
+    application.registerActivityLifecycleCallbacks(lifecycleCallbacks);
+  }
+</code></pre>
+<p>也就是我们平时也会使用的<code>registerActivityLifecycleCallbacks</code>,在<code>lifecycleCallbacks</code>的<code>onActivityDestroyed(Activity activity)</code>中最终会调用<code>refWatcher.watch(activity);</code> ,其中<code>refWatcher</code>是<code>RefWatcher</code>的一个实例,<code>watch(activity)</code> 会调用他的重载函数</p>
+<pre><code class="language-java">  public void watch(Object watchedReference, String referenceName) {
+    if (this == DISABLED) {
+      return;
+    }
+    checkNotNull(watchedReference, &quot;watchedReference&quot;);
+    checkNotNull(referenceName, &quot;referenceName&quot;);
+    final long watchStartNanoTime = System.nanoTime();
+    String key = UUID.randomUUID().toString();
+    retainedKeys.add(key);
+    final KeyedWeakReference reference =
+        new KeyedWeakReference(watchedReference, key, referenceName, queue); //WeakReference的子类  这里的queue就是上文多次提及的ReferenceQueue
+
+    ensureGoneAsync(watchStartNanoTime, reference);
+  }
+
+  private void ensureGoneAsync(final long watchStartNanoTime, final KeyedWeakReference reference) {
+    watchExecutor.execute(new Retryable() {
+      @Override public Retryable.Result run() {
+        return ensureGone(reference, watchStartNanoTime);
+      }
+    });
+  }
+</code></pre>
+<p>可以看到最后调用<code>watchExecutor.execute(...)</code> 这里的<code>watchExecutor</code>是<code>AndroidWatchExecutor</code>,对应的函数为</p>
+<pre><code class="language-java"> @Override public void execute(Retryable retryable) {
+    //?? 为什么一定要在主线程执行??
+    if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
+      waitForIdle(retryable, 0);
+    } else {
+      postWaitForIdle(retryable, 0);  //使用主线程的handler重新post到waitForIdle(...)上.
+    }
+  }
+ 
+ void waitForIdle(final Retryable retryable, final int failedAttempts) {
+    // This needs to be called from the main thread.
+    Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
+      @Override public boolean queueIdle() {
+        postToBackgroundWithDelay(retryable, failedAttempts);
+        return false;
+      }
+    });
+  }
+
+  void postToBackgroundWithDelay(final Retryable retryable, final int failedAttempts) {
+    long exponentialBackoffFactor = (long) Math.min(Math.pow(2, failedAttempts), maxBackoffFactor);
+    long delayMillis = initialDelayMillis * exponentialBackoffFactor;
+    backgroundHandler.postDelayed(new Runnable() {
+      @Override public void run() {
+        Retryable.Result result = retryable.run(); //上文ensureGone(reference, watchStartNanoTime)的结果
+        if (result == RETRY) {
+          postWaitForIdle(retryable, failedAttempts + 1);
+        }
+      }
+    }, delayMillis);
+  }
+</code></pre>
+<p>所以最后的执行其实就是<code>ensureGone(reference, watchStartNanoTime)</code>这里,这就是具体的判断泄露的过程,</p>
+<pre><code class="language-java">Retryable.Result ensureGone(final KeyedWeakReference reference, final long watchStartNanoTime) {
+    long gcStartNanoTime = System.nanoTime();
+    long watchDurationMs = NANOSECONDS.toMillis(gcStartNanoTime - watchStartNanoTime);
+
+    removeWeaklyReachableReferences();
+
+    if (debuggerControl.isDebuggerAttached()) {
+      // The debugger can create false leaks.
+      return RETRY;
+    }
+    if (gone(reference)) {
+      return DONE;
+    }
+    gcTrigger.runGc();   // 强制发生GC
+  
+    removeWeaklyReachableReferences();
+  
+  
+  	//如果发生了GC该对象依旧没有被回收,那么就有可能发生了内存泄露
+  	//就会到出heap进行分析
+    if (!gone(reference)) {
+      long startDumpHeap = System.nanoTime();
+      long gcDurationMs = NANOSECONDS.toMillis(startDumpHeap - gcStartNanoTime);
+
+      File heapDumpFile = heapDumper.dumpHeap();
+      if (heapDumpFile == RETRY_LATER) {
+        // Could not dump the heap.
+        return RETRY;
+      }
+      long heapDumpDurationMs = NANOSECONDS.toMillis(System.nanoTime() - startDumpHeap);
+      heapdumpListener.analyze(
+          new HeapDump(heapDumpFile, reference.key, reference.name, excludedRefs, watchDurationMs,
+              gcDurationMs, heapDumpDurationMs));
+    }
+    return DONE;
+  }
+
+ private boolean gone(KeyedWeakReference reference) {
+    return !retainedKeys.contains(reference.key);
+  }
+
+  private void removeWeaklyReachableReferences() {
+    // WeakReferences are enqueued as soon as the object to which they point to becomes weakly
+    // reachable. This is before finalization or garbage collection has actually happened.
+    KeyedWeakReference ref;
+    while ((ref = (KeyedWeakReference) queue.poll()) != null) {
+      retainedKeys.remove(ref.key);
+    }
+  }
+</code></pre>
+<p>好了,到此我们就知道了<code>LeakCanary</code>检测内存泄露的方法及过程,对于heap内存的导出并没分析,这确实也是比较重要的,在后续有空在弄一下.</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#reference-%E4%B8%8E-referencequeue">Reference 与 ReferenceQueue</a></li>
+<li><a href="#leakcanary-%E5%88%86%E6%9E%90">LeakCanary 分析</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2017-04-21-Android_Volley">
+              <h3 class="post-title">
+                抛开源码讲流程-Volley
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

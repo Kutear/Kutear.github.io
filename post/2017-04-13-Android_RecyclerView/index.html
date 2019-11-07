@@ -1,0 +1,193 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android RecyclerView使用中的问题记录 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android RecyclerView使用中的问题记录
+            </h2>
+            <div class="post-info">
+              <span>
+                2017-04-13
+              </span>
+              <span>
+                2 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/2bhUImQpoP" class="post-tag">
+                  # Android
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h1 id="禁用recyclerview快速滑动之后默认的缓冲滑动效果">禁用RecyclerView快速滑动之后默认的缓冲滑动效果</h1>
+<p>通过<code>google</code>一番，发现<code>RecyclerView</code>内部实现是使用了一个名为<code>ViewFlinger</code>的类，然而该类是<code>RecyclerView</code>的私有内部类，我们无法构建注入，所以就只能看看是在哪里进行了调用，通过代码搜索，找到函数</p>
+<pre><code class="language-java">
+	/**
+     * Begin a standard fling with an initial velocity along each axis in pixels per second.
+     * If the velocity given is below the system-defined minimum this method will return false
+     * and no fling will occur.
+     *
+     * @param velocityX Initial horizontal velocity in pixels per second
+     * @param velocityY Initial vertical velocity in pixels per second
+     * @return true if the fling was started, false if the velocity was too low to fling or
+     * LayoutManager does not support scrolling in the axis fling is issued.
+     *
+     * @see LayoutManager#canScrollVertically()
+     * @see LayoutManager#canScrollHorizontally()
+     */
+    @Override
+    public boolean fling(int velocityX, int velocityY) {
+         ...
+    }
+</code></pre>
+<p>根据注释部分的说明，传入x和y方向的速度，返回<code>true</code>表示开始猛滑，否则放弃猛滑。所以我们只要该函数一直返回<code>false</code>即可</p>
+<h1 id="关于自定义layoutmanager">关于自定义LayoutManager</h1>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E7%A6%81%E7%94%A8recyclerview%E5%BF%AB%E9%80%9F%E6%BB%91%E5%8A%A8%E4%B9%8B%E5%90%8E%E9%BB%98%E8%AE%A4%E7%9A%84%E7%BC%93%E5%86%B2%E6%BB%91%E5%8A%A8%E6%95%88%E6%9E%9C">禁用RecyclerView快速滑动之后默认的缓冲滑动效果</a></li>
+<li><a href="#%E5%85%B3%E4%BA%8E%E8%87%AA%E5%AE%9A%E4%B9%89layoutmanager">关于自定义LayoutManager</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2017-02-15-Android_Apk_install">
+              <h3 class="post-title">
+                Android Apk安装过程
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

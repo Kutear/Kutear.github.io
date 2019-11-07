@@ -1,0 +1,252 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Golang基础学习 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Golang基础学习
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-12-22
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/HAcXtjRpl" class="post-tag">
+                  # Golang
+                </a>
+              
+                <a href="https://kutear.github.io/tag/g2V9K7uJS" class="post-tag">
+                  # Activity
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <ul>
+<li>定义在函数外的全局变量必须有var,而且可以只定义而不使用</li>
+</ul>
+<pre><code class="language-go">    var x int = 1
+    const name = &quot;This is Const&quot;
+</code></pre>
+<ul>
+<li>引用用类型包括 slice、map 和 channel,其他的类型复值不是引用</li>
+</ul>
+<pre><code class="language-go">	s := &quot;hello&quot;
+	fmt.Println(&amp;s, s) //0xc420078ed0 hello
+	f := s   //这里怎么是值引用,而不是地址引用? ==&gt; 字符串是不可变值类型,同Java一样
+	fmt.Println(&amp;f, f) //0xc420078f00 hello
+	f = &quot;Modify&quot;
+	fmt.Println(&amp;f, f) //0xc420078f00 Modify
+	fmt.Println(&amp;s, s) //0xc420078ed0 hello
+	s, y := &quot;hello&quot;, 20  //这里的s为重新赋值m,等同于s=&quot;hello&quot;,但是这里不能使用s:=&quot;hello&quot;,因为变量s已经被声明了。
+	fmt.Println(&amp;s, y) //0xc420078ed0 20
+</code></pre>
+<ul>
+<li>接口转具体类型</li>
+</ul>
+<pre><code class="language-go">    if err := recover(); err != nil {
+    println(err.(string))
+    // 将 interface{} 转型为具体类型。
+    }
+</code></pre>
+<ul>
+<li>数组与slice<br>
+数组作为参数时是值拷贝，不同于Java中的地址拷贝<br>
+数组是固定的长度，包括显式或隐式<br>
+slice底层是引用数组，但是一一旦超出原 slice.cap 限制,就会重新分配底层数组，也就是说当前slice与原数组的关联性消失了。<br>
+copy()函数回影响底层数组</li>
+</ul>
+<pre><code class="language-go">array[start:end] //表示的范围为start到end-1
+</code></pre>
+<ul>
+<li>
+<p>Map<br>
+键值必须可以做(==,!=)运算，值为任意类型<br>
+从map中提取的值是复制值，修改它不会改变原始map中的值<br>
+使用空结构实现set</p>
+</li>
+<li>
+<p>struct</p>
+<p>标签 类似java的注解</p>
+</li>
+<li>
+<p>注意</p>
+</li>
+</ul>
+<pre><code class="language-go">//https://leetcode.com/problems/subsets/
+
+func helper(nums []int) [][]int {
+	size := len(nums)
+	if size == 0 {
+		return [][]int{[]int{}}  //空集
+
+	} else if size == 1 {
+		return [][]int{[]int{}, []int{nums[0]}}
+	} else {
+		first := nums[0]
+		other := helper(nums[1:size])
+		res := other
+		fmt.Println(other)
+		for i := 0; i &lt; len(other); i++ {
+			//fuck this
+			//res = append(res,append(other[i], first))
+			//如果按照上面的写法 res = append(slice,i)
+			//其中res可能同slice指向相同地址，会导致再以后修改其中一个
+			//而影响其余的
+			
+			temp := make([]int, len(other[i]) + 1)
+			copy(temp, append(other[i], first))
+			res = append(res, temp)
+		}
+
+		return res
+
+	}
+}
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2016-12-20-Android_Dev_Problem">
+              <h3 class="post-title">
+                最近开发过程中遇到的问题
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

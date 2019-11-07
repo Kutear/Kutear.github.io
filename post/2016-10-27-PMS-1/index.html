@@ -1,0 +1,1337 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PackageManagerService学习--上 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              PackageManagerService学习--上
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-10-27
+              </span>
+              <span>
+                36 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/A-hQFaIdbF" class="post-tag">
+                  # PMS
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h1 id="pm命令的使用">pm命令的使用</h1>
+<h2 id="pm-基本使用">pm 基本使用</h2>
+<p><code>pm</code>工具在Android系统<code>System/bin</code>下,由于该路径已经在环境变量<code>PATH</code>下,所以我们可以在Android终端下运行<code>pm</code>命令</p>
+<pre><code class="language-java">pm &lt;command&gt;
+</code></pre>
+<p>通过键入<code>pm</code>我们可以看见他的用法,主要包括以下几个方面</p>
+<ul>
+<li>list  =&gt;  列出安装的APK/权限组/机器硬件功能(NFC/蓝牙/WIFI)/设备支持库</li>
+<li>path =&gt;  查询指定apk的路径</li>
+<li>install =&gt; APK安装</li>
+<li>dump =&gt; 获取系统中的信息(电量/activity/server)</li>
+<li>clear =&gt; 清除APK数据</li>
+<li>hide/unhide =&gt; 隐藏与恢复应用(被隐藏应用在应用管理中变得不可见，桌面图标也会消失)</li>
+<li>enable/disable =&gt; 禁用和启用应用</li>
+<li>grant/revoke =&gt; 赋予/撤销应用权限</li>
+</ul>
+<p>参考:<a href="http://www.iloveandroid.net/2016/06/20/Android_PackageManagerService-1/">初探Android的PMS服务</a></p>
+<h2 id="pm-命令源码分析">pm 命令源码分析</h2>
+<p>Pm命令的源码在framework/base/cmds/pm下(本文基于5.1.1 r1 <a href="http://grepcode.com/file/repository.grepcode.com/java/ext/com.google.android/android/5.1.1_r1/com/android/commands/pm/Pm.java">代码地址</a>),只有一个类<code>Pm.java</code>,在其静态入口函数<code>main(args)</code>中执行函数<code>run(args)</code>,这里我们可以看看其中一部分<code>Pm list package</code> 。</p>
+<pre><code class="language-java">    public int run(String[] args) throws IOException, RemoteException {
+        boolean validCommand = false;
+        if (args.length &lt; 1) {
+            return showUsage();
+        }
+
+        mUm = IUserManager.Stub.asInterface(ServiceManager.getService(&quot;user&quot;));
+        mPm = IPackageManager.Stub.asInterface(ServiceManager.getService(&quot;package&quot;));
+        if (mPm == null) {
+            System.err.println(PM_NOT_RUNNING_ERR);
+            return 1;
+        }
+        mInstaller = mPm.getPackageInstaller();
+
+        mArgs = args;
+        String op = args[0];
+        mNextArg = 1;
+
+        if (&quot;list&quot;.equals(op)) {
+            return runList();
+        }
+			//....其他命令
+	}
+</code></pre>
+<p>上面的代码通过进程间通信获取的<code>PackageManagaerServer</code>,然后运行具体的指令,下面看看<code>list</code>指令是怎么获取到数据的。</p>
+<pre><code class="language-java">    /**
+     * Execute the list sub-command.
+     *
+     * pm list [package | packages]
+     * pm list permission-groups
+     * pm list permissions
+     * pm list features
+     * pm list libraries
+     * pm list instrumentation
+     */
+    private int runList() {
+        String type = nextArg();
+        if (type == null) {
+            System.err.println(&quot;Error: didn't specify type of data to list&quot;);
+            return 1;
+        }
+        if (&quot;package&quot;.equals(type) || &quot;packages&quot;.equals(type)) {
+            return runListPackages(false);
+        } else if (&quot;permission-groups&quot;.equals(type)) {
+            return runListPermissionGroups();
+        } else if (&quot;permissions&quot;.equals(type)) {
+            return runListPermissions();
+        } else if (&quot;features&quot;.equals(type)) {
+            return runListFeatures();
+        } else if (&quot;libraries&quot;.equals(type)) {
+            return runListLibraries();
+        } else if (&quot;instrumentation&quot;.equals(type)) {
+            return runListInstrumentation();
+        } else if (&quot;users&quot;.equals(type)) {
+            return runListUsers();
+        } else {
+            System.err.println(&quot;Error: unknown list type '&quot; + type + &quot;'&quot;);
+            return 1;
+        }
+    }
+</code></pre>
+<p>这里没有实质性的操作,只是分发<code>list</code>的子指令,下面我们看<code>package</code>指令的实现逻辑。</p>
+<pre><code class="language-java">    /* 
+     * Lists all the installed packages.
+     */
+    private int runListPackages(boolean showApplicationPackage) {
+        int getFlags = 0;
+        boolean listDisabled = false, listEnabled = false;
+        boolean listSystem = false, listThirdParty = false;
+        boolean listInstaller = false;
+   		//A user id constant to indicate the &quot;owner&quot; user of the device
+        int userId = UserHandle.USER_OWNER;
+        try {
+            String opt;
+            while ((opt=nextOption()) != null) {
+                if (opt.equals(&quot;-l&quot;)) {
+                    // old compat
+                } else if (opt.equals(&quot;-lf&quot;)) {
+                    showApplicationPackage = true;
+                } else if (opt.equals(&quot;-f&quot;)) {
+                    showApplicationPackage = true;
+                } else if (opt.equals(&quot;-d&quot;)) {
+                    listDisabled = true;
+                } else if (opt.equals(&quot;-e&quot;)) {
+                    listEnabled = true;
+                } else if (opt.equals(&quot;-s&quot;)) {
+                    listSystem = true;
+                } else if (opt.equals(&quot;-3&quot;)) {
+                    listThirdParty = true;
+                } else if (opt.equals(&quot;-i&quot;)) {
+                    listInstaller = true;
+                } else if (opt.equals(&quot;--user&quot;)) {
+                    userId = Integer.parseInt(nextArg());
+                } else if (opt.equals(&quot;-u&quot;)) {
+                    getFlags |= PackageManager.GET_UNINSTALLED_PACKAGES;
+                } else {
+                    System.err.println(&quot;Error: Unknown option: &quot; + opt);
+                    return 1;
+                }
+            }
+        } catch (RuntimeException ex) {
+            System.err.println(&quot;Error: &quot; + ex.toString());
+            return 1;
+        }
+
+        String filter = nextArg();
+
+        try {
+            //重点关注
+            final List&lt;PackageInfo&gt; packages = getInstalledPackages(mPm, getFlags, userId);
+
+            int count = packages.size();
+            for (int p = 0 ; p &lt; count ; p++) {
+                PackageInfo info = packages.get(p);
+                if (filter != null &amp;&amp; !info.packageName.contains(filter)) {
+                    continue;
+                }
+                final boolean isSystem =
+                        (info.applicationInfo.flags&amp;ApplicationInfo.FLAG_SYSTEM) != 0;
+                if ((!listDisabled || !info.applicationInfo.enabled) &amp;&amp;
+                        (!listEnabled || info.applicationInfo.enabled) &amp;&amp;
+                        (!listSystem || isSystem) &amp;&amp;
+                        (!listThirdParty || !isSystem)) {
+                    System.out.print(&quot;package:&quot;);
+                    if (showApplicationPackage) {
+                        System.out.print(info.applicationInfo.sourceDir);
+                        System.out.print(&quot;=&quot;);
+                    }
+                    System.out.print(info.packageName);
+                    if (listInstaller) {
+                        System.out.print(&quot;  installer=&quot;);
+                        System.out.print(mPm.getInstallerPackageName(info.packageName));
+                    }
+                    System.out.println();
+                }
+            }
+            return 0;
+        } catch (RemoteException e) {
+            System.err.println(e.toString());
+            System.err.println(PM_NOT_RUNNING_ERR);
+            return 1;
+        }
+    }
+</code></pre>
+<p>上面的代码一方面是添加过滤参数,然后获取所有安装的APK,在根据过滤参数展示对应的APK,而我们最为关心的就是获取所有APK的过程.到底是怎么获取的呢, 我们接着往下看。</p>
+<pre><code class="language-java">    @SuppressWarnings(&quot;unchecked&quot;)
+    private List&lt;PackageInfo&gt; getInstalledPackages(IPackageManager pm, int flags, int userId)
+            throws RemoteException {
+        ParceledListSlice&lt;PackageInfo&gt; slice = pm.getInstalledPackages(flags, userId);
+        return slice.getList();
+    }
+</code></pre>
+<p>到此,我们发现其实获取APK列表的过程是由<code>IPackageManager</code>来实现的,同样的方式分析其他命令的操作,其最后都是归集到<code>IPackageManager</code>上,而<code>IPackageManager</code>就是我们今天的主角,下面我们会重点分析<code>PM</code>启动的过程</p>
+<h1 id="packagemanagerserver的启动位置"><code>PackageManagerServer</code>的启动位置</h1>
+<p>在<code>SystemServer</code>启动后,会实例化<code>PackageManagerServer</code>, 具体位置在<code>PackageManagerServer#startBootstrapServices()</code> 。</p>
+<pre><code class="language-java">mPackageManagerService = PackageManagerService.main(mSystemContext, installer,
+                mFactoryTestMode != FactoryTest.FACTORY_TEST_OFF, mOnlyCore);
+</code></pre>
+<p>在这个<code>main()</code>函数中实现很简单,只是实例化一个<code>PMS</code>对象,然后将其加入<code>SystemServer</code>中,而最为重要的过程就是<code>PackageManagerServer</code>的实例化的过程，下面将会重点分析这个过程。</p>
+<h1 id="packagemanagerserver-的实例过程"><code>PackageManagerServer</code> 的实例过程</h1>
+<h2 id="pm相关的目录">PM相关的目录</h2>
+<ul>
+<li>
+<p>系统APK</p>
+<ul>
+<li>
+<h4 id="systempriv-app">/system/priv-app</h4>
+</li>
+<li>
+<h4 id="systemapp">/system/app</h4>
+</li>
+<li>
+<h4 id="vendorapp">/vendor/app</h4>
+</li>
+<li>
+<h4 id="oemapp">/oem/app</h4>
+</li>
+</ul>
+</li>
+<li>
+<p>用户APK</p>
+<ul>
+<li>
+<h4 id="dataapp">/data/app</h4>
+</li>
+</ul>
+</li>
+</ul>
+<p>PMS配置文件</p>
+<ul>
+<li>
+<p>/data/system/packages.xml</p>
+<p>记录系统中所有已经安装的应用信息，包括基本信息，签名和权限。</p>
+</li>
+<li>
+<p>/system/etc/permissions/</p>
+<p>读取当前Android设备的硬件特性和设定的相关权限。</p>
+</li>
+</ul>
+<p>参考:<a href="http://www.iloveandroid.net/2016/06/20/Android_PackageManagerService-2/">PMS运行时的一些规则</a></p>
+<h2 id="pm初始化过程">PM初始化过程</h2>
+<pre><code class="language-java">//PackageManagerServer.java构造函数
+  	//build类型，可以在shell下通过getprop来查看全部 
+  	//使用getprop	ro.build.type获取到该build type
+    //build type有user,userdebug,eng
+    //user:性能好,Log/Debug信息少,相当于是正式版
+    //eng:Log/Debug信息相对多
+    //userdebug:debug强
+  	//根据这里的返回，我们猜测返回值和dexopt相关
+    mLazyDexOpt = &quot;eng&quot;.equals(SystemProperties.get(&quot;ro.build.type&quot;));
+    mMetrics = new DisplayMetrics();
+    mSettings = new Settings(mPackages);
+    mSettings.addSharedUserLPw(&quot;android.uid.system&quot;, Process.SYSTEM_UID,
+            ApplicationInfo.FLAG_SYSTEM, ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
+    mSettings.addSharedUserLPw(&quot;android.uid.phone&quot;, RADIO_UID,
+            ApplicationInfo.FLAG_SYSTEM, ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
+    mSettings.addSharedUserLPw(&quot;android.uid.log&quot;, LOG_UID,
+            ApplicationInfo.FLAG_SYSTEM, ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
+    mSettings.addSharedUserLPw(&quot;android.uid.nfc&quot;, NFC_UID,
+            ApplicationInfo.FLAG_SYSTEM, ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
+    mSettings.addSharedUserLPw(&quot;android.uid.bluetooth&quot;, BLUETOOTH_UID,
+            ApplicationInfo.FLAG_SYSTEM, ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
+    mSettings.addSharedUserLPw(&quot;android.uid.shell&quot;, SHELL_UID,
+            ApplicationInfo.FLAG_SYSTEM, ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
+</code></pre>
+<p>上面主要就是新建一个<code>Setting</code>对象,然后调用函数<code>addSharedUserLPw(...)</code>,在<code>Setting</code>的构造函数中主要就是为上文说的<code>/data/system/packages.xml</code>等文件的创建和赋权限.现在看看函数<code>addSharedUserLPw()</code>的实现。</p>
+<pre><code class="language-java">   SharedUserSetting addSharedUserLPw(String name, int uid, int pkgFlags, int pkgPrivateFlags) {
+        //ArrayMap&lt;String, SharedUserSetting&gt; mSharedUsers
+        SharedUserSetting s = mSharedUsers.get(name);
+        if (s != null) {
+            if (s.userId == uid) {
+                return s;
+            }
+            PackageManagerService.reportSettingsProblem(Log.ERROR,
+                    &quot;Adding duplicate shared user, keeping first: &quot; + name);
+            return null;
+        }
+        s = new SharedUserSetting(name, pkgFlags, pkgPrivateFlags);
+        s.userId = uid;
+        if (addUserIdLPw(uid, s, name)) {
+            mSharedUsers.put(name, s);
+            return s;
+        }
+        return null;
+    }
+</code></pre>
+<p>该函数主要就是共享UID,例如有的系统应用会有</p>
+<pre><code class="language-xml">android:sharedUserId=&quot;android.uis.system&quot;
+</code></pre>
+<p>而根据上面的设置就是该APK的UID为<code>Process.SYSTEM_UID</code>,从而达到共享系统UID的目的.而下面调用的函数<code>addUserIdLPw(...)</code>就是保存该UID和对应的<code>ShareUserSetting</code> 。接着看<code>PackageMangerService</code>的构造函数的下一部分。</p>
+<pre><code class="language-java">    SystemConfig systemConfig = SystemConfig.getInstance();
+    mGlobalGids = systemConfig.getGlobalGids();
+    mSystemPermissions = systemConfig.getSystemPermissions();
+    mAvailableFeatures = systemConfig.getAvailableFeatures();
+</code></pre>
+<p><code>SystemConfig</code>在构造函数里对一些目录进行读取,这些目录包括</p>
+<pre><code class="language-xml">/system/etc/sysconfig
+/system/etc/permissions
+/oem/etc/sysconfig
+/oem/etc/permissions
+</code></pre>
+<p>然后解析这些目录下面的文件,这些文件的作用是声明当前设备的功能(NFC/WIFI)等.下面我们看看解析函数</p>
+<pre><code class="language-java">    private void readPermissionsFromXml(File permFile, boolean onlyFeatures) {
+        FileReader permReader = null;
+        try {
+            permReader = new FileReader(permFile);
+        } catch (FileNotFoundException e) {
+            Slog.w(TAG, &quot;Couldn't find or open permissions file &quot; + permFile);
+            return;
+        }
+
+        final boolean lowRam = ActivityManager.isLowRamDeviceStatic();
+
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setInput(permReader);
+
+            int type;
+            while ((type=parser.next()) != parser.START_TAG
+                       &amp;&amp; type != parser.END_DOCUMENT) {
+                ;
+            }
+
+            if (type != parser.START_TAG) {
+                throw new XmlPullParserException(&quot;No start tag found&quot;);
+            }
+			//要求根结点为permissions OR config
+            if (!parser.getName().equals(&quot;permissions&quot;) &amp;&amp; !parser.getName().equals(&quot;config&quot;)) {
+                throw new XmlPullParserException(&quot;Unexpected start tag in &quot; + permFile
+                        + &quot;: found &quot; + parser.getName() + &quot;, expected 'permissions' or 'config'&quot;);
+            }
+			//遍历XML,并将不同的功能保存到不同的ArraySet&lt;&gt;中
+            while (true) {
+                XmlUtils.nextElement(parser);
+                if (parser.getEventType() == XmlPullParser.END_DOCUMENT) {
+                    break;
+                }
+
+                String name = parser.getName();
+                if (&quot;group&quot;.equals(name) &amp;&amp; !onlyFeatures) {
+                    String gidStr = parser.getAttributeValue(null, &quot;gid&quot;);
+                    if (gidStr != null) {
+                        int gid = android.os.Process.getGidForName(gidStr);
+                        mGlobalGids = appendInt(mGlobalGids, gid);
+                    } else {
+                        Slog.w(TAG, &quot;&lt;group&gt; without gid in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                    }
+
+                    XmlUtils.skipCurrentTag(parser);
+                    continue;
+                } else if (&quot;permission&quot;.equals(name) &amp;&amp; !onlyFeatures) {
+                    String perm = parser.getAttributeValue(null, &quot;name&quot;);
+                    if (perm == null) {
+                        Slog.w(TAG, &quot;&lt;permission&gt; without name in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                        XmlUtils.skipCurrentTag(parser);
+                        continue;
+                    }
+                    perm = perm.intern();
+                    readPermission(parser, perm);
+
+                } else if (&quot;assign-permission&quot;.equals(name) &amp;&amp; !onlyFeatures) {
+                    String perm = parser.getAttributeValue(null, &quot;name&quot;);
+                    if (perm == null) {
+                        Slog.w(TAG, &quot;&lt;assign-permission&gt; without name in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                        XmlUtils.skipCurrentTag(parser);
+                        continue;
+                    }
+                    String uidStr = parser.getAttributeValue(null, &quot;uid&quot;);
+                    if (uidStr == null) {
+                        Slog.w(TAG, &quot;&lt;assign-permission&gt; without uid in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                        XmlUtils.skipCurrentTag(parser);
+                        continue;
+                    }
+                    int uid = Process.getUidForName(uidStr);
+                    if (uid &lt; 0) {
+                        Slog.w(TAG, &quot;&lt;assign-permission&gt; with unknown uid \&quot;&quot;
+                                + uidStr + &quot;  in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                        XmlUtils.skipCurrentTag(parser);
+                        continue;
+                    }
+                    perm = perm.intern();
+                    ArraySet&lt;String&gt; perms = mSystemPermissions.get(uid);
+                    if (perms == null) {
+                        perms = new ArraySet&lt;String&gt;();
+                        mSystemPermissions.put(uid, perms);
+                    }
+                    perms.add(perm);
+                    XmlUtils.skipCurrentTag(parser);
+
+                } else if (&quot;library&quot;.equals(name) &amp;&amp; !onlyFeatures) {
+                    String lname = parser.getAttributeValue(null, &quot;name&quot;);
+                    String lfile = parser.getAttributeValue(null, &quot;file&quot;);
+                    if (lname == null) {
+                        Slog.w(TAG, &quot;&lt;library&gt; without name in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                    } else if (lfile == null) {
+                        Slog.w(TAG, &quot;&lt;library&gt; without file in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                    } else {
+                        //Log.i(TAG, &quot;Got library &quot; + lname + &quot; in &quot; + lfile);
+                        mSharedLibraries.put(lname, lfile);
+                    }
+                    XmlUtils.skipCurrentTag(parser);
+                    continue;
+
+                } else if (&quot;feature&quot;.equals(name)) {
+                    String fname = parser.getAttributeValue(null, &quot;name&quot;);
+                    boolean allowed;
+                    if (!lowRam) {
+                        allowed = true;
+                    } else {
+                        String notLowRam = parser.getAttributeValue(null, &quot;notLowRam&quot;);
+                        allowed = !&quot;true&quot;.equals(notLowRam);
+                    }
+                    if (fname == null) {
+                        Slog.w(TAG, &quot;&lt;feature&gt; without name in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                    } else if (allowed) {
+                        //Log.i(TAG, &quot;Got feature &quot; + fname);
+                        FeatureInfo fi = new FeatureInfo();
+                        fi.name = fname;
+                        mAvailableFeatures.put(fname, fi);
+                    }
+                    XmlUtils.skipCurrentTag(parser);
+                    continue;
+
+                } else if (&quot;unavailable-feature&quot;.equals(name)) {
+                    String fname = parser.getAttributeValue(null, &quot;name&quot;);
+                    if (fname == null) {
+                        Slog.w(TAG, &quot;&lt;unavailable-feature&gt; without name in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                    } else {
+                        mUnavailableFeatures.add(fname);
+                    }
+                    XmlUtils.skipCurrentTag(parser);
+                    continue;
+
+                } else if (&quot;allow-in-power-save-except-idle&quot;.equals(name) &amp;&amp; !onlyFeatures) {
+                    String pkgname = parser.getAttributeValue(null, &quot;package&quot;);
+                    if (pkgname == null) {
+                        Slog.w(TAG, &quot;&lt;allow-in-power-save-except-idle&gt; without package in &quot;
+                                + permFile + &quot; at &quot; + parser.getPositionDescription());
+                    } else {
+                        mAllowInPowerSaveExceptIdle.add(pkgname);
+                    }
+                    XmlUtils.skipCurrentTag(parser);
+                    continue;
+
+                } else if (&quot;allow-in-power-save&quot;.equals(name) &amp;&amp; !onlyFeatures) {
+                    String pkgname = parser.getAttributeValue(null, &quot;package&quot;);
+                    if (pkgname == null) {
+                        Slog.w(TAG, &quot;&lt;allow-in-power-save&gt; without package in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                    } else {
+                        mAllowInPowerSave.add(pkgname);
+                    }
+                    XmlUtils.skipCurrentTag(parser);
+                    continue;
+
+                } else if (&quot;fixed-ime-app&quot;.equals(name) &amp;&amp; !onlyFeatures) {
+                    String pkgname = parser.getAttributeValue(null, &quot;package&quot;);
+                    if (pkgname == null) {
+                        Slog.w(TAG, &quot;&lt;fixed-ime-app&gt; without package in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                    } else {
+                        mFixedImeApps.add(pkgname);
+                    }
+                    XmlUtils.skipCurrentTag(parser);
+                    continue;
+
+                } else if (&quot;app-link&quot;.equals(name)) {
+                    String pkgname = parser.getAttributeValue(null, &quot;package&quot;);
+                    if (pkgname == null) {
+                        Slog.w(TAG, &quot;&lt;app-link&gt; without package in &quot; + permFile + &quot; at &quot;
+                                + parser.getPositionDescription());
+                    } else {
+                        mLinkedApps.add(pkgname);
+                    }
+                    XmlUtils.skipCurrentTag(parser);
+
+                } else {
+                    XmlUtils.skipCurrentTag(parser);
+                    continue;
+                }
+            }
+        } catch (XmlPullParserException e) {
+            Slog.w(TAG, &quot;Got exception parsing permissions.&quot;, e);
+        } catch (IOException e) {
+            Slog.w(TAG, &quot;Got exception parsing permissions.&quot;, e);
+        } finally {
+            IoUtils.closeQuietly(permReader);
+        }
+
+        for (String fname : mUnavailableFeatures) {
+            if (mAvailableFeatures.remove(fname) != null) {
+                Slog.d(TAG, &quot;Removed unavailable feature &quot; + fname);
+            }
+        }
+    }
+</code></pre>
+<p>上面代码很容易理解,解析xml节点的数据到具体的List或Set中,在<code>PackageManagerService</code>的构造函数中就取出了<code>mGlobalGids/mAvailableFeatures/mSystemPermissions</code>出来,分别对应的TAG节点为</p>
+<pre><code class="language-xml">&lt;group gid=&quot;&quot; &gt;&lt;/group&gt;
+&lt;feature&gt;&lt;/feature&gt;
+&lt;assign-permission&gt;&lt;/assign-permission&gt;
+</code></pre>
+<p>下面接着分析<code>PackageManagerService</code>的构造函数</p>
+<pre><code class="language-java">        mHandlerThread = new ServiceThread(TAG,
+                Process.THREAD_PRIORITY_BACKGROUND, true /*allowIo*/);  //HandlerThread
+        mHandlerThread.start();
+        mHandler = new PackageHandler(mHandlerThread.getLooper());
+        Watchdog.getInstance().addThread(mHandler, WATCHDOG_TIMEOUT);
+
+        File dataDir = Environment.getDataDirectory(); //dataDir = &quot;/data/&quot;
+        mAppDataDir = new File(dataDir, &quot;data&quot;);       //  = &quot;/data/data&quot;
+        mAppInstallDir = new File(dataDir, &quot;app&quot;);     //  = &quot;/data/app&quot;
+        mAppLib32InstallDir = new File(dataDir, &quot;app-lib&quot;); // = &quot;/data/app-lib&quot;
+        mAsecInternalPath = new File(dataDir, &quot;app-asec&quot;).getPath();  // = &quot;data/app-asec&quot;
+        mUserAppDataDir = new File(dataDir, &quot;user&quot;);   //=  &quot;/data/user&quot;
+        mDrmAppPrivateInstallDir = new File(dataDir, &quot;app-private&quot;); // = &quot;/data/app-private&quot;
+        sUserManager = new UserManagerService(context, this,
+                mInstallLock, mPackages);
+
+        // Propagate permission configuration in to package manager.
+	    //合并SystemConfig读取的permission到Settings下
+        ArrayMap&lt;String, SystemConfig.PermissionEntry&gt; permConfig
+                = systemConfig.getPermissions(); //permission标签下的
+        for (int i=0; i&lt;permConfig.size(); i++) {
+            SystemConfig.PermissionEntry perm = permConfig.valueAt(i);
+            BasePermission bp = mSettings.mPermissions.get(perm.name);
+            if (bp == null) {
+                bp = new BasePermission(perm.name, &quot;android&quot;, BasePermission.TYPE_BUILTIN);
+                mSettings.mPermissions.put(perm.name, bp);
+            }
+            if (perm.gids != null) {
+                bp.setGids(perm.gids, perm.perUser);
+            }
+        }
+		//从SystemConfig中读取的libs存入共享库
+        ArrayMap&lt;String, String&gt; libConfig = systemConfig.getSharedLibraries();
+        for (int i=0; i&lt;libConfig.size(); i++) {
+            mSharedLibraries.put(libConfig.keyAt(i),
+                    new SharedLibraryEntry(libConfig.valueAt(i), null));
+        }
+
+        mFoundPolicyFile = SELinuxMMAC.readInstallPolicy();
+</code></pre>
+<p>上面的代码主要就是通过上面的<code>SystemConfig</code>获取到的信息存在在<code>Settings</code>和<code>PMS</code>内部。</p>
+<pre><code class="language-java">       //这里会读取前面说的/data/system/packages.xml文件以及他的备份文件
+	   //这里特别说明下，会把解析的application存放到mSetting的mPackages中，后面会用到
+        mRestoredSettings = mSettings.readLPw(this, sUserManager.getUsers(false),
+                mSdkVersion, mOnlyCore);
+
+        String customResolverActivity = Resources.getSystem().getString(
+                R.string.config_customResolverActivity);
+        if (TextUtils.isEmpty(customResolverActivity)) {
+            customResolverActivity = null;
+        } else {
+            mCustomResolverComponentName = ComponentName.unflattenFromString(
+                    customResolverActivity);
+        }
+
+        long startTime = SystemClock.uptimeMillis();
+
+        EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_SYSTEM_SCAN_START,
+                startTime);
+
+        // Set flag to monitor and not change apk file paths when
+        // scanning install directories.
+        final int scanFlags = SCAN_NO_PATHS | SCAN_DEFER_DEX | SCAN_BOOTING | SCAN_INITIAL;
+		//已经dexopt的apk存放位置
+        final ArraySet&lt;String&gt; alreadyDexOpted = new ArraySet&lt;String&gt;();
+
+        /**
+         * Add everything in the in the boot class path to the
+         * list of process files because dexopt will have been run
+         * if necessary during zygote startup.
+         */
+        final String bootClassPath = System.getenv(&quot;BOOTCLASSPATH&quot;);
+        final String systemServerClassPath = System.getenv(&quot;SYSTEMSERVERCLASSPATH&quot;);
+		//系统库类不要优化  可以通过echo $BOOTCLASSPATH查看
+        if (bootClassPath != null) {
+            String[] bootClassPathElements = splitString(bootClassPath, ':');
+            for (String element : bootClassPathElements) {
+                alreadyDexOpted.add(element);
+            }
+        } else {
+            Slog.w(TAG, &quot;No BOOTCLASSPATH found!&quot;);
+        }
+
+        if (systemServerClassPath != null) {
+            String[] systemServerClassPathElements = splitString(systemServerClassPath, ':');
+            for (String element : systemServerClassPathElements) {
+                alreadyDexOpted.add(element);
+            }
+        } else {
+            Slog.w(TAG, &quot;No SYSTEMSERVERCLASSPATH found!&quot;);
+        }
+</code></pre>
+<p>上面代码开始时解析<code>packages.xml</code>,该文件保存了系统内安装了的APK的信息,然后就是添加一些库类到<code>alreadyDexOpted</code>这个List里面,目的是以后做dexopt的时候跳过这些不必要的优化。这里说明一下<code>packages.xml</code>中的字段的保存位置(以下是在<code>Settings.java</code>中)。</p>
+<pre><code class="language-java">package  -&gt; mPackages(readPackageLPw()--&gt;addPackageLPw()) //重点
+
+permissions -&gt;  mPermissions(readPermissionsLPw())
+
+permission-trees -&gt; mPermissionTrees(readPermissionsLPw())
+
+shared-user -&gt; mSharedUsers(readSharedUserLPw()--&gt;addSharedUserLPw())
+
+updated-package -&gt; mDisabledSysPackages(readDisabledSysPackageLPw()) //这个标签是在OTA中添加的？删除也会有这个标记？
+
+renamed-package -&gt; mRenamedPackages
+</code></pre>
+<p>这里强调一下，会把<code>package</code>的信息存在<code>Settings.mPackages</code>中，并根据<code>package</code>标签下的<code>installStatus</code>字段判断app安装的状态，这在后面有用到。下面继续看<code>PMS</code>的构造函数。</p>
+<pre><code class="language-java">        //通过命令getprop ro.product.cpu.abilist查看设备支持的指令集
+        final List&lt;String&gt; allInstructionSets = InstructionSets.getAllInstructionSets();
+        final String[] dexCodeInstructionSets =
+                getDexCodeInstructionSets(
+                        allInstructionSets.toArray(new String[allInstructionSets.size()]));
+
+        /**
+         * Ensure all external libraries have had dexopt run on them.
+         */
+        if (mSharedLibraries.size() &gt; 0) {
+            // NOTE: For now, we're compiling these system &quot;shared libraries&quot;
+            // (and framework jars) into all available architectures. It's possible
+            // to compile them only when we come across an app that uses them (there's
+            // already logic for that in scanPackageLI) but that adds some complexity.
+            for (String dexCodeInstructionSet : dexCodeInstructionSets) {
+                for (SharedLibraryEntry libEntry : mSharedLibraries.values()) {
+                    final String lib = libEntry.path;
+                    if (lib == null) {
+                        continue;
+                    }
+
+                    try {
+                        int dexoptNeeded = DexFile.getDexOptNeeded(lib, null, dexCodeInstructionSet, false);
+                        if (dexoptNeeded != DexFile.NO_DEXOPT_NEEDED) {
+                            alreadyDexOpted.add(lib);
+                            mInstaller.dexopt(lib, Process.SYSTEM_UID, true, dexCodeInstructionSet, dexoptNeeded);
+                        }
+                    } catch (FileNotFoundException e) {
+                        Slog.w(TAG, &quot;Library not found: &quot; + lib);
+                    } catch (IOException e) {
+                        Slog.w(TAG, &quot;Cannot dexopt &quot; + lib + &quot;; is it an APK or JAR? &quot;
+                                + e.getMessage());
+                    }
+                }
+            }
+        }
+</code></pre>
+<p>这段代码主要就是执行dexopt的过程,并将优化过的apk/jar放入<code>alreadyDexOpted</code>,这里<code>mInstaller</code>内部通过<code>LocalStock</code>发送一条指令<code>dexopt apkpath ....</code>,让<code>LocalStock</code>的服务端处理这个请求,我没有找到服务端的实现位置....但不影响我们继续阅读。</p>
+<pre><code class="language-java">        File frameworkDir = new File(Environment.getRootDirectory(), &quot;framework&quot;);
+
+        // Gross hack for now: we know this file doesn't contain any
+        // code, so don't dexopt it to avoid the resulting log spew.
+        alreadyDexOpted.add(frameworkDir.getPath() + &quot;/framework-res.apk&quot;);
+
+        // Gross hack for now: we know this file is only part of
+        // the boot class path for art, so don't dexopt it to
+        // avoid the resulting log spew.
+        alreadyDexOpted.add(frameworkDir.getPath() + &quot;/core-libart.jar&quot;);
+
+        /**
+         * There are a number of commands implemented in Java, which
+         * we currently need to do the dexopt on so that they can be
+         * run from a non-root shell.
+         */
+        String[] frameworkFiles = frameworkDir.list();
+        if (frameworkFiles != null) {
+            // TODO: We could compile these only for the most preferred ABI. We should
+            // first double check that the dex files for these commands are not referenced
+            // by other system apps.
+            for (String dexCodeInstructionSet : dexCodeInstructionSets) {
+                for (int i=0; i&lt;frameworkFiles.length; i++) {
+                    File libPath = new File(frameworkDir, frameworkFiles[i]);
+                    String path = libPath.getPath();
+                    // Skip the file if we already did it.
+                    if (alreadyDexOpted.contains(path)) {
+                        continue;
+                    }
+                    // Skip the file if it is not a type we want to dexopt.
+                    if (!path.endsWith(&quot;.apk&quot;) &amp;&amp; !path.endsWith(&quot;.jar&quot;)) {
+                        continue;
+                    }
+                    try {
+                        int dexoptNeeded = DexFile.getDexOptNeeded(path, null, dexCodeInstructionSet, false);
+                        if (dexoptNeeded != DexFile.NO_DEXOPT_NEEDED) {
+                            mInstaller.dexopt(path, Process.SYSTEM_UID, true, dexCodeInstructionSet, dexoptNeeded);
+                        }
+                    } catch (FileNotFoundException e) {
+                        Slog.w(TAG, &quot;Jar not found: &quot; + path);
+                    } catch (IOException e) {
+                        Slog.w(TAG, &quot;Exception reading jar: &quot; + path, e);
+                    }
+                }
+            }
+        }
+</code></pre>
+<p>这段代码和上面的实现几乎一样,读取<code>/system/framework/</code>下的几个目录的jar包和apk,判断是否需要进行优化,值得注意的是并没有加入列表<code>alreadyDexOpted</code> 。</p>
+<pre><code class="language-java">        final VersionInfo ver = mSettings.getInternalVersion();
+        mIsUpgrade = !Build.FINGERPRINT.equals(ver.fingerprint);
+        // when upgrading from pre-M, promote system app permissions from install to runtime  运行时权限
+        mPromoteSystemApps =
+                mIsUpgrade &amp;&amp; ver.sdkVersion &lt;= Build.VERSION_CODES.LOLLIPOP_MR1;
+
+        // save off the names of pre-existing system packages prior to scanning; we don't
+        // want to automatically grant runtime permissions for new system apps
+        if (mPromoteSystemApps) {
+            Iterator&lt;PackageSetting&gt; pkgSettingIter = mSettings.mPackages.values().iterator();
+            while (pkgSettingIter.hasNext()) {
+                PackageSetting ps = pkgSettingIter.next();
+                if (isSystemApp(ps)) {
+                    mExistingSystemPackages.add(ps.name);
+                }
+            }
+        }
+</code></pre>
+<p>当系统有<code>LOLLIPOP_MR1</code>一下升级时到<code>LOLLIPOP_MR1</code>以上时，android在6.0引入动态权限机制，在这里也就是<code>mPromoteSystemApps=true</code>,会执行下面一段代码。</p>
+<pre><code class="language-java">        // Collect vendor overlay packages.
+        // (Do this before scanning any apps.)
+        // For security and version matching reason, only consider
+        // overlay packages if they reside in VENDOR_OVERLAY_DIR.
+        File vendorOverlayDir = new File(VENDOR_OVERLAY_DIR);// = &quot;/vendor/overlay&quot;
+        scanDirLI(vendorOverlayDir, PackageParser.PARSE_IS_SYSTEM
+                | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags | SCAN_TRUSTED_OVERLAY, 0);
+
+        // Find base frameworks (resource packages without code).
+        scanDirLI(frameworkDir, PackageParser.PARSE_IS_SYSTEM   //system/framework
+                | PackageParser.PARSE_IS_SYSTEM_DIR
+                | PackageParser.PARSE_IS_PRIVILEGED,
+                scanFlags | SCAN_NO_DEX, 0);
+
+        // Collected privileged system packages.
+        final File privilegedAppDir = new File(Environment.getRootDirectory(), &quot;priv-app&quot;);
+        scanDirLI(privilegedAppDir, PackageParser.PARSE_IS_SYSTEM
+                | PackageParser.PARSE_IS_SYSTEM_DIR
+                | PackageParser.PARSE_IS_PRIVILEGED, scanFlags, 0);
+
+        // Collect ordinary system packages.
+        final File systemAppDir = new File(Environment.getRootDirectory(), &quot;app&quot;);
+        scanDirLI(systemAppDir, PackageParser.PARSE_IS_SYSTEM
+                | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0);
+
+        // Collect all vendor packages.
+        File vendorAppDir = new File(&quot;/vendor/app&quot;);
+        try {
+            vendorAppDir = vendorAppDir.getCanonicalFile();
+        } catch (IOException e) {
+            // failed to look up canonical path, continue with original one
+        }
+        scanDirLI(vendorAppDir, PackageParser.PARSE_IS_SYSTEM
+                | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0);
+
+        // Collect all OEM packages.
+        final File oemAppDir = new File(Environment.getOemDirectory(), &quot;app&quot;);
+        scanDirLI(oemAppDir, PackageParser.PARSE_IS_SYSTEM
+                | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0);
+
+        if (DEBUG_UPGRADE) Log.v(TAG, &quot;Running installd update commands&quot;);
+        mInstaller.moveFiles(); //执行LocalStock发送movefiles命令
+</code></pre>
+<p>上面的代码的逻辑就是扫描指定的目录，这里的目录包括下面这些</p>
+<pre><code class="language-xml">/vendor/overlay
+/system/framework
+/system/priv-app
+/system/app
+/vendor/app
+/oem/app
+</code></pre>
+<p>也就是我们上文提到的系统APK的存放目录，扫描结束之后会把apk信息存放在<code>mPackages</code>(这里是PMS,区别于<code>Settings</code>的<code>mPackages</code>)。下面我们来分析<code>scanDirLI()</code>的过程。</p>
+<pre><code class="language-java">    private void scanDirLI(File dir, int parseFlags, int scanFlags, long currentTime) {
+        final File[] files = dir.listFiles();
+        if (ArrayUtils.isEmpty(files)) {
+            Log.d(TAG, &quot;No files in app dir &quot; + dir);
+            return;
+        }
+
+        if (DEBUG_PACKAGE_SCANNING) {
+            Log.d(TAG, &quot;Scanning app dir &quot; + dir + &quot; scanFlags=&quot; + scanFlags
+                    + &quot; flags=0x&quot; + Integer.toHexString(parseFlags));
+        }
+		//遍历该目录下的APK
+        for (File file : files) {
+            final boolean isPackage = (isApkFile(file) || file.isDirectory())
+                    &amp;&amp; !PackageInstallerService.isStageName(file.getName());
+            if (!isPackage) {
+                // Ignore entries which are not packages
+                continue;
+            }
+            try {
+                scanPackageLI(file, parseFlags | PackageParser.PARSE_MUST_BE_APK,
+                        scanFlags, currentTime, null);
+            } catch (PackageManagerException e) {
+                Slog.w(TAG, &quot;Failed to parse &quot; + file + &quot;: &quot; + e.getMessage());
+
+                // Delete invalid userdata apps
+              	// 删除无效的用户APK
+                if ((parseFlags &amp; PackageParser.PARSE_IS_SYSTEM) == 0 &amp;&amp;
+                        e.error == PackageManager.INSTALL_FAILED_INVALID_APK) {
+                    logCriticalInfo(Log.WARN, &quot;Deleting invalid package at &quot; + file);
+                    if (file.isDirectory()) {
+                        mInstaller.rmPackageDir(file.getAbsolutePath());
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+        }
+    }
+</code></pre>
+<p>上面代码核心就是遍历指定的文件夹，对文件夹内部的文件执行函数<code>scanPackageLI(File,...)</code> ，通过其注释我们了解到他是扫描包的。它的代码也比较长，下面选择其中一部分说明。</p>
+<pre><code class="language-java">    private PackageParser.Package scanPackageLI(File scanFile,  
+            int parseFlags, int scanMode, long currentTime) {  
+        ......  
+  
+        String scanPath = scanFile.getPath();  
+        parseFlags |= mDefParseFlags;  
+        PackageParser pp = new PackageParser();  
+          
+        ......  
+  
+        final PackageParser.Package pkg = pp.parsePackage(scanFile,  
+            scanPath, mMetrics, parseFlags);  
+  
+        ......  
+  
+        return scanPackageLI(pkg, parseFlags, scanMode | SCAN_UPDATE_SIGNATURE, currentTime);  
+    }  
+</code></pre>
+<p>为指定的文件创建<code>PackageParser</code>,将解析结果存入<code>Package</code> ,最后在调用函数<code>scanPackageLI(Package,...)</code>。而在函数<code>PackageParser.Package.parsePackage(...)</code>中会判断<code>scanFile</code>是文件还是目录(Android分包)，会对他们做不同的处理，我们这里简单点，就看是文件的分支，当时文件时，会调用函数<code>parseMonolithicPackage(packageFile, flags)</code> ，下面分析这个函数。</p>
+<pre><code class="language-java">   public Package parseMonolithicPackage(File apkFile, int flags){ 
+	  final AssetManager assets = new AssetManager();
+      final Package pkg = parseBaseApk(apkFile, assets, flags);
+      pkg.codePath = apkFile.getAbsolutePath();
+      return pkg;
+   }  
+</code></pre>
+<p>这里的核心就是函数<code>parseBaseApk(File,...)</code>，根据名称感觉有些明朗了,不就解析APK嘛，看看到底是怎么实现的吧。</p>
+<pre><code class="language-java">   private Package parseBaseApk(File apkFile, AssetManager assets, int flags){
+     	....
+        Resources res = null;
+        XmlResourceParser parser = null;
+        res = new Resources(assets, mMetrics, null);
+        assets.setConfiguration(0, 0, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    Build.VERSION.RESOURCES_SDK_INT);
+        parser = assets.openXmlResourceParser(cookie, &quot;AndroidManifest.xml&quot;);
+        final String[] outError = new String[1];
+        final Package pkg = parseBaseApk(res, parser, flags, outError);   
+        ...
+        return pkg;  
+   }
+</code></pre>
+<p>卧槽，又是圈套，有调函数<code>parseBaseApk(Resources,...)</code>来解析，不过上面我们已经看见关键的<code>AndroidManifest.xml</code>已经出现了。通过阅读<code>parseBaseApk(Resources,...)</code>，我们发现他会解析<code>AndroidManifest.xml</code>中的一部分文件，这里大体包括以下标签</p>
+<pre><code class="language-xml">- application
+- overlay
+- key-sets
+- permission-group
+- permission-tree
+- uses-permission
+- uses-permission-sdk-m | uses-permission-sdk-23
+- uses-configuration
+- uses-feature
+- feature-group
+- uses-sdk
+- supports-screens
+- protected-broadcast
+- instrumentation
+- original-package
+- adopt-permissions
+- uses-gl-texture
+- compatible-screens
+- supports-input
+- eat-comment
+</code></pre>
+<p>惭愧，好多标签没见过，查看官网发现官网并没有列举以上全部<a href="https://developer.android.com/guide/topics/manifest/manifest-intro.html">AndroidManifest</a> 。我们这里继续跟进<code>application</code>标签，发现他调用函数<code>parseBaseApplication()</code>。这个函数就是对<code>Application</code>内部四大组件进行解析。我们这里选取<code>activity</code>的部分来看看。</p>
+<pre><code class="language-java">		    // 函数参数 Package owner
+ 			if (tagName.equals(&quot;activity&quot;)) {
+            	//class Activity extends Component&lt;ActivityIntentInfo&gt;
+                Activity a = parseActivity(owner, res, parser, attrs, flags, outError, false,
+                        owner.baseHardwareAccelerated);
+                if (a == null) {
+                    mParseError = PackageManager.INSTALL_PARSE_FAILED_MANIFEST_MALFORMED;
+                    return false;
+                }
+
+                owner.activities.add(a);
+            }
+</code></pre>
+<p><code>parseActivity()</code>就是解析<code>activity</code>标签下的内容，比如<code>Activity</code>的<code>Theme</code>什么的，解析的过程主要是利用<code>TypedArray</code>,具体的属性可以看看<a href="https://developer.android.com/guide/topics/manifest/activity-element.html">Activity</a>,很多属性都是存储在一个<code>flags</code>标记了,这样减少了类中成员字段过多，这在Android中使用的比较多,比如<code>View</code>中很多属性也是存在一个<code>flags</code>中。到此一个解析好了的<code>Package</code>就好了，不知不觉，已经偏了十万八千里，不要急，拉回来，上面我们讲到<code>scanPackageLI(File,...)</code>的最后调用了<code>scanPackageLI(Package,...)</code>,那么这个函数有是做什么的呢？这个函数调用了<code>scanPackageDirtyLI()</code>,这个函数的代码量也是相当吓人，这里不打算具体分析，主要工作就是为app创建目录，也就是<code>/data/data/apk.name/</code>这个目录，还有就是APK对应的libs的存放位置，App签名验证，收集APK要的权限，最重要的就是把解析信息存放到了<code>PMS</code>的<code>mPackages</code>变量中，意味着App安装成功了，后面会用到这个变量。回到<code>PackageManagerService</code>的构造函数中来。</p>
+<pre><code class="language-java">        // Prune any system packages that no longer exist.
+        final List&lt;String&gt; possiblyDeletedUpdatedSystemApps = new ArrayList&lt;String&gt;();
+        if (!mOnlyCore) {
+          	//mSettings.mPackages来自与package.xml的package标签
+            Iterator&lt;PackageSetting&gt; psit = mSettings.mPackages.values().iterator();
+            while (psit.hasNext()) {
+                PackageSetting ps = psit.next();
+
+                /*
+                 * If this is not a system app, it can't be a
+                 * disable system app.
+                 */
+                if ((ps.pkgFlags &amp; ApplicationInfo.FLAG_SYSTEM) == 0) {
+                    continue;
+                }
+
+                /*
+                 * If the package is scanned, it's not erased.
+                 */
+                //PMS的mPackages存放扫描过的APK
+                final PackageParser.Package scannedPkg = mPackages.get(ps.name);
+              	//扫描到了 &amp;&amp; packages.xml中存在
+                if (scannedPkg != null) {
+                    /*
+                     * If the system app is both scanned and in the
+                     * disabled packages list, then it must have been
+                     * added via OTA. Remove it from the currently
+                     * scanned package so the previously user-installed
+                     * application can be scanned.
+                     */
+                  	//package.xml的package标签和updated-package标签都包含这个pkg
+                    //根据上面注释，意味着这个APK是通过OTA添加的，暂时移除
+                    if (mSettings.isDisabledSystemPackageLPr(ps.name)) {
+                        logCriticalInfo(Log.WARN, &quot;Expecting better updated system app for &quot;
+                                + ps.name + &quot;; removing system app.  Last known codePath=&quot;
+                                + ps.codePathString + &quot;, installStatus=&quot; + ps.installStatus
+                                + &quot;, versionCode=&quot; + ps.versionCode + &quot;; scanned versionCode=&quot;
+                                + scannedPkg.mVersionCode);
+                        removePackageLI(ps, true);//mPackages.remove(ps.name);
+                        mExpectingBetter.put(ps.name, ps.codePath);
+                    }
+
+                    continue;
+                }
+				//没有扫描到，在package标签下，但不在updated-package标签下，说明该APP已经不存在了
+                //因此要删掉他的目录
+                //直接从mSettings.mPackages中移除
+                if (!mSettings.isDisabledSystemPackageLPr(ps.name)) {
+                    psit.remove(); 
+                    logCriticalInfo(Log.WARN, &quot;System package &quot; + ps.name
+                            + &quot; no longer exists; wiping its data&quot;);
+                    removeDataDirsLI(null, ps.name);
+                } else {
+                    //没有扫描到，在package标签下，也在updated-package标签下
+                  	//可能由OTA引入（或删除？）
+                    final PackageSetting disabledPs = mSettings.getDisabledSystemPkgLPr(ps.name);
+                    if (disabledPs.codePath == null || !disabledPs.codePath.exists()) {
+                        possiblyDeletedUpdatedSystemApps.add(ps.name);
+                    }
+                }
+            }
+        }
+</code></pre>
+<p>处理被用户隐藏的APP(前面讲的<code>pm hide package</code>),因为被隐藏的APP在<code>package.xml</code>还存在,这里就是把这些APP从保存他们的列表中移除。另外就是在<code>package.xml</code>中还有该APK,但是扫描系统目录发现这个APK已经不存在了的处理方式。执行完之后<code>mSetting.mPackages</code>剩下的就是无效的APK，我们需要将这些清除，于是就有了下面的几行代码</p>
+<pre><code class="language-java">        //look for any incomplete package installations
+        ArrayList&lt;PackageSetting&gt; deletePkgsList = mSettings.getListOfIncompleteInstallPackagesLPr();//获取mSettings.mPackages中installStatus为未成功安装的App(前文有讲，package中installStatus=false的apk)
+        //clean up list
+        for(int i = 0; i &lt; deletePkgsList.size(); i++) {
+            //clean up here
+            cleanupInstallFailedPackage(deletePkgsList.get(i));
+        }
+        //delete tmp files
+        deleteTempPackageFiles();
+
+        // Remove any shared userIDs that have no associated packages
+        mSettings.pruneSharedUsersLPw();//移除没有被关联的mSharedUsers
+</code></pre>
+<p>上面的作用就是清除无效APK引入的文件夹等。系统APK装载完了，下面就开始装载用户APK,</p>
+<pre><code class="language-java">            scanDirLI(mAppInstallDir, 0, scanFlags | SCAN_REQUIRE_KNOWN, 0);
+            scanDirLI(mDrmAppPrivateInstallDir, PackageParser.PARSE_FORWARD_LOCK,
+                    scanFlags | SCAN_REQUIRE_KNOWN, 0);
+</code></pre>
+<p>上面的代码和前面扫描系统APK是一样的，这是目录和flags变了，逻辑是一样的。这里的目录包括</p>
+<pre><code class="language-java">/data/app
+/data/app-private
+</code></pre>
+<p>继续看构造函数。</p>
+<pre><code class="language-java">            /**
+             * Remove disable package settings for any updated system
+             * apps that were removed via an OTA. If they're not a
+             * previously-updated app, remove them completely.
+             * Otherwise, just revoke their system-level permissions.
+             */
+			//在引进了用户app之后mPackages内容增加了，再看看是否有这些app
+            for (String deletedAppName : possiblyDeletedUpdatedSystemApps) {
+                PackageParser.Package deletedPkg = mPackages.get(deletedAppName);
+                mSettings.removeDisabledSystemPackageLPw(deletedAppName);
+
+                String msg;
+                if (deletedPkg == null) {  //OTA删除
+                    msg = &quot;Updated system package &quot; + deletedAppName
+                            + &quot; no longer exists; wiping its data&quot;;
+                    removeDataDirsLI(null, deletedAppName);
+                } else {	//在用户app中找到了，当然会移除系统包标识
+                    msg = &quot;Updated system app + &quot; + deletedAppName
+                            + &quot; no longer present; removing system privileges for &quot;
+                            + deletedAppName;
+
+                    deletedPkg.applicationInfo.flags &amp;= ~ApplicationInfo.FLAG_SYSTEM;
+
+                    PackageSetting deletedPs = mSettings.mPackages.get(deletedAppName);
+                    deletedPs.pkgFlags &amp;= ~ApplicationInfo.FLAG_SYSTEM;
+                }
+                logCriticalInfo(Log.WARN, msg);
+            }
+
+            /**
+             * Make sure all system apps that we expected to appear on
+             * the userdata partition actually showed up. If they never
+             * appeared, crawl back and revive the system version.
+             */
+            for (int i = 0; i &lt; mExpectingBetter.size(); i++) {  //有新包，更新APK
+                final String packageName = mExpectingBetter.keyAt(i);
+                if (!mPackages.containsKey(packageName)) {
+                    final File scanFile = mExpectingBetter.valueAt(i);
+
+                    logCriticalInfo(Log.WARN, &quot;Expected better &quot; + packageName
+                            + &quot; but never showed up; reverting to system&quot;);
+
+                    final int reparseFlags;
+                  	//不同目录flags不一样
+                    if (FileUtils.contains(privilegedAppDir, scanFile)) {
+                        reparseFlags = PackageParser.PARSE_IS_SYSTEM
+                                | PackageParser.PARSE_IS_SYSTEM_DIR
+                                | PackageParser.PARSE_IS_PRIVILEGED;
+                    } else if (FileUtils.contains(systemAppDir, scanFile)) {
+                        reparseFlags = PackageParser.PARSE_IS_SYSTEM
+                                | PackageParser.PARSE_IS_SYSTEM_DIR;
+                    } else if (FileUtils.contains(vendorAppDir, scanFile)) {
+                        reparseFlags = PackageParser.PARSE_IS_SYSTEM
+                                | PackageParser.PARSE_IS_SYSTEM_DIR;
+                    } else if (FileUtils.contains(oemAppDir, scanFile)) {
+                        reparseFlags = PackageParser.PARSE_IS_SYSTEM
+                                | PackageParser.PARSE_IS_SYSTEM_DIR;
+                    } else {
+                        Slog.e(TAG, &quot;Ignoring unexpected fallback path &quot; + scanFile);
+                        continue;
+                    }
+					//加入mStting.mPackages	
+                    mSettings.enableSystemPackageLPw(packageName);
+
+                    try {
+                        scanPackageLI(scanFile, reparseFlags, scanFlags, 0, null);
+                    } catch (PackageManagerException e) {
+                        Slog.e(TAG, &quot;Failed to parse original system package: &quot;
+                                + e.getMessage());
+                    }
+                }
+            }
+		    mExpectingBetter.clear();
+</code></pre>
+<p>上面这段代码就是删除被OTA移除app的目录，更新新引入的App的目录。</p>
+<pre><code class="language-java">        // Now that we know all of the shared libraries, update all clients to have
+        // the correct library paths.
+        updateAllSharedLibrariesLPw(); //为需要sharelibs的apk关联libs,放在pkg.usesLibraryFiles
+
+        for (SharedUserSetting setting : mSettings.getAllSharedUsersLPw()) {
+            // NOTE: We ignore potential failures here during a system scan (like
+            // the rest of the commands above) because there's precious little we
+            // can do about it. A settings error is reported, though.
+            adjustCpuAbisForSharedUserLPw(setting.packages, null /* scanned package */,
+                    false /* force dexopt */, false /* defer dexopt */);
+        }
+
+        // Now that we know all the packages we are keeping,
+        // read and update their last usage times.
+        mPackageUsage.readLP();//读/data/system/package-usage.list
+
+        EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_SCAN_END,
+                SystemClock.uptimeMillis());
+        Slog.i(TAG, &quot;Time to scan packages: &quot;
+                + ((SystemClock.uptimeMillis()-startTime)/1000f)
+                + &quot; seconds&quot;);
+
+        // If the platform SDK has changed since the last time we booted,
+        // we need to re-grant app permission to catch any new ones that
+        // appear.  This is really a hack, and means that apps can in some
+        // cases get permissions that the user didn't initially explicitly
+        // allow...  it would be nice to have some better way to handle
+        // this situation.
+        int updateFlags = UPDATE_PERMISSIONS_ALL;
+        if (ver.sdkVersion != mSdkVersion) {
+            Slog.i(TAG, &quot;Platform changed from &quot; + ver.sdkVersion + &quot; to &quot;
+                    + mSdkVersion + &quot;; regranting permissions for internal storage&quot;);
+            updateFlags |= UPDATE_PERMISSIONS_REPLACE_PKG | UPDATE_PERMISSIONS_REPLACE_ALL;
+        }
+        updatePermissionsLPw(null, null, updateFlags);//Apk分配权限
+        ver.sdkVersion = mSdkVersion;
+        // clear only after permissions have been updated
+        mExistingSystemPackages.clear();
+        mPromoteSystemApps = false;
+
+        // If this is the first boot, and it is a normal boot, then
+        // we need to initialize the default preferred apps.
+		//第一次启动，初始化默认程序，如浏览器，email程序
+        if (!mRestoredSettings &amp;&amp; !onlyCore) {
+            mSettings.applyDefaultPreferredAppsLPw(this, UserHandle.USER_OWNER);
+            applyFactoryDefaultBrowserLPw(UserHandle.USER_OWNER);
+            primeDomainVerificationsLPw(UserHandle.USER_OWNER);
+        }
+
+        // If this is first boot after an OTA, and a normal boot, then
+        // we need to clear code cache directories.
+        if (mIsUpgrade &amp;&amp; !onlyCore) {
+            Slog.i(TAG, &quot;Build fingerprint changed; clearing code caches&quot;);
+            for (int i = 0; i &lt; mSettings.mPackages.size(); i++) {
+                final PackageSetting ps = mSettings.mPackages.valueAt(i);
+                if (Objects.equals(StorageManager.UUID_PRIVATE_INTERNAL, ps.volumeUuid)) {
+                    deleteCodeCacheDirsLI(ps.volumeUuid, ps.name);
+                }
+            }
+            ver.fingerprint = Build.FINGERPRINT;
+        }
+
+        checkDefaultBrowser();
+
+        // All the changes are done during package scanning.
+        ver.databaseVersion = Settings.CURRENT_DATABASE_VERSION;
+
+        // can downgrade to reader
+        mSettings.writeLPr(); //写package.xml
+
+        EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_READY,
+                SystemClock.uptimeMillis());
+
+        mRequiredVerifierPackage = getRequiredVerifierLPr(); //string
+        mRequiredInstallerPackage = getRequiredInstallerLPr(); //string
+
+        mInstallerService = new PackageInstallerService(context, this); //根据名字知道大概是app安装相关服务
+
+        mIntentFilterVerifierComponent = getIntentFilterVerifierComponentNameLPr();
+        mIntentFilterVerifier = new IntentVerifierProxy(mContext,
+                mIntentFilterVerifierComponent);
+
+    } // synchronized (mPackages)
+    } // synchronized (mInstallLock)
+
+    // Now after opening every single application zip, make sure they
+    // are all flushed.  Not really needed, but keeps things nice and
+    // tidy.
+    Runtime.getRuntime().gc();
+
+    // Expose private service for system components to use.
+    LocalServices.addService(PackageManagerInternal.class, new PackageManagerInternalImpl());
+}
+</code></pre>
+<p>到此，<code>PMS</code>的构造函数就阅读完毕了。</p>
+<h1 id="总结">总结</h1>
+<p>本文由<code>pm</code>命令引入，讲解<code>PMS</code>的构造过程，这里在梳理一下这个过程。</p>
+<ol>
+<li>通过<code>packages.xml(backup)</code>读取系统已经安装了的app,保存到<code>mSettings</code>的相关字段中去。</li>
+<li>通过扫描系统目录/用户app目录，将扫描的app保存到<code>PMS</code>的<code>mPackages</code>中去。</li>
+<li>根据上两步的结果判断哪些app无效(删除),哪些被OTA的方式更新，删除或重建对应app的目录</li>
+<li>app扫描结束，app权限分配，app引用的库的关联</li>
+<li>重新保存这些新信息到<code>packages.xml</code>供下次开机使用</li>
+</ol>
+<h1 id="参考">参考</h1>
+<ul>
+<li><a href="http://www.iloveandroid.net/2016/06/21/Android_PackageManagerService-3/">Android-6.0之PMS解析系列</a></li>
+<li><a href="https://yq.aliyun.com/articles/61570">android系统启动之PMS启动源码解析</a></li>
+<li><a href="http://blog.csdn.net/luoshengyang/article/details/6766010">Android应用程序安装过程源代码分析</a></li>
+<li>&lt;&lt;Android 源码设计模式-第十章&gt;&gt;</li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#pm%E5%91%BD%E4%BB%A4%E7%9A%84%E4%BD%BF%E7%94%A8">pm命令的使用</a>
+<ul>
+<li><a href="#pm-%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8">pm 基本使用</a></li>
+<li><a href="#pm-%E5%91%BD%E4%BB%A4%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90">pm 命令源码分析</a></li>
+</ul>
+</li>
+<li><a href="#packagemanagerserver%E7%9A%84%E5%90%AF%E5%8A%A8%E4%BD%8D%E7%BD%AE"><code>PackageManagerServer</code>的启动位置</a></li>
+<li><a href="#packagemanagerserver-%E7%9A%84%E5%AE%9E%E4%BE%8B%E8%BF%87%E7%A8%8B"><code>PackageManagerServer</code> 的实例过程</a>
+<ul>
+<li><a href="#pm%E7%9B%B8%E5%85%B3%E7%9A%84%E7%9B%AE%E5%BD%95">PM相关的目录</a><br>
+*
+<ul>
+<li><a href="#systempriv-app">/system/priv-app</a></li>
+<li><a href="#systemapp">/system/app</a></li>
+<li><a href="#vendorapp">/vendor/app</a></li>
+<li><a href="#oemapp">/oem/app</a></li>
+<li><a href="#dataapp">/data/app</a></li>
+</ul>
+</li>
+<li><a href="#pm%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%87%E7%A8%8B">PM初始化过程</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2016-10-09-Android_Xml_Parser">
+              <h3 class="post-title">
+                Android中View,Drawable,Animation从XML中解析生成的过程
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

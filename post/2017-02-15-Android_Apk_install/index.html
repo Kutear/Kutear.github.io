@@ -1,0 +1,288 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android Apk安装过程 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android Apk安装过程
+            </h2>
+            <div class="post-info">
+              <span>
+                2017-02-15
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/2bhUImQpoP" class="post-tag">
+                  # Android
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h1 id="表皮">表皮</h1>
+<p>系统默认的安装器<a href="https://android.googlesource.com/platform/packages/apps/PackageInstaller/+/marshmallow-release/src/com/android/packageinstaller/PackageInstallerActivity.java">com/android/packageinstaller/PackageInstallerActivity.java</a>。</p>
+<p>点击安装会执行</p>
+<pre><code class="language-java">    private void startInstall() {
+        // Start subactivity to actually install the application
+        Intent newIntent = new Intent();
+        newIntent.putExtra(PackageUtil.INTENT_ATTR_APPLICATION_INFO,
+                mPkgInfo.applicationInfo);
+        newIntent.setData(mPackageURI);
+        newIntent.setClass(this, InstallAppProgress.class);
+        newIntent.putExtra(InstallAppProgress.EXTRA_MANIFEST_DIGEST, mPkgDigest);
+        newIntent.putExtra(
+                InstallAppProgress.EXTRA_INSTALL_FLOW_ANALYTICS, mInstallFlowAnalytics);
+        String installerPackageName = getIntent().getStringExtra(
+                Intent.EXTRA_INSTALLER_PACKAGE_NAME);
+        if (mOriginatingURI != null) {
+            newIntent.putExtra(Intent.EXTRA_ORIGINATING_URI, mOriginatingURI);
+        }
+        if (mReferrerURI != null) {
+            newIntent.putExtra(Intent.EXTRA_REFERRER, mReferrerURI);
+        }
+        if (mOriginatingUid != VerificationParams.NO_UID) {
+            newIntent.putExtra(Intent.EXTRA_ORIGINATING_UID, mOriginatingUid);
+        }
+        if (installerPackageName != null) {
+            newIntent.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME,
+                    installerPackageName);
+        }
+        if (getIntent().getBooleanExtra(Intent.EXTRA_RETURN_RESULT, false)) {
+            newIntent.putExtra(Intent.EXTRA_RETURN_RESULT, true);
+            newIntent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+        }
+        if(localLOGV) Log.i(TAG, &quot;downloaded app uri=&quot;+mPackageURI);
+        startActivity(newIntent);
+        finish();
+    }
+</code></pre>
+<p>启动<code>InstallAppProgress.java</code>会执行</p>
+<pre><code class="language-java">PackageManager pm = getPackageManager();
+//originatingUid为发起安装的app的uid
+//originatingURI,referrer也都是标识安装的发起者
+VerificationParams verificationParams = new VerificationParams(null, originatingURI,
+                referrer, originatingUid, manifestDigest);
+pm.installPackageWithVerificationAndEncryption(mPackageURI, observer, installFlags,
+                    installerPackageName, verificationParams, null);
+</code></pre>
+<p>上面代码我们大概过一下知道<code>mPackageURI</code>是APK的路径，<code>observer</code>是观察APK安装的一个观察者，<code>installFlag</code>设置安装标记，比如replace已有的APK,<code>installerPackageName</code>大概是发起安装的APK的的app的包名(待确认)。</p>
+<h1 id="核心">核心</h1>
+<p>下文基于android-sdk-23。</p>
+<p>到此我们进入Android核心之一的<code>PackageManager</code>。介于之前对Android系统级<code>Manager</code>的了解，	<code>PackageManager</code>的子类<code>ApplicationPackageManager</code>其实引用的是一个<code>IPackageManager</code>,而<code>IPackageManager</code>的实现就是<code>PackageManagerService</code>(以下简称<code>PMS</code>)，在函数<code>installPackageWithVerificationAndEncryption()</code>中实际上调用了<code>PMS</code>的<code>installPackage(...)</code>函数。</p>
+<pre><code class="language-java">installPackage(String originPath, IPackageInstallObserver2 observer,int installFlags, String installerPackageName,VerificationParams verificationParams,String packageAbiOverride)
+</code></pre>
+<p>这个函数的逻辑包括以下几部分逻辑</p>
+<ol>
+<li>
+<p>检查当前使设备的人是否拥有安装apk的权限，检查调用安装apk的程序是否含有安装apk的权限。</p>
+</li>
+<li>
+<p>使用<code>UserHandle</code>指示安装的apk归属于哪一个用户。</p>
+</li>
+<li>
+<p>使用<code>Handler</code>发送一个<code>INIT_COPY</code>的消息。</p>
+</li>
+</ol>
+<p><code>INIT_COPY</code>中把<code>InstallParams</code>(持有待安装app的信息)存入一个列表,然后在发送另外一个消息<code>MCS_BOUND</code>。在<code>MCS_BOUND</code>中会从上文中存放<code>InstallParams</code>的列表中依次取出待安装apk的部分信息。对于依次取出的<code>InstallParams</code>在执行函数<code>InstallParams#startCopy()</code>,在这个函数中会进行<code>media container service</code>绑定，如果多次(4次)尝试绑定都失败的话，就表示安装失败，退出，否则执行函数<code>InstallParams#handleStartCopy()</code>,<code>handleStartCopy()</code>方法很长,它的逻辑包含以下几点</p>
+<ol>
+<li>判断安装位置，根据<code>DefaultContainerServie#getMinimalPackageInfo()</code>获取推荐位置</li>
+<li>判断/data/app空间是否足够，否则释放cache在尝试</li>
+<li>如果启动了包验证的话，就会进入验证阶段</li>
+<li>没有启动验证或验证通过进入<code>InstallArgs#copyApk(...)</code></li>
+</ol>
+<p>这里<code>copyApk(...)</code>的作用大致是</p>
+<ol>
+<li>
+<p>首先mInstallerService.allocateStageDirLegacy申请足够的存储空间（data/app/vmdl</p>
+<p>***.tmp目录）</p>
+</li>
+<li>
+<p>得到申请的那部分空间的文件描述符，并且修改权限</p>
+</li>
+<li>
+<p>IMediaContainerService#copyPackage 拷贝到指定目录，实现在DefaultContainerService中</p>
+</li>
+<li>
+<p>NativeLibraryHelper#copyNativeBinariesWithOverride 拷贝二进制文件(so库)</p>
+</li>
+</ol>
+<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2017/02/21/fc925c470b4d9785e69c8aebf1c387d9.png" alt=""></figure>
+<p>到此app的所有文件拷贝到了<code>data/app/vmdl***.tmp</code>目录下。此时的目录结构大致如下</p>
+<pre><code>data/app/vmdl***.tmp/
+					/base.apk
+					/split_***.apk  ???
+					/lib
+					   /lib***.so
+</code></pre>
+<p>在函数<code>InstallParams#handleStartCopy()</code>之后，是执行函数<code>InstallParams#handleReturnCode()</code> ，这个函数的逻辑主要包括一下几个要点：</p>
+<ol>
+<li>安装App之前的操作（<code>InstallArgs#doPreInstall(...)</code>）</li>
+<li>安装App(<code>installPackageLI(...)</code>)</li>
+<li>安装App之后的操作(<code>InstallArgs#doPostInstall(res.returnCode, res.uid);</code>)</li>
+<li>备份操作</li>
+</ol>
+<p>安装之前主要是处理清理工作，删除一些文件目录。</p>
+<p>// TODO</p>
+<h1 id="参考">参考</h1>
+<ul>
+<li>
+<p><a href="http://blog.csdn.net/singwhatiwanna/article/details/19578947">Android内核解读-应用的安装过程</a></p>
+</li>
+<li>
+<p><a href="https://guolei1130.github.io/2017/01/04/Android%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%89%E8%A3%85%E7%9A%84/">Android应用程序是如何安装的</a></p>
+</li>
+<li>
+<p><a href="http://www.ieveryday.pub/index.php/Andriod_Framework_Work_Note_Url_6">使用PackageInstaller安装app流程学习小结</a></p>
+<p>​</p>
+</li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E8%A1%A8%E7%9A%AE">表皮</a></li>
+<li><a href="#%E6%A0%B8%E5%BF%83">核心</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2016-12-22-Go_Base_study">
+              <h3 class="post-title">
+                Golang基础学习
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

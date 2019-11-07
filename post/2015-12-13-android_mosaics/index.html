@@ -1,0 +1,262 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android 马赛克(Mosaics)效果 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android 马赛克(Mosaics)效果
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-12-13
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/-9p0OuZT9x" class="post-tag">
+                  # 技术
+                </a>
+              
+                <a href="https://kutear.github.io/tag/2bhUImQpoP" class="post-tag">
+                  # Android
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p><strong>代码地址</strong><br>
+<a href="https://github.com/Kutear/studydemo">GitHub</a></p>
+<h2 id="说明">说明</h2>
+<p>前几天看见开源项目[ExplosionField]效果好赞,看了下代码,他的实现大致就是在原界面之上覆盖一成自定义的View,获取到点击的那个View的内容(Bitmap),然后在覆盖的那个自定义View的特定位置画出来,之后就是对这个Bitmap做一些列拆分,变化重绘的过程.在这里根据他对bitmap的拆分,感觉用来实现Bitmap的效果也是不错的,就试着做一做.</p>
+<p>在这里介绍使用两种方式实现马赛克效果.开始之前先看看效果<br>
+<img src="http://kutear.qiniudn.com/2015/12/13/8d2246da8e66047d9c51100503b0c75b.png" alt=""></p>
+<p>感觉还可以</p>
+<h2 id="直接绘制">直接绘制</h2>
+<pre><code class="language-java">public static Bitmap getMosaicsBitmap(Bitmap bmp, double precent) {
+        long start = System.currentTimeMillis();
+        int bmpW = bmp.getWidth();
+        int bmpH = bmp.getHeight();
+        Bitmap resultBmp = Bitmap.createBitmap(bmpW, bmpH, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(resultBmp);
+        Paint paint = new Paint();
+        double unit;
+        if (precent == 0) {
+            unit = bmpW;
+        } else {
+            unit = 1 / precent;
+        }
+        double resultBmpW = bmpW / unit;
+        double resultBmpH = bmpH / unit;
+        for (int i = 0; i &lt; resultBmpH; i++) {
+            for (int j = 0; j &lt; resultBmpW; j++) {
+                int pickPointX = (int) (unit * (j + 0.5));
+                int pickPointY = (int) (unit * (i + 0.5));
+                int color;
+                if (pickPointX &gt;= bmpW || pickPointY &gt;= bmpH) {
+                    color = bmp.getPixel(bmpW / 2, bmpH / 2);
+                } else {
+                    color = bmp.getPixel(pickPointX, pickPointY);
+                }
+                paint.setColor(color);
+                canvas.drawRect((int) (unit * j), (int) (unit * i), (int) (unit * (j + 1)), (int) (unit * (i + 1)), paint);
+            }
+        }
+        canvas.setBitmap(null);
+        long end = System.currentTimeMillis();
+        Log.v(TAG, &quot;DrawTime:&quot; + (end - start));
+        return resultBmp;
+        } 
+</code></pre>
+<h2 id="修改像素点">修改像素点</h2>
+<pre><code class="language-java"> public static Bitmap getMosaicsBitmaps(Bitmap bmp, double precent) {
+        long start = System.currentTimeMillis();
+        int bmpW = bmp.getWidth();
+        int bmpH = bmp.getHeight();
+        int[] pixels = new int[bmpH * bmpW];
+        bmp.getPixels(pixels, 0, bmpW, 0, 0, bmpW, bmpH);
+        int raw = (int) (bmpW * precent);
+        int unit;
+        if (raw == 0) {
+            unit = bmpW;
+        } else {
+            unit = bmpW / raw; //原来的unit*unit像素点合成一个，使用原左上角的值
+        }
+        if (unit &gt;= bmpW || unit &gt;= bmpH) {
+            return getMosaicsBitmap(bmp, precent);
+        }
+        for (int i = 0; i &lt; bmpH; ) {
+            for (int j = 0; j &lt; bmpW; ) {
+                int leftTopPoint = i * bmpW + j;
+                for (int k = 0; k &lt; unit; k++) {
+                    for (int m = 0; m &lt; unit; m++) {
+                        int point = (i + k) * bmpW + (j + m);
+                        if (point &lt; pixels.length) {
+                            pixels[point] = pixels[leftTopPoint];
+                        }
+                    }
+                }
+                j += unit;
+            }
+            i += unit;
+        }
+        long end = System.currentTimeMillis();
+        Log.v(TAG, &quot;DrawTime:&quot; + (end - start));
+        return Bitmap.createBitmap(pixels, bmpW, bmpH, Bitmap.Config.ARGB_8888);
+    }
+</code></pre>
+<h2 id="总结">总结</h2>
+<p>从效率上来看,第二中方式效率会高10倍,只要是因为第一种方式绘制的次数太多了,而绘制是比较费时间的.这里,特别提示,不要在大量的循环语句内部使用<code>Log.v(...)</code>,这是一个很耗时间的操作.</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%AF%B4%E6%98%8E">说明</a></li>
+<li><a href="#%E7%9B%B4%E6%8E%A5%E7%BB%98%E5%88%B6">直接绘制</a></li>
+<li><a href="#%E4%BF%AE%E6%94%B9%E5%83%8F%E7%B4%A0%E7%82%B9">修改像素点</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2015-12-01-android_device_monitor_1">
+              <h3 class="post-title">
+                Android Device Monitor工具的使用
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

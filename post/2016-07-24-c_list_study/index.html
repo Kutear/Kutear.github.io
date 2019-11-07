@@ -1,0 +1,381 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>单链表学习 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              单链表学习
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-07-24
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/5meBnw6SC" class="post-tag">
+                  # 数据结构
+                </a>
+              
+                <a href="https://kutear.github.io/tag/EGAW1QPhVh" class="post-tag">
+                  # 算法
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="创建">创建</h2>
+<p>定义结构体</p>
+<pre><code class="language-c">typedef struct Node{
+  int data;
+  struct Node *next;
+}node;
+</code></pre>
+<p>创建</p>
+<pre><code class="language-c">node *create(node *header){
+ int cycle = 1,input;
+ node *p,*s;
+ header = (node *)malloc(sizeof(node));
+ p = header;
+ printf(&quot;please input:\n&quot;);
+ while (cycle) {
+     scanf(&quot;%d&quot;,&amp;input);
+     if(input != -1){
+         s = (node *)malloc(sizeof(node));
+         s-&gt;data = input;
+         s-&gt;next = NULL;
+         p-&gt;next = s;
+         p = s;
+     }else{
+         cycle = 0;
+     }
+ }
+ //头节点是个空节点,没有数据,把他去掉
+ p = header-&gt;next;
+ free(header);
+ return p;
+}
+</code></pre>
+<h2 id="长度">长度</h2>
+<pre><code class="language-c">int length(node *header){
+    int i = 0;
+    node *p;
+    p = header;
+    while (p!=NULL) {
+        i++;
+        p = p-&gt;next;
+    }
+    return i;
+}
+</code></pre>
+<h2 id="排序">排序</h2>
+<p>冒泡排序,没有修改原始节点的顺序,只是改变他们的值.</p>
+<pre><code class="language-c">node * orderByValue(node *header){
+  if(header == NULL || header-&gt;next==NULL){
+      return header;
+  }
+  node *p;
+  p = header;
+  int n = length(header);
+  for(int i=0;i&lt;n;i++){
+      p = header;
+      for(int j = 0;j&lt;n - i -1;j++){
+        if(p-&gt;data&gt;p-&gt;next-&gt;data){
+            int temp = p-&gt;data;
+            p-&gt;data = p-&gt;next-&gt;data;
+            p-&gt;next-&gt;data = temp;
+        }
+        p = p-&gt;next;
+      }
+  }
+  return header;
+}
+</code></pre>
+<h2 id="反转">反转</h2>
+<pre><code class="language-c">node * reversion(node *header){
+ node *p,*q,*s;
+ p = header;
+ s = header;
+ //no NODE OR just one NODE
+ if(p== NULL || p-&gt;next == NULL){
+     return header;
+ }
+ p = header-&gt;next;
+ s-&gt;next = NULL;
+ while(p!=NULL){
+     q = p-&gt;next;
+     p-&gt;next = s;
+     s = p;
+     p = q;
+ }
+ return s;
+}
+</code></pre>
+<h2 id="插入">插入</h2>
+<p>原本链表为小-&gt;大的有序链表</p>
+<pre><code class="language-c">node *insert(node *header,int data){
+  node *p,*s;
+  p = header;
+  s = (node *)malloc(sizeof(node));
+  s-&gt;data = data;
+  s-&gt;next = NULL;
+  if(p == NULL){
+    return s;
+  }
+  if(p-&gt;data &gt; data){
+      s-&gt;next = p;
+      return s;
+  }
+  while(p-&gt;next!=NULL){
+   if(p-&gt;data &lt;= data &amp;&amp; p-&gt;next-&gt;data&gt;data){
+      s-&gt;next = p-&gt;next;
+      p-&gt;next = s;
+      return header;
+   }
+   p = p-&gt;next;
+  }
+  if(p-&gt;next == NULL){
+      p-&gt;next = s;
+      return header;
+  }
+
+}
+</code></pre>
+<h2 id="打印">打印</h2>
+<pre><code class="language-c">void print(node *header){
+ node *p;
+ p = header;
+ printf(&quot;Current Node: &quot;);
+ while(p!=NULL){
+  printf(&quot;%d  &quot;,p-&gt;data);
+  p = p-&gt;next;
+ }
+ printf(&quot;\n&quot;);
+}
+</code></pre>
+<h2 id="删除">删除</h2>
+<pre><code class="language-C">node *deleteNodeWithData(node *header,int data){
+  node *p,*s;
+  p = header;
+  if(header == NULL){
+      return NULL;
+  }
+  while(p-&gt;data!=data &amp;&amp; p-&gt;next!=NULL){
+    s = p;
+    p = p-&gt;next;
+  }
+  if(p-&gt;data == data){
+    if(p == header){
+        header = header-&gt;next;
+        free(p);
+    }else{
+        s-&gt;next = p-&gt;next;
+        free(p);
+    }
+  }else{
+    printf(&quot;Node not exist! \n&quot;);
+  }
+  return header;
+}
+</code></pre>
+<h2 id="测试">测试</h2>
+<pre><code class="language-C">int main(void){
+  node * header = NULL;
+  header = create(header);
+  print(header);
+  printf(&quot;Length:%d \n&quot;,length(header));
+  int deleteNode;
+  printf(&quot;Delete:&quot;);
+  scanf(&quot;%d&quot;,&amp;deleteNode);
+  header = deleteNodeWithData(header,deleteNode);
+  print(header);
+  printf(&quot;After Order:&quot;);
+  header = orderByValue(header);
+  print(header);
+  int insertData;
+  printf(&quot;Insert:&quot;);
+  scanf(&quot;%d&quot;,&amp;insertData);
+  header = insert(header,insertData);
+  print(header);
+  header = reversion(header);
+  printf(&quot;after :&quot;);
+  print(header);
+  return 0;
+}
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2016/07/24/6354306984275bafdf482dfc1167d188.png" alt="运行结果"></figure>
+<h2 id="面试题">面试题</h2>
+<ol>
+<li>求单链表中结点的个数</li>
+<li>将单链表反转</li>
+<li>查找单链表中的倒数第K个结点（k &gt; 0)(<a href="http://blog.csdn.net/luckyxiaoqiang/article/details/7393134#topic3">参考</a>)</li>
+<li>查找单链表的中间结点(<a href="http://blog.csdn.net/luckyxiaoqiang/article/details/7393134#topic4">参考</a>)</li>
+<li>从尾到头打印单链表</li>
+<li>已知两个单链表pHead1 和pHead2 各自有序，把它们合并成一个链表依然有序</li>
+<li>判断一个单链表中是否有环(注重理解)</li>
+<li>判断两个单链表是否相交(尾节点相同)</li>
+<li>在可能有环的情况下上题又会怎样</li>
+<li>求两个单链表相交的第一个节点</li>
+<li>已知一个单链表中存在环，求进入环中的第一个节点</li>
+<li>给出一单链表头指针pHead和一节点指针pToBeDeleted，O(1)时间复杂度删除节点pToBeDeleted</li>
+</ol>
+<p><a href="http://blog.csdn.net/luckyxiaoqiang/article/details/7393134">答案与解析</a></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%88%9B%E5%BB%BA">创建</a></li>
+<li><a href="#%E9%95%BF%E5%BA%A6">长度</a></li>
+<li><a href="#%E6%8E%92%E5%BA%8F">排序</a></li>
+<li><a href="#%E5%8F%8D%E8%BD%AC">反转</a></li>
+<li><a href="#%E6%8F%92%E5%85%A5">插入</a></li>
+<li><a href="#%E6%89%93%E5%8D%B0">打印</a></li>
+<li><a href="#%E5%88%A0%E9%99%A4">删除</a></li>
+<li><a href="#%E6%B5%8B%E8%AF%95">测试</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98">面试题</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2016-07-18-Android_Studio">
+              <h3 class="post-title">
+                Android Studio使用指南(Windows/Linux)
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

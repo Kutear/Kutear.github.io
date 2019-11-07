@@ -1,0 +1,235 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android Desigin Library | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android Desigin Library
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-09-05
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/GZoTRLinXH" class="post-tag">
+                  # Desigin
+                </a>
+              
+                <a href="https://kutear.github.io/tag/2bhUImQpoP" class="post-tag">
+                  # Android
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="1appbarlayout">1.AppBarLayout</h2>
+<p>AppBarLayout为LinearLayout的子类，不过不同的是固定是以竖直方向排列。本身实现了许多Desigin相关的特效。<br>
+通过给AppBarLayout的child设置app:layout_scrollFlags=&quot;scroll|enterAlways&quot;<br>
+其中参数的具体意思为：</p>
+<blockquote>
+<p>scroll - 想滚动就必须设置这个。<br>
+enterAlways - 实现quick return效果,当向下移动时，立即显示View（比如Toolbar)。如果没有设置，就必须等到该出现的时候才会出现（比如ListView滑到最顶端ToolBar才出现）；<br>
+exitUntilCollapsed - 向上滚动时收缩View，但可以固定Toolbar一直在上面。<br>
+enterAlwaysCollapsed -当你的View已经设置minHeight属性又使用此标志时，你的View只能以最小高度进入，只有当滚动视图到达顶部时才扩大到完整高度。</p>
+</blockquote>
+<p>AppBarLayout在APP上的显示大体上为如下,当然只是外面的框的部分<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/5cbaf4ca72f175e4882b0111ff1e3f12.png" alt="App中的显示"><br>
+上图中的阴影部分可以通过app:elevation=&quot;&quot;来进行设置，默认为0</p>
+<h2 id="2collapsingtoolbarlayout">2.CollapsingToolbarLayout</h2>
+<p>顾名思义，可以折叠的ToolBar的布局， CollapsingToolbarLayout作用是提供了一个可以折叠的Toolbar，它继承至FrameLayout，给它设置layout_scrollFlags，它可以控制包含在CollapsingToolbarLayout中的控件(如：ImageView、Toolbar)在响应layout_behavior事件时作出相应的scrollFlags滚动事件(移除屏幕或固定在屏幕顶端)。<br>
+常用的属性：</p>
+<blockquote>
+<p>contentScrim - 设置当完全CollapsingToolbarLayout折叠(收缩)后的背景颜色。<br>
+expandedTitleMarginStart - 设置扩张时候(还没有收缩时)title向左填充的距离。<br>
+layout_collapseMode (折叠模式) - 有两个值:<br>
+pin -  设置为这个模式时，当CollapsingToolbarLayout完全收缩后，Toolbar还可以保留在屏幕上。<br>
+parallax - 设置为这个模式时，在内容滚动时，CollapsingToolbarLayout中的View（比如ImageView)也可以同时滚动，实现视差滚动效果，通常和layout_collapseParallaxMultiplier(设置视差因子)搭配使用。<br>
+layout_collapseParallaxMultiplier(视差因子) - 设置视差滚动因子，值为：0~1。</p>
+</blockquote>
+<p>当设置了layout_behavior的控件响应起了CollapsingToolbarLayout中的layout_scrollFlags事件时，ImageView会有视差效果的向上滚动移除屏幕，当开始折叠时CollapsingToolbarLayout的背景色(也就是Toolbar的背景色)就会变为我们设置好的背景色，Toolbar也一直会固定在最顶端。<br>
+具体在App中的效果可以为<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/8bea39c98f4a879f357cc55a5ebb36e6.gif" alt="Google Android Image"></p>
+<h2 id="3coordinatorlayout">3.CoordinatorLayout</h2>
+<p>作为以上布局的父布局来是用，主要就是控制各个组件之间的协同处理，相互相应。</p>
+<h2 id="4floatingactionbutton">4.FloatingActionButton</h2>
+<p>在Google发布官方库之前就以及有很多的类似的组件，比如<a href="https://github.com/makovkastar/FloatingActionButton">makovkastar/FloatingActionButton</a> 和 <a href="https://github.com/futuresimple/android-floating-action-button">futuresimple/android-floating-action-button</a><br>
+效果图为：<br>
+<img src="http://kutear.qiniudn.com/2016/03/21/beb505abcfac7153faf1218554f6f88e.gif" alt="FAB"><br>
+当然这里的动画效果是自己设置的。</p>
+<h2 id="5navigationview">5.NavigationView</h2>
+<p>使用非常的简单，看官方的实例<a href="https://developer.android.com/reference/android/support/design/widget/NavigationView.html">NavigationView</a></p>
+<h2 id="6snackbar">6.Snackbar</h2>
+<p>SnackBar的使用方法同Toast几乎一样，但是官方说他更轻量</p>
+<h2 id="7tablayout">7.TabLayout</h2>
+<h2 id="8textinputlayout">8.TextInputLayout</h2>
+<h2 id="9behavior">9.Behavior</h2>
+<p>在所有desigin包下面的组件都实现了自己的Behavior来相应不同的过渡效果，Behavior是整个desigin包的核心元素之一。但是要想自己的View也能相应这样的效果,就需要实现自己的Behavior,具体的方法可以在<a href="https://guides.codepath.com/android/Floating-Action-Buttons#using-coordinatorlayout">CodePath</a>上了解。</p>
+<h2 id="资料参考">资料参考</h2>
+<ul>
+<li><a href="https://developer.android.com/reference/android/support/design/widget/package-summary.html">Android官方文档</a></li>
+<li><a href="http://android-developers.blogspot.com/2015/05/android-design-support-library.html">Android官方博客</a></li>
+<li><a href="http://inthecheesefactory.com/blog/android-design-support-library-codelab/en">Inthecheesefactory</a></li>
+<li><a href="https://guides.codepath.com/android/Floating-Action-Buttons">CodePath</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#1appbarlayout">1.AppBarLayout</a></li>
+<li><a href="#2collapsingtoolbarlayout">2.CollapsingToolbarLayout</a></li>
+<li><a href="#3coordinatorlayout">3.CoordinatorLayout</a></li>
+<li><a href="#4floatingactionbutton">4.FloatingActionButton</a></li>
+<li><a href="#5navigationview">5.NavigationView</a></li>
+<li><a href="#6snackbar">6.Snackbar</a></li>
+<li><a href="#7tablayout">7.TabLayout</a></li>
+<li><a href="#8textinputlayout">8.TextInputLayout</a></li>
+<li><a href="#9behavior">9.Behavior</a></li>
+<li><a href="#%E8%B5%84%E6%96%99%E5%8F%82%E8%80%83">资料参考</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2015-08-15-android_background_setting">
+              <h3 class="post-title">
+                Android背景设置
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

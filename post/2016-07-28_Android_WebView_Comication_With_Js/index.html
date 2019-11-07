@@ -1,0 +1,367 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Android WebView同Js的交互方案 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573116963578">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://kutear.github.io">
+  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573116963578" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Android WebView同Js的交互方案
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-07-28
+              </span>
+              <span>
+                5 min read
+              </span>
+              
+                <a href="https://kutear.github.io/tag/IW3pC-_2y" class="post-tag">
+                  # WebView
+                </a>
+              
+                <a href="https://kutear.github.io/tag/2bhUImQpoP" class="post-tag">
+                  # Android
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="开源方案">开源方案</h2>
+<ul>
+<li><a href="https://github.com/tcoulter/jockeyjs">Jockey</a></li>
+<li><a href="https://github.com/lzyzsd/JsBridge">JsBridge</a></li>
+<li><a href="https://github.com/Sunzxyong/RainbowBridge">RainbowBridge</a></li>
+</ul>
+<h2 id="实现">实现</h2>
+<h3 id="jockey">Jockey</h3>
+<h4 id="基本原理">基本原理</h4>
+<p>复写<code>WebViewClient</code>的<code>shouldOverrideUrlLoading()</code>,通过对<code>URL</code>的scheme和action来判断是否由App执行某个Action.</p>
+<h4 id="使用">使用</h4>
+<pre><code class="language-java">        mJockey = JockeyImpl.getDefault();
+        mJockey.configure(mWebView);
+        mJockey.setWebViewClient(mWebViewClient);
+        mJockey.on(&quot;log&quot;, new JockeyHandler() { //添加Action
+			@Override
+			public void doPerform(Map&lt;Object, Object&gt; payload) {
+				String value = &quot;color=&quot; + payload.get(&quot;color&quot;);
+				Log.d(&quot;jockey&quot;, value);
+			}
+		});
+</code></pre>
+<h4 id="源码解读">源码解读</h4>
+<p>在<code>JockeyImpl</code>的<code>configure(...)</code>函数中</p>
+<pre><code class="language-java">@SuppressLint(&quot;SetJavaScriptEnabled&quot;)
+@Override
+ public void configure(WebView webView) {
+      webView.getSettings().setJavaScriptEnabled(true);
+      //设置默认的WebViewClient
+        webView.setWebViewClient(this.getWebViewClient());//JockeyWebViewClient
+}
+</code></pre>
+<p>在设置自定义WebViewClient时不能直接在WebView设置,因为这样会覆盖底层的<code>JockeyWebViewClient</code>,需要使用</p>
+<pre><code class="language-java">mJockey.setWebViewClient(myWebViewClient);
+</code></pre>
+<p>在这里的看看实现</p>
+<pre><code class="language-java">    @Override
+    public void setWebViewClient(WebViewClient client) {
+        //装饰模式
+        this._client.setDelegate(client); //这里的_client就是JockeyWebViewClient
+    }
+</code></pre>
+<p>核心代码就在<code>JockeyWebViewClient</code>的<code>shouldOverrideUrlLoading(...)</code>函数</p>
+<pre><code class="language-java">    @Override
+    public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        if (delegate() != null
+                &amp;&amp; delegate().shouldOverrideUrlLoading(view, url))
+            return true; //用户的Client处理
+        try {
+            URI uri = new URI(url);
+            if (isJockeyScheme(uri)) {  //判读是否为 jockey://开始
+                processUri(view, uri);  //对URL进行处理
+                return true;
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (HostValidationException e) {
+            e.printStackTrace();
+            Log.e(&quot;Jockey&quot;, &quot;The source of the event could not be validated!&quot;);
+        }
+        return false; //宿主不处理,由WebView自行处理
+    }
+</code></pre>
+<p>接着就是对感兴趣的URL进行处理</p>
+<pre><code class="language-java">public void processUri(WebView view, URI uri)
+			throws HostValidationException {
+		String[] parts = uri.getPath().replaceAll(&quot;^\\/&quot;, &quot;&quot;).split(&quot;/&quot;);
+		String host = uri.getHost();
+		JockeyWebViewPayload payload = checkPayload(_gson.fromJson(
+				uri.getQuery(), JockeyWebViewPayload.class));   //参数解析,在自己项目中可以替换为自己的解析方式
+		if (parts.length &gt; 0) {
+			if (host.equals(&quot;event&quot;)) {
+				getImplementation().triggerEventFromWebView(view, payload); //getImplementation() 返回 JockeyImpl
+			} else if (host.equals(&quot;callback&quot;)) {
+				getImplementation().triggerCallbackForMessage(
+						Integer.parseInt(parts[0]));
+			}
+		}
+	}
+</code></pre>
+<pre><code class="language-java">protected void triggerEventFromWebView(final WebView webView,JockeyWebViewPayload envelope) {
+		final int messageId = envelope.id;
+		String type = envelope.type;//Action类型,如本节开始的'log'
+		if (this.handles(type)) {
+			JockeyHandler handler = _listeners.get(type); 
+		    //每一个事件都有一个对WebView js的回调
+			handler.perform(envelope.payload, new JockeyHandler.OnCompletedListener() {
+				@Override
+				public void onCompleted() {
+					// This has to be done with a handler because a webview load
+					// must be triggered
+					// in the UI thread
+					_handler.post(new Runnable() {
+						@Override
+						public void run() {
+							triggerCallbackOnWebView(webView, messageId);
+						}
+					});
+				}
+			});
+		}
+	}
+</code></pre>
+<p>现在可以反过来看看本节开始的<code>mJsckey.on()</code>方法的实现</p>
+<pre><code class="language-java">@Override
+public void on(String type, JockeyHandler... handler) {
+    if (!this.handles(type)) {
+            _listeners.put(type, new CompositeJockeyHandler());
+    }
+    _listeners.get(type).add(handler);  //又是装饰模式
+}
+</code></pre>
+<p><code>CompositeJockeyHandler</code>的<code>add()</code>的实现</p>
+<pre><code class="language-java">	public void add(JockeyHandler ... handler) {
+		_handlers.addAll(Arrays.asList(handler));
+	}
+</code></pre>
+<p>就是把自定义的<code>JockeyHandler</code>添加到变量<code>_handlers</code>中去了.<br>
+现在可以知道上面<code>_listeners.get(type)</code>得到的一定是<code>CompositeJockeyHandler</code>,执行<code>perform</code>函数,</p>
+<pre><code class="language-java">@Override
+public void perform(String payload, OnCompletedListener listener) {
+		this._listener = listener;
+		this._accumulator = new AccumulatingListener();
+		doPerform(payload);
+}
+	
+@Override
+protected void doPerform(String payload) {
+		for (JockeyHandler handler : _handlers)
+			handler.perform(payload, this._accumulator);
+}
+</code></pre>
+<p>在此,我们就可以看见,事件到达用户自已的<code>JockeyHandler</code>的<code>perform()</code>,<code>perform()</code>又调用<code>onPerform()</code>函数.OK,现在自己处理事件咯~</p>
+<p>对于Java调用js部分,原理就更加的简单,就一句话</p>
+<pre><code class="language-java">webView.load(&quot;javascript:XXXXXXX&quot;);
+</code></pre>
+<h3 id="jsbridge">JsBridge</h3>
+<p><code>JsBridge</code>是大头鬼的开源项目,star和fork的量很高,但是我个人觉得他的实现并没有<code>Jockey</code>好,比如对自定义的<code>WebViewClient</code>,它要添加<code>WebViewClient</code>必须重写<code>BridgeWebView</code>,并且<code>WebViewClient</code>必须是<code>BridgeWebViewClient</code>的子类.这样不仅对开发者来说使用复杂程度提升了,另外暴露了太多开发者本不需要关注的接口.</p>
+<h4 id="基本原理-2">基本原理</h4>
+<p>同<code>Jockey</code>一样,复写<code>WebViewClient</code>的<code>shouldOverrideUrlLoading()</code>方法.源码部分也是基本和上面一致,这里不再多说.</p>
+<h3 id="rainbowbridge">RainbowBridge</h3>
+<h4 id="基本原理-3">基本原理</h4>
+<p><code>RainbowBridge</code>的原理和上面两个不同,上面是通过<code>URL</code>来触发事件的执行,而<code>RainbowBridge</code>是通过<code>Js</code>来控制事件的执行.Android在<code>WebChromeClient</code>有对一些原生的<code>Js</code>事件进行捕获,最常见的就是<code>alert</code>对话框,但是<code>alert</code>对话框在原本<code>Js</code>中出现的频率较高,如果我们对这个事件拦截掉,可能有一些异常,所以可以拦截一个相对较少出现的事件,通过处理这个事件的信息从而达到执行事件.</p>
+<h4 id="源码解读-2">源码解读</h4>
+<pre><code class="language-java">public class JsBridgeWebChromeClient extends WebChromeClient {
+    @Override
+    public final boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
+        result.confirm();
+        JsCallJava.newInstance().call(view,message);//在这里处理事件
+        return true;
+    }
+    ...
+}
+</code></pre>
+<p>下面简单看一下对事件的处理.</p>
+<pre><code class="language-java">public void call(WebView webView, String message) {
+    if (webView == null || TextUtils.isEmpty(message))
+            return;
+    parseMessage(message); //解析参数到mParms
+    invokeNativeMethod(webView); //根据参数掉本地方法,这里使用了反射. 实现比较灵活
+ }
+</code></pre>
+<p>同样,对于原生发送消息到<code>Js</code>依旧是使用<code>WebView.load(&quot;JavaScript:XXXX&quot;)</code>.</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="http://zjutkz.net/2016/04/17/%E5%A5%BD%E5%A5%BD%E5%92%8Ch5%E6%B2%9F%E9%80%9A%EF%BC%81%E5%87%A0%E7%A7%8D%E5%B8%B8%E8%A7%81%E7%9A%84hybrid%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/">好好和h5沟通！几种常见的hybrid通信方式</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%BC%80%E6%BA%90%E6%96%B9%E6%A1%88">开源方案</a></li>
+<li><a href="#%E5%AE%9E%E7%8E%B0">实现</a>
+<ul>
+<li><a href="#jockey">Jockey</a>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86">基本原理</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8">使用</a></li>
+<li><a href="#%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB">源码解读</a></li>
+</ul>
+</li>
+<li><a href="#jsbridge">JsBridge</a>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86-2">基本原理</a></li>
+</ul>
+</li>
+<li><a href="#rainbowbridge">RainbowBridge</a>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86-3">基本原理</a></li>
+<li><a href="#%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-2">源码解读</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://kutear.github.io/post/2016-07-26_Android_Hot_Fix">
+              <h3 class="post-title">
+                Android 热修复
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      console.log('section.offsetHeight', section.offsetHeight);
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>
