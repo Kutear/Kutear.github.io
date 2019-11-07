@@ -1,101 +1,1072 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>对Window/WindowManager和WindowManagerSystem的理解 | Gridea</title>
-<meta name="description" content="温故而知新" />
-<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573117490167">
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
-<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
+  <head lang="zh">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="telephone=no" name="format-detection"/>
+<meta name="renderer" content="webkit">
+<meta name="description" content="温故而知新">
+<meta http-equiv="Access-Control-Allow-Origin" content="*">
 
-<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+<title>对Window/WindowManager和WindowManagerSystem的理解 | KuTeat</title>
+<link href="https://kutear.github.io/styles/main.css" type="text/css" rel="stylesheet"/>
+<link rel="stylesheet" href="//cdn.bootcss.com/KaTeX/0.10.2/katex.min.css"/>
+<script src="//cdn.bootcss.com/KaTeX/0.10.2/katex.min.js"></script>
+<script src="//cdn.bootcss.com/KaTeX/0.10.2/contrib/auto-render.min.js"></script>
+<script type="text/javascript" src="https://kutear.github.io/media/scripts/jquery.js"></script>
+<script type="text/javascript" src="https://kutear.github.io/media/scripts/jquery.pjax.min.js"></script>
+<script type="text/javascript" src="https://kutear.github.io/media/scripts/basic.js"></script>
+<script type="text/javascript" src="//cdn.bootcss.com/gitalk/1.5.0/gitalk.min.js"></script>
+<script src="//cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+<script async type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script async type="text/javascript" src="https://kutear.github.io/media/scripts/search.js"></script>
+<script type="text/javascript">
+$(document).pjax('a[target!=_blank]', '#pjax-container', {
+	fragment: '#pjax-container',
+	timeout: 5000,
+	cache: false
+});
+$(document).on('pjax:complete', function(){  	
+	pjax();
+});
 
+$(window).on('popstate.pjax', function () {
+	pjax();
+})
 
+function pjax() {
+	$.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js");
+
+	if (("#gitalk-container").length > 0 ) {
+	$('#mememe').attr('src','//source.unsplash.com/800x400/?arts,weather?'+Math.random());
+	$.getScript("//cdn.bootcss.com/KaTeX/0.10.2/katex.min.js");
+	$.getScript("//cdn.bootcss.com/KaTeX/0.10.2/contrib/auto-render.min.js");
+	$('pre code').each(function(i, block) {
+        hljs.highlightBlock(block);
+    	});
+	}
+}
+</script>
 
   </head>
+
   <body>
-    <div class="main">
-      <div class="main-content">
-        <div class="site-header">
-  <a href="https://kutear.github.io">
-  <img class="avatar" src="https://kutear.github.io/images/avatar.png?v=1573117490167" alt="">
-  </a>
-  <h1 class="site-title">
-    Gridea
-  </h1>
-  <p class="site-description">
-    温故而知新
-  </p>
-  <div class="menu-container">
-    
-      
-        <a href="/" class="menu">
-          首页
-        </a>
-      
-    
-      
-        <a href="/archives" class="menu">
-          归档
-        </a>
-      
-    
-      
-        <a href="/tags" class="menu">
-          标签
-        </a>
-      
-    
-      
-        <a href="/post/about" class="menu">
-          关于
-        </a>
-      
-    
+     <div class="header">
+      <div class="logo_title">
+		  
+        <div class="title animated fadeInDown"><img id="img1" style="display:inline-block;" src="https://kutear.github.io/images/avatar.png"/>
+<script>
+var r = 0;
+    window.onload = function(){
+        var current = 0;
+        document.getElementById('img1').onclick = function(){
+            current = (current+90)%360;
+            this.style.transform = 'rotate('+current+'deg)';
+        }
+    };
+</script>
+          <h1 title="KuTeat" class="weaklink"><a  href="/">KuTeat</a>
+
+          </h1>
+
+          <div class="navbar weaklink">
+            <div class="normal_nav">
+
+<div class="bitcron_nav_container">
+
+
+  <div class="bitcron_nav">
+    <div class="mixed_site_nav_wrap site_nav_wrap">
+		
+      <ul class="mixed_site_nav site_nav sm sm-base">
+	  
+ 
+  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/" class="selected active current nav__item" >首页</a>
+  </li>
+  
+ 
+  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/archives" class="selected active current nav__item" >归档</a>
+  </li>
+  
+ 
+  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/tags" class="selected active current nav__item" >标签</a>
+  </li>
+  
+ 
+  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/post/about" class="selected active current nav__item" >关于</a>
+  </li>
+  
+ 
+ <li>
+
+      </ul>
+	  
+
+      <div class="clear clear_nav_inline_end"></div>
+<div class="search">
+    <i class="search-icon fa fa-search search-start"></i>
+    <input type="text" class="search-input" placeholder="Searching..." />
+    <i class="search-icon fa fa-refresh search-clear"></i>
+	<div class="search-results"></div>
+</div>
+    </div>
+
   </div>
-  <div class="social-container">
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-  </div>
+
+
+
+  <div class="clear clear_nav_end"></div>
+
 </div>
 
-        <div class="post-detail">
-          <article class="post">
-            <h2 class="post-title">
-              对Window/WindowManager和WindowManagerSystem的理解
-            </h2>
-            <div class="post-info">
-              <span>
-                2016-09-20
-              </span>
-              <span>
-                13 min read
-              </span>
-              
-                <a href="https://kutear.github.io/tag/23BKTXLtA" class="post-tag">
-                  # View
-                </a>
-              
-                <a href="https://kutear.github.io/tag/w-_t1J-CXe" class="post-tag">
-                  # Touch
-                </a>
-              
             </div>
-            
-            <div class="post-content-wrapper">
-              <div class="post-content">
-                <h1 id="windowsmanager">WindowsManager</h1>
+			
+			<div class="hamberger"><i class="fa fa-bars"></i>
+<i class="fa fa-times"></i>
+
+			</div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="hidden_nav animated fadeInDown">
+
+<div class="bitcron_nav_container">
+
+
+  <div class="bitcron_nav">
+    <div class="mixed_site_nav_wrap site_nav_wrap">
+      <ul class="mixed_site_nav site_nav sm sm-base">
+	
+  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/" class="selected active current nav__item" >首页</a>
+
+  </li>
+
+
+  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/archives" class="selected active current nav__item" >归档</a>
+
+  </li>
+
+
+  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/tags" class="selected active current nav__item" >标签</a>
+
+  </li>
+
+
+  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/post/about" class="selected active current nav__item" >关于</a>
+
+  </li>
+
+
+
+
+      </ul>
+
+      <div class="clear clear_nav_inline_end"></div>
+    </div>
+
+  </div>
+
+
+
+  <div class="clear clear_nav_end"></div>
+
+</div>
+
+      </div>
+
+    </div>
+
+<style type="text/css">
+.search {
+    position: relative;
+    height: 30px;
+    text-align: right;
+    line-height: 30px;
+    padding-right: 10px;
+}
+
+.search .search-icon {
+    float: right;
+    height: 100%;
+    margin: 0 10px;
+    line-height: 30px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.search .search-input {
+    float: right;
+    width: 30%;
+    height: 30px;
+    line-height: 30px;
+    margin: 0;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+
+.search .search-clear {
+    display: none;
+}
+
+.search .search-results {
+    display: block;
+    z-index: 1000;
+    position: absolute;
+    top: 30px;
+    right: 50px;
+    width: 50%;
+    max-height: 400px;
+    overflow: auto;
+    text-align: left;
+    border-radius: 5px;
+    box-shadow: 0 .3rem .5rem #333;
+}
+
+.search .search-results .result-item {
+    color: #000;
+    margin: 5px;
+    padding: 3px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+</style>
+
+    <div class="main" id="pjax-container">
+      <div class="main-inner">
+
+
+<div class="content">
+
+
+
+
+
+
+  <div class="post_page" >
+
+<div class="post">
+  <div class="post_title sm_margin">
+    <h2><a>对Window/WindowManager和WindowManagerSystem的理解</a>
+
+
+
+    </h2>
+  </div>
+  
+<script>
+function lan(){
+	if (document.getElementById("lan").innerText == "繁"){
+		var s=document.getElementById("tongwenlet_cn");
+		if(s != null){
+		document.body.removeChild(s);
+		}
+		var s = document.createElement("script");
+		s.language = "javascript";
+		s.type = "text/javascript";
+		s.src = "https://git.oschina.net/runningcheese/JiathisQR.js/raw/master/bookmarklet_tw.js";
+		s.id = "tongwenlet_cn";
+		document.body.appendChild(s);
+		document.getElementById("lan").innerHTML = "简"
+	}
+	else if(document.getElementById("lan").innerText == "簡"){
+		var s=document.getElementById("tongwenlet_cn");
+		if(s != null){
+		document.body.removeChild(s);
+		}
+		var s = document.createElement("script");
+		s.language = "javascript";
+		s.type = "text/javascript";
+		s.src = "https://git.oschina.net/runningcheese/JiathisQR.js/raw/master/bookmarklet_cn.js";
+		s.id = "tongwenlet_cn";
+		document.body.appendChild(s);
+		document.getElementById("lan").innerHTML = "繁"
+		}
+}
+
+function change(){	
+    var rand = Math.random()*1+1;
+    var num = window.getComputedStyle(document.getElementsByName("show")[0],undefined).fontSize;
+	num = num.slice(0,-2); 
+    document.getElementById("show").style.fontSize = num - rand +'px';
+}
+</script>
+
+  <div class="post_details">
+    <div class="info"><i class="fa fa-clock-o"></i>
+<span class="date_info">2016-09-20</span>
+<i class="fa fa-eye"></i>
+
+<span class="date_info"><span id="busuanzi_value_page_pv"></span> Views</span>
+
+<i class="fa fa-bookmark-o"></i>
+<span class="tags_info weaklink">
+	
+	<a href="https://kutear.github.io/tag/23BKTXLtA" class="tag">View</a>
+
+	<a href="https://kutear.github.io/tag/w-_t1J-CXe" class="tag">Touch</a>
+
+
+</span>
+<span>13 min read</span>
+&nbsp
+&nbsp
+<i class="fa fa-share"></i>
+<a title="QR code" target="_blank" href="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://kutear.github.io/post/2016-09-20-Android-Windows"><i class="fa fa-qrcode"></i></a>
+<a title="qq share" target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://kutear.github.io/post/2016-09-20-Android-Windows&sharesource=qzone&title=对Window/WindowManager和WindowManagerSystem的理解&pics=https://blog.blinkstar.cn/images/avatar.png&summary=&lt;h1 id=&#34;windowsmanager&#34;&gt;WindowsManager&lt;/h1&gt;
+&lt;h2 id=&#34;window的type&#34;&gt;Window的type&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;The general type of window.  There are three main classes of&lt;br&gt;
+window types:&lt;/p&gt;
+&lt;/blockquote&gt;
+  &lt;ul&gt;
+  &lt;li&gt; &lt;strong&gt;Application windows&lt;/strong&gt; (ranging from
+  {@link #FIRST_APPLICATION_WINDOW} to
+  {@link #LAST_APPLICATION_WINDOW}) are normal top-level application
+  windows.  For these types of windows, the {@link #token} must be
+  set to the token of the activity they are a part of (this will
+  normally be done for you if {@link #token} is null).
+  &lt;li&gt; &lt;strong&gt;Sub-windows&lt;/strong&gt; (ranging from
+  {@link #FIRST_SUB_WINDOW} to
+  {@link #LAST_SUB_WINDOW}) are associated with another top-level
+  window.  For these types of windows, the {@link #token} must be
+  the token of the window it is attached to.
+  &lt;li&gt; &lt;strong&gt;System windows&lt;/strong&gt; (ranging from
+  {@link #FIRST_SYSTEM_WINDOW} to
+  {@link #LAST_SYSTEM_WINDOW}) are special types of windows for
+  use by the system for specific purposes.  They should not normally
+  be used by applications, and a special permission is required
+  to use them.
+  &lt;/ul&gt;
+                           		---WindowManager.java
+&lt;p&gt;以上来源&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/core/java/android/view/WindowManager.java#199&#34;&gt;WindowManager#LayoutParams&lt;/a&gt;，介绍了Window分为&lt;code&gt;Application windows&lt;/code&gt;，&lt;code&gt;Sub-windows&lt;/code&gt;，&lt;code&gt;System windows&lt;/code&gt;三种。&lt;/p&gt;
+&lt;h2 id=&#34;getsystemservicestr的实现原理&#34;&gt;getSystemService(str)的实现原理&lt;/h2&gt;
+&lt;p&gt;我们知道&lt;code&gt;Context&lt;/code&gt;的实现类是&lt;code&gt;ContextImpl&lt;/code&gt;，通过查看源码，得到函数的实现为&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/ContextImpl.java#1538&#34;&gt;源码&lt;/a&gt;。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    //ContextImpl.java
+    @Override
+    public Object getSystemService(String name) {
+        return SystemServiceRegistry.getSystemService(this, name);
+    }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;OK,在此可以看见，是调用&lt;code&gt;SystemServiceRegistry&lt;/code&gt;的静态函数&lt;code&gt;getSystemService(..)&lt;/code&gt;来实现的，我们跟着深入，这个函数的实现为&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/SystemServiceRegistry.java#790&#34;&gt;源码&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    //SystemServiceRegistry.java
+    /**
+     * Gets a system service from a given context.
+     */
+    public static Object getSystemService(ContextImpl ctx, String name) {
+        ServiceFetcher&amp;lt;?&amp;gt; fetcher = SYSTEM_SERVICE_FETCHERS.get(name);
+        return fetcher != null ? fetcher.getService(ctx) : null;
+    }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;OK，进一步知道是从&lt;code&gt;ServiceFetcher&lt;/code&gt;中获取到的，而&lt;code&gt;ServiceFetcher&lt;/code&gt;是从&lt;code&gt;SYSTEM_SERVICE_FETCHERS&lt;/code&gt;获取到的，跟进知道&lt;code&gt;SYSTEM_SERVICE_FETCHERS&lt;/code&gt;的申明为&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    private static final HashMap&amp;lt;String, ServiceFetcher&amp;lt;?&amp;gt;&amp;gt; SYSTEM_SERVICE_FETCHERS =
+            new HashMap&amp;lt;String, ServiceFetcher&amp;lt;?&amp;gt;&amp;gt;();
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;是个&lt;code&gt;HashMap&lt;/code&gt;，现在我们就要看看数据是在哪里&lt;code&gt;put&lt;/code&gt;进去的，通过分析查找，&lt;code&gt;put&lt;/code&gt;只在函数&lt;code&gt;registerService()&lt;/code&gt;中调用过，所以这些服务一定是通过这里注册的。由于是&lt;code&gt;static final&lt;/code&gt;，所以只能在构造函数或静态块进行初始化，这就很方便我们查找。根据查找，可看见实现&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/SystemServiceRegistry.java#151&#34;&gt;源码&lt;/a&gt;。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;	static {
+        registerService(Context.ACCESSIBILITY_SERVICE, AccessibilityManager.class,
+                new CachedServiceFetcher&amp;lt;AccessibilityManager&amp;gt;() {
+            @Override
+            public AccessibilityManager createService(ContextImpl ctx) {
+                return AccessibilityManager.getInstance(ctx);
+        }});
+        ......
+        registerService(Context.WINDOW_SERVICE, WindowManager.class,
+               new CachedServiceFetcher&amp;lt;WindowManager&amp;gt;() {
+            @Override
+            public WindowManager createService(ContextImpl ctx) {
+                return new WindowManagerImpl(ctx);
+        }});
+        ......
+	}
+    /**
+     * Statically registers a system service with the context.
+     * This method must be called during static initialization only.
+     */
+    private static &amp;lt;T&amp;gt; void registerService(String serviceName, Class&amp;lt;T&amp;gt; serviceClass,
+            ServiceFetcher&amp;lt;T&amp;gt; serviceFetcher) {
+        SYSTEM_SERVICE_NAMES.put(serviceClass, serviceName);
+        SYSTEM_SERVICE_FETCHERS.put(serviceName, serviceFetcher);
+    }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;回到上面的&lt;code&gt;fetcher.getService(ctx)&lt;/code&gt;函数，它的实现为&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/d0c83cc/core/java/android/app/ContextImpl.java#212&#34;&gt;源码&lt;/a&gt;。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    //代码去除了无用部分
+	public Object getService(ContextImpl ctx) {
+        service = createService(ctx);
+        cache.set(mContextCacheIndex, service);
+        return service;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;看到这里，我们知道平时使用&lt;code&gt;WindowManager&lt;/code&gt;的真实对象其实是&lt;code&gt;WindowManagerImpl&lt;/code&gt;。&lt;/p&gt;
+&lt;h2 id=&#34;window的添加过程&#34;&gt;Window的添加过程&lt;/h2&gt;
+&lt;p&gt;根据上面的分析，知道了&lt;code&gt;WindowManagerImpl&lt;/code&gt;才是幕后的凶手，但是真的是这样的吗？我们接着分析。在它的源码中，我们可以看看&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/0e2d281/core/java/android/view/WindowManagerImpl.java&#34;&gt;源码&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class WindowManagerImpl implements WindowManager {
+    private final WindowManagerGlobal mGlobal = WindowManagerGlobal.getInstance();
+    private final Display mDisplay;
+    private final Window mParentWindow;
+    public WindowManagerImpl(Display display) {
+        this(display, null);
+    }
+    private WindowManagerImpl(Display display, Window parentWindow) {
+        mDisplay = display;
+        mParentWindow = parentWindow;
+    }
+    public WindowManagerImpl createLocalWindowManager(Window parentWindow) {
+        return new WindowManagerImpl(mDisplay, parentWindow);
+    }
+    public WindowManagerImpl createPresentationWindowManager(Display display) {
+        return new WindowManagerImpl(display, mParentWindow);
+    }
+    @Override
+    public void addView(View view, ViewGroup.LayoutParams params) {
+        mGlobal.addView(view, params, mDisplay, mParentWindow);
+    }
+    @Override
+    public void updateViewLayout(View view, ViewGroup.LayoutParams params) {
+        mGlobal.updateViewLayout(view, params);
+    }
+    @Override
+    public void removeView(View view) {
+        mGlobal.removeView(view, false);
+    }
+    @Override
+    public void removeViewImmediate(View view) {
+        mGlobal.removeView(view, true);
+    }
+    @Override
+    public Display getDefaultDisplay() {
+        return mDisplay;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;卧槽，添加&lt;code&gt;View&lt;/code&gt;并不是它在操作，看来真实另有隐情啊。&lt;code&gt;Window&lt;/code&gt;的三大操作(add,remove,update)都是有&lt;code&gt;WindowManagerGlobal&lt;/code&gt;来实现的。下面分析&lt;code&gt;WindowManagerGlobal&lt;/code&gt;,先看看它的内部字段的含义。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;//存储所有Window对应的View
+private final ArrayList&amp;lt;View&amp;gt; mViews = new ArrayList&amp;lt;View&amp;gt;();
+//存储所有Window对应的ViewRootImpl
+private final ArrayList&amp;lt;ViewRootImpl&amp;gt; mRoots = new ArrayList&amp;lt;ViewRootImpl&amp;gt;();
+//存储所有Window对应的布局参数
+private final ArrayList&amp;lt;WindowManager.LayoutParams&amp;gt; mParams =
+        new ArrayList&amp;lt;WindowManager.LayoutParams&amp;gt;();
+//存储正在被删除的View(已经调用remove但remove还没有完成)
+private final ArraySet&amp;lt;View&amp;gt; mDyingViews = new ArraySet&amp;lt;View&amp;gt;();
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;接下来就是核心部分了，分析&lt;code&gt;addView&lt;/code&gt;的&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/0e40462e11d27eb859b829b112cecb8c6f0d7afb/core/java/android/view/WindowManagerGlobal.java#204&#34;&gt;源码&lt;/a&gt;。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public void addView(View view, ViewGroup.LayoutParams params,
+        Display display, Window parentWindow) {
+    ...... 参数合法判断
+    final WindowManager.LayoutParams wparams = (WindowManager.LayoutParams)params;
+    if (parentWindow != null) {
+        //parentWindow != null 表示新建的Window的type为子Window,如Dialog,其主要作用是修改token
+        //子Window回共用父Window的token.
+        parentWindow.adjustLayoutParamsForSubWindow(wparams);
+    } else {
+        // If there&#39;s no parent and we&#39;re running on L or above (or in the
+        // system context), assume we want hardware acceleration.
+        final Context context = view.getContext();
+        if (context != null
+                &amp;amp;&amp;amp; context.getApplicationInfo().targetSdkVersion &amp;gt;= Build.VERSION_CODES.LOLLIPOP) {
+            wparams.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
+        }
+    }
+    ViewRootImpl root;
+    View panelParentView = null;
+    synchronized (mLock) {
+        // Start watching for system property changes.
+        if (mSystemPropertyUpdater == null) {
+            mSystemPropertyUpdater = new Runnable() {
+                @Override public void run() {
+                    synchronized (mLock) {
+                        for (int i = mRoots.size() - 1; i &amp;gt;= 0; --i) {
+                            mRoots.get(i).loadSystemProperties();
+                        }
+                    }
+                }
+            };
+            SystemProperties.addChangeCallback(mSystemPropertyUpdater);
+        }
+        //view在mViews中的位置
+        int index = findViewLocked(view, false);
+        //找到说明该View已经添加到某个Window
+        if (index &amp;gt;= 0) {
+            //正在remove
+            if (mDyingViews.contains(view)) {
+                // Don&#39;t wait for MSG_DIE to make it&#39;s way through root&#39;s queue.
+                mRoots.get(index).doDie();
+            } else {
+                throw new IllegalStateException(&amp;quot;View &amp;quot; + view
+                        + &amp;quot; has already been added to the window manager.&amp;quot;);
+            }
+            // The previous removeView() had not completed executing. Now it has.
+        }
+        // If this is a panel window, then find the window it is being
+        // attached to for future reference.
+        if (wparams.type &amp;gt;= WindowManager.LayoutParams.FIRST_SUB_WINDOW &amp;amp;&amp;amp;
+                wparams.type &amp;lt;= WindowManager.LayoutParams.LAST_SUB_WINDOW) {
+            final int count = mViews.size();
+            for (int i = 0; i &amp;lt; count; i++) {
+                if (mRoots.get(i).mWindow.asBinder() == wparams.token) {
+                    panelParentView = mViews.get(i);
+                }
+            }
+        }
+        root = new ViewRootImpl(view.getContext(), display);
+        view.setLayoutParams(wparams);
+        mViews.add(view);
+        mRoots.add(root);
+        mParams.add(wparams);
+    }
+    // do this last because it fires off messages to start doing things
+    try {
+        root.setView(view, wparams, panelParentView);
+    } catch (RuntimeException e) {
+        // BadTokenException or InvalidDisplayException, clean up.
+        synchronized (mLock) {
+            final int index = findViewLocked(view, false);
+            if (index &amp;gt;= 0) {
+                removeViewLocked(index, true);
+            }
+        }
+        throw e;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;看了这么多，我们发现还是没有看见核心代码，那就继续往下看咯，&lt;code&gt;ViewRootImpl&lt;/code&gt;这个类。&lt;code&gt;ViewRootImpl&lt;/code&gt;是&lt;code&gt;FrameWork&lt;/code&gt;层与&lt;code&gt;Native&lt;/code&gt;层的通信桥梁。在上面的代码中有实例化它,我们看看具体的实现.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public ViewRootImpl(Context context, Displaydisplay) {
+    // ① 从WindowManagerGlobal中获取一个IWindowSession的实例。它是ViewRootImpl和WMS进行通信的代理
+   mWindowSession= WindowManagerGlobal.getWindowSession(context.getMainLooper());
+    // ② 保存参数display，在后面setView()调用中将会把窗口添加到这个Display上
+   mDisplay= display;
+   CompatibilityInfoHolder cih = display.getCompatibilityInfo();
+   mCompatibilityInfo = cih != null ? cih : new CompatibilityInfoHolder();
+    // ③ 保存当前线程到mThread。这个赋值操作体现了创建ViewRootImpl的线程如何成为UI主线程。在ViewRootImpl处理来自控件树的请求时（如请求重新布局，请求重绘，改变焦点等），会检查发起请求的thread与这个mThread是否相同。倘若不同则会拒绝这个请求并抛出一个异常
+    mThread= Thread.currentThread();
+    ......
+    // ④ mDirty用于收集窗口中的无效区域。**所谓无效区域是指由于数据或状态发生改变时而需要进行重绘的区域。举例说明，当应用程序修改了一TextView的文字时，TextView会将自己的区域标记为无效区域，并通invalidate()方法将这块区域收集到这里的mDirty中。当下次绘制时，TextView便可以将新的文字绘制在这块区域上
+    mDirty =new Rect();
+    mTempRect = new Rect();
+    mVisRect= new Rect();
+    // ⑤ mWinFrame，描述了当前窗口的位置和尺寸。与WMS中WindowState.mFrame保持着一致
+    mWinFrame = new Rect();
+    // ⑥ 创建一个W类型的实例，W是IWindow.Stub的子类。即它将在WMS中作为新窗口的ID，以及接收来自WMS的回调
+    mWindow= new W(this);
+    ......
+    // ⑦ 创建mAttachInfo。mAttachInfo是控件系统中很重要的对象。它存储了此当前控件树所以贴附的窗口的各种有用的信息，并且会派发给控件树中的每一个控件。这些控件会将这个对象保存在自己的mAttachInfo变量中。mAttachInfo中所保存的信息有WindowSession，窗口的实例（即mWindow）， ViewRootImpl实例，窗口所属的Display，窗口的Surface以及窗口在屏幕上的位置等等。所以，当要需在一个View中查询与当前窗口相关的信息时，非常值得在mAttachInfo中搜索一下
+    mAttachInfo = new View.AttachInfo(mWindowSession, mWindow, display,this, mHandler, this);
+    // ⑧ 创建FallbackEventHandler。**这个类如同PhoneWindowManger一样定义在android.policy包中，其实现为PhoneFallbackEventHandler。FallbackEventHandler是一个处理未经任何人消费的输入事件的场所。在6.5.4节中将会介绍它
+    mFallbackEventHandler =PolicyManager.makeNewFallbackEventHandler(context);
+    ......
+    //⑨ 创建一个依附于当前线程，即主线程的Choreographer，用于通过VSYNC特性安排重绘行为
+    mChoreographer= Choreographer.getInstance();
+    ......
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;以上分析来源于&lt;a href=&#34;https://wizardforcel.gitbooks.io/deepin-android-vol3/content/6.html&#34;&gt;GITBOOK&lt;/a&gt;.接着看看&lt;code&gt;mWindowSession&lt;/code&gt;是怎么来的。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public static IWindowSession getWindowSession() {
+     //代码删除干扰部分
+     InputMethodManager imm = InputMethodManager.getInstance();
+     IWindowManager windowManager = getWindowManagerService();
+     sWindowSession = windowManager.openSession(
+             new IWindowSessionCallback.Stub() {
+                   @Override
+                   public void onAnimatorScaleChanged(float scale) {
+                          ValueAnimator.setDurationScale(scale);
+                   }
+             },
+             imm.getClient(),
+             imm.getInputContext());
+     return sWindowSession;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;通过Google搜索，我们发现&lt;code&gt;IWindowManager&lt;/code&gt;其实是一个&lt;code&gt;AIDL&lt;/code&gt;文件,&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/view/IWindowManager.aidl&#34;&gt;代码在此&lt;/a&gt;,也就是说，这里的实现其实是进程间的通信，继续跟进下&lt;code&gt;getWindowManagerService()&lt;/code&gt;的实现。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public static IWindowManager getWindowManagerService() {
+        synchronized (WindowManagerGlobal.class) {
+            if (sWindowManagerService == null) {
+                sWindowManagerService = IWindowManager.Stub.asInterface(
+                        ServiceManager.getService(&amp;quot;window&amp;quot;));
+                ......        
+            }
+            return sWindowManagerService;
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;根据我们已有的AIDL的知识，我们知道&lt;code&gt;ServiceManager.getService(&amp;quot;window&amp;quot;)&lt;/code&gt;返回的其实是一个&lt;code&gt;IBinder&lt;/code&gt;,这里接着看看到底返回的是什么？&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/0e2d281/core/java/android/os/ServiceManager.java#49&#34;&gt;在源码中&lt;/a&gt;查看。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public static IBinder getService(String name) {
+     ...
+     return getIServiceManager().getService(name);
+     ...
+}
+public static void addService(String name, IBinder service) {
+    getIServiceManager().addService(name, service, false);
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;所以，所有的服务都是通过&lt;code&gt;addService&lt;/code&gt;添加到&lt;code&gt;ServiceManager&lt;/code&gt;,然后通过&lt;code&gt;getService&lt;/code&gt;取出，但是是怎么添加，每个服务具体的类是什么？我们只要看看哪里调用&lt;code&gt;addService&lt;/code&gt;即可。&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base.git/+/22f7dfd23490a3de2f21ff96949ba47003aac8f8/services/java/com/android/server/SystemServer.java#97&#34;&gt;源码&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;try {
+  power = new PowerManagerService();
+  ServiceManager.addService(Context.POWER_SERVICE, power);
+  ....
+  wm = WindowManagerService.main(context, power,
+                   factoryTest != SystemServer.FACTORY_TEST_LOW_LEVEL);
+  ServiceManager.addService(Context.WINDOW_SERVICE, wm);//Context.WINDOW_SERVICE = &amp;quot;window&amp;quot;
+}
+...
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;在&lt;code&gt;WindowManagerService.main(...)&lt;/code&gt;中，我们可以看到返回的其实是	&lt;code&gt;WindowManagerService&lt;/code&gt;。而&lt;code&gt;WindowManagerService&lt;/code&gt;的声明为&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class WindowManagerService extends IWindowManager.Stub
+        implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs{}
+
+class IWindowManager.Stub extends android.os.Binder{}
+
+public class Binder implements IBinder{}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;这里可以看到,这是很普通的一个AIDL的实现.回到函数&lt;code&gt;getWindowSession()&lt;/code&gt;,&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;IWindowManager windowManager = getWindowManagerService();
+sWindowSession = windowManager.openSession(
+        new IWindowSessionCallback.Stub() {
+              @Override
+              public void onAnimatorScaleChanged(float scale) {
+                     ValueAnimator.setDurationScale(scale);
+              }
+        },
+        imm.getClient(),
+        imm.getInputContext());
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;我们知道了&lt;code&gt;windowManager&lt;/code&gt;其实是&lt;code&gt;WindowManagerService&lt;/code&gt;,所以看看&lt;code&gt;openSession&lt;/code&gt;的具体实现。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Override
+public IWindowSession openSession(IWindowSessionCallback callback, IInputMethodClient client,IInputContext inputContext) {
+    if (client == null) throw new IllegalArgumentException(&amp;quot;null client&amp;quot;);
+    if (inputContext == null) throw new IllegalArgumentException(&amp;quot;null inputContext&amp;quot;);
+    Session session = new Session(this, callback, client, inputContext);
+    return session;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;可以看见&lt;code&gt;Session&lt;/code&gt;的签名如下,我们知道它是&lt;code&gt;IWindowSession.aidl&lt;/code&gt;的具体实现.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;final class Session extends IWindowSession.Stub
+        implements IBinder.DeathRecipient{}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;blockquote&gt;
+&lt;p&gt;This class represents an active client session.  There is generally one&lt;br&gt;
+Session object per process that is interacting with the window manager.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;code&gt;WindowManagerGlobal&lt;/code&gt;的&lt;code&gt;addView()&lt;/code&gt;最终调用的了&lt;code&gt;ViewRootImpl&lt;/code&gt;的&lt;code&gt;setView()&lt;/code&gt;方法,那么这个方法又是做什么用的?&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Schedule the first layout -before- adding to the window
+// manager, to make sure we do the relayout before receiving
+// any other events from the system.
+requestLayout();
+...
+try {
+    ...
+    res = mWindowSession.addToDisplay(mWindow, mSeq, mWindowAttributes,
+            getHostVisibility(), mDisplay.getDisplayId(),
+            mAttachInfo.mContentInsets, mAttachInfo.mStableInsets,
+            mAttachInfo.mOutsets, mInputChannel);
+} catch (RemoteException e) {} finally {}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;上面代码中的&lt;code&gt;requestLayout()&lt;/code&gt;会调用&lt;code&gt;scheduleTraversals()&lt;/code&gt;方法,而该方法最终会调用&lt;code&gt;performTraversals()&lt;/code&gt;,该函数就是android系统View树遍历工作的核心。执行过程可简单概括为根据之前所有设置好的状态，判断是否需要计算视图大小（measure）、是否需要重新安置视图的位置（layout），以及是否需要重绘（draw）视图,这里我不会进一步分析.下面看看&lt;code&gt;mWindowSession.addToDisplay()&lt;/code&gt;的调用,我们知道&lt;code&gt;mWindowSession&lt;/code&gt;就是&lt;code&gt;Session&lt;/code&gt;,这个函数的实现为&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Override
+public int addToDisplay(IWindow window, int seq, WindowManager.LayoutParams attrs,
+        int viewVisibility, int displayId, Rect outContentInsets, Rect outStableInsets,
+        Rect outOutsets, InputChannel outInputChannel) {
+          //mService 是WindowManagerService ,构造函数中赋的值
+    return mService.addWindow(this, window, seq, attrs, viewVisibility, displayId,
+            outContentInsets, outStableInsets, outOutsets, outInputChannel);
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;可以看出，Window的添加请求就交给WindowManagerService去处理了。addView大概一个过程如下：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;WindowManagerImpl——&amp;gt;WindowManagerGobal——&amp;gt;ViewRootImpl——&amp;gt;Session——&amp;gt;WindowManagerService&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;参考&#34;&gt;参考&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://wizardforcel.gitbooks.io/deepin-android-vol3/content/6.html&#34;&gt;深入理解控件（ViewRoot）系统&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://blog.csdn.net/qianhaifeng2012/article/details/51737370&#34;&gt;Android中的ViewRootImpl类源码解析&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+"><i class="fa fa-qq"></i></a>
+<a title="weibo share" target="_blank" href="https://service.weibo.com/share/share.php?url=https://kutear.github.io/post/2016-09-20-Android-Windows&sharesource=weibo&title=对Window/WindowManager和WindowManagerSystem的理解 + " - " + &lt;h1 id=&#34;windowsmanager&#34;&gt;WindowsManager&lt;/h1&gt;
+&lt;h2 id=&#34;window的type&#34;&gt;Window的type&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;The general type of window.  There are three main classes of&lt;br&gt;
+window types:&lt;/p&gt;
+&lt;/blockquote&gt;
+  &lt;ul&gt;
+  &lt;li&gt; &lt;strong&gt;Application windows&lt;/strong&gt; (ranging from
+  {@link #FIRST_APPLICATION_WINDOW} to
+  {@link #LAST_APPLICATION_WINDOW}) are normal top-level application
+  windows.  For these types of windows, the {@link #token} must be
+  set to the token of the activity they are a part of (this will
+  normally be done for you if {@link #token} is null).
+  &lt;li&gt; &lt;strong&gt;Sub-windows&lt;/strong&gt; (ranging from
+  {@link #FIRST_SUB_WINDOW} to
+  {@link #LAST_SUB_WINDOW}) are associated with another top-level
+  window.  For these types of windows, the {@link #token} must be
+  the token of the window it is attached to.
+  &lt;li&gt; &lt;strong&gt;System windows&lt;/strong&gt; (ranging from
+  {@link #FIRST_SYSTEM_WINDOW} to
+  {@link #LAST_SYSTEM_WINDOW}) are special types of windows for
+  use by the system for specific purposes.  They should not normally
+  be used by applications, and a special permission is required
+  to use them.
+  &lt;/ul&gt;
+                           		---WindowManager.java
+&lt;p&gt;以上来源&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/core/java/android/view/WindowManager.java#199&#34;&gt;WindowManager#LayoutParams&lt;/a&gt;，介绍了Window分为&lt;code&gt;Application windows&lt;/code&gt;，&lt;code&gt;Sub-windows&lt;/code&gt;，&lt;code&gt;System windows&lt;/code&gt;三种。&lt;/p&gt;
+&lt;h2 id=&#34;getsystemservicestr的实现原理&#34;&gt;getSystemService(str)的实现原理&lt;/h2&gt;
+&lt;p&gt;我们知道&lt;code&gt;Context&lt;/code&gt;的实现类是&lt;code&gt;ContextImpl&lt;/code&gt;，通过查看源码，得到函数的实现为&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/ContextImpl.java#1538&#34;&gt;源码&lt;/a&gt;。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    //ContextImpl.java
+    @Override
+    public Object getSystemService(String name) {
+        return SystemServiceRegistry.getSystemService(this, name);
+    }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;OK,在此可以看见，是调用&lt;code&gt;SystemServiceRegistry&lt;/code&gt;的静态函数&lt;code&gt;getSystemService(..)&lt;/code&gt;来实现的，我们跟着深入，这个函数的实现为&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/SystemServiceRegistry.java#790&#34;&gt;源码&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    //SystemServiceRegistry.java
+    /**
+     * Gets a system service from a given context.
+     */
+    public static Object getSystemService(ContextImpl ctx, String name) {
+        ServiceFetcher&amp;lt;?&amp;gt; fetcher = SYSTEM_SERVICE_FETCHERS.get(name);
+        return fetcher != null ? fetcher.getService(ctx) : null;
+    }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;OK，进一步知道是从&lt;code&gt;ServiceFetcher&lt;/code&gt;中获取到的，而&lt;code&gt;ServiceFetcher&lt;/code&gt;是从&lt;code&gt;SYSTEM_SERVICE_FETCHERS&lt;/code&gt;获取到的，跟进知道&lt;code&gt;SYSTEM_SERVICE_FETCHERS&lt;/code&gt;的申明为&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    private static final HashMap&amp;lt;String, ServiceFetcher&amp;lt;?&amp;gt;&amp;gt; SYSTEM_SERVICE_FETCHERS =
+            new HashMap&amp;lt;String, ServiceFetcher&amp;lt;?&amp;gt;&amp;gt;();
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;是个&lt;code&gt;HashMap&lt;/code&gt;，现在我们就要看看数据是在哪里&lt;code&gt;put&lt;/code&gt;进去的，通过分析查找，&lt;code&gt;put&lt;/code&gt;只在函数&lt;code&gt;registerService()&lt;/code&gt;中调用过，所以这些服务一定是通过这里注册的。由于是&lt;code&gt;static final&lt;/code&gt;，所以只能在构造函数或静态块进行初始化，这就很方便我们查找。根据查找，可看见实现&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/SystemServiceRegistry.java#151&#34;&gt;源码&lt;/a&gt;。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;	static {
+        registerService(Context.ACCESSIBILITY_SERVICE, AccessibilityManager.class,
+                new CachedServiceFetcher&amp;lt;AccessibilityManager&amp;gt;() {
+            @Override
+            public AccessibilityManager createService(ContextImpl ctx) {
+                return AccessibilityManager.getInstance(ctx);
+        }});
+        ......
+        registerService(Context.WINDOW_SERVICE, WindowManager.class,
+               new CachedServiceFetcher&amp;lt;WindowManager&amp;gt;() {
+            @Override
+            public WindowManager createService(ContextImpl ctx) {
+                return new WindowManagerImpl(ctx);
+        }});
+        ......
+	}
+    /**
+     * Statically registers a system service with the context.
+     * This method must be called during static initialization only.
+     */
+    private static &amp;lt;T&amp;gt; void registerService(String serviceName, Class&amp;lt;T&amp;gt; serviceClass,
+            ServiceFetcher&amp;lt;T&amp;gt; serviceFetcher) {
+        SYSTEM_SERVICE_NAMES.put(serviceClass, serviceName);
+        SYSTEM_SERVICE_FETCHERS.put(serviceName, serviceFetcher);
+    }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;回到上面的&lt;code&gt;fetcher.getService(ctx)&lt;/code&gt;函数，它的实现为&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/d0c83cc/core/java/android/app/ContextImpl.java#212&#34;&gt;源码&lt;/a&gt;。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    //代码去除了无用部分
+	public Object getService(ContextImpl ctx) {
+        service = createService(ctx);
+        cache.set(mContextCacheIndex, service);
+        return service;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;看到这里，我们知道平时使用&lt;code&gt;WindowManager&lt;/code&gt;的真实对象其实是&lt;code&gt;WindowManagerImpl&lt;/code&gt;。&lt;/p&gt;
+&lt;h2 id=&#34;window的添加过程&#34;&gt;Window的添加过程&lt;/h2&gt;
+&lt;p&gt;根据上面的分析，知道了&lt;code&gt;WindowManagerImpl&lt;/code&gt;才是幕后的凶手，但是真的是这样的吗？我们接着分析。在它的源码中，我们可以看看&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/0e2d281/core/java/android/view/WindowManagerImpl.java&#34;&gt;源码&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class WindowManagerImpl implements WindowManager {
+    private final WindowManagerGlobal mGlobal = WindowManagerGlobal.getInstance();
+    private final Display mDisplay;
+    private final Window mParentWindow;
+    public WindowManagerImpl(Display display) {
+        this(display, null);
+    }
+    private WindowManagerImpl(Display display, Window parentWindow) {
+        mDisplay = display;
+        mParentWindow = parentWindow;
+    }
+    public WindowManagerImpl createLocalWindowManager(Window parentWindow) {
+        return new WindowManagerImpl(mDisplay, parentWindow);
+    }
+    public WindowManagerImpl createPresentationWindowManager(Display display) {
+        return new WindowManagerImpl(display, mParentWindow);
+    }
+    @Override
+    public void addView(View view, ViewGroup.LayoutParams params) {
+        mGlobal.addView(view, params, mDisplay, mParentWindow);
+    }
+    @Override
+    public void updateViewLayout(View view, ViewGroup.LayoutParams params) {
+        mGlobal.updateViewLayout(view, params);
+    }
+    @Override
+    public void removeView(View view) {
+        mGlobal.removeView(view, false);
+    }
+    @Override
+    public void removeViewImmediate(View view) {
+        mGlobal.removeView(view, true);
+    }
+    @Override
+    public Display getDefaultDisplay() {
+        return mDisplay;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;卧槽，添加&lt;code&gt;View&lt;/code&gt;并不是它在操作，看来真实另有隐情啊。&lt;code&gt;Window&lt;/code&gt;的三大操作(add,remove,update)都是有&lt;code&gt;WindowManagerGlobal&lt;/code&gt;来实现的。下面分析&lt;code&gt;WindowManagerGlobal&lt;/code&gt;,先看看它的内部字段的含义。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;//存储所有Window对应的View
+private final ArrayList&amp;lt;View&amp;gt; mViews = new ArrayList&amp;lt;View&amp;gt;();
+//存储所有Window对应的ViewRootImpl
+private final ArrayList&amp;lt;ViewRootImpl&amp;gt; mRoots = new ArrayList&amp;lt;ViewRootImpl&amp;gt;();
+//存储所有Window对应的布局参数
+private final ArrayList&amp;lt;WindowManager.LayoutParams&amp;gt; mParams =
+        new ArrayList&amp;lt;WindowManager.LayoutParams&amp;gt;();
+//存储正在被删除的View(已经调用remove但remove还没有完成)
+private final ArraySet&amp;lt;View&amp;gt; mDyingViews = new ArraySet&amp;lt;View&amp;gt;();
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;接下来就是核心部分了，分析&lt;code&gt;addView&lt;/code&gt;的&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/0e40462e11d27eb859b829b112cecb8c6f0d7afb/core/java/android/view/WindowManagerGlobal.java#204&#34;&gt;源码&lt;/a&gt;。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public void addView(View view, ViewGroup.LayoutParams params,
+        Display display, Window parentWindow) {
+    ...... 参数合法判断
+    final WindowManager.LayoutParams wparams = (WindowManager.LayoutParams)params;
+    if (parentWindow != null) {
+        //parentWindow != null 表示新建的Window的type为子Window,如Dialog,其主要作用是修改token
+        //子Window回共用父Window的token.
+        parentWindow.adjustLayoutParamsForSubWindow(wparams);
+    } else {
+        // If there&#39;s no parent and we&#39;re running on L or above (or in the
+        // system context), assume we want hardware acceleration.
+        final Context context = view.getContext();
+        if (context != null
+                &amp;amp;&amp;amp; context.getApplicationInfo().targetSdkVersion &amp;gt;= Build.VERSION_CODES.LOLLIPOP) {
+            wparams.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
+        }
+    }
+    ViewRootImpl root;
+    View panelParentView = null;
+    synchronized (mLock) {
+        // Start watching for system property changes.
+        if (mSystemPropertyUpdater == null) {
+            mSystemPropertyUpdater = new Runnable() {
+                @Override public void run() {
+                    synchronized (mLock) {
+                        for (int i = mRoots.size() - 1; i &amp;gt;= 0; --i) {
+                            mRoots.get(i).loadSystemProperties();
+                        }
+                    }
+                }
+            };
+            SystemProperties.addChangeCallback(mSystemPropertyUpdater);
+        }
+        //view在mViews中的位置
+        int index = findViewLocked(view, false);
+        //找到说明该View已经添加到某个Window
+        if (index &amp;gt;= 0) {
+            //正在remove
+            if (mDyingViews.contains(view)) {
+                // Don&#39;t wait for MSG_DIE to make it&#39;s way through root&#39;s queue.
+                mRoots.get(index).doDie();
+            } else {
+                throw new IllegalStateException(&amp;quot;View &amp;quot; + view
+                        + &amp;quot; has already been added to the window manager.&amp;quot;);
+            }
+            // The previous removeView() had not completed executing. Now it has.
+        }
+        // If this is a panel window, then find the window it is being
+        // attached to for future reference.
+        if (wparams.type &amp;gt;= WindowManager.LayoutParams.FIRST_SUB_WINDOW &amp;amp;&amp;amp;
+                wparams.type &amp;lt;= WindowManager.LayoutParams.LAST_SUB_WINDOW) {
+            final int count = mViews.size();
+            for (int i = 0; i &amp;lt; count; i++) {
+                if (mRoots.get(i).mWindow.asBinder() == wparams.token) {
+                    panelParentView = mViews.get(i);
+                }
+            }
+        }
+        root = new ViewRootImpl(view.getContext(), display);
+        view.setLayoutParams(wparams);
+        mViews.add(view);
+        mRoots.add(root);
+        mParams.add(wparams);
+    }
+    // do this last because it fires off messages to start doing things
+    try {
+        root.setView(view, wparams, panelParentView);
+    } catch (RuntimeException e) {
+        // BadTokenException or InvalidDisplayException, clean up.
+        synchronized (mLock) {
+            final int index = findViewLocked(view, false);
+            if (index &amp;gt;= 0) {
+                removeViewLocked(index, true);
+            }
+        }
+        throw e;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;看了这么多，我们发现还是没有看见核心代码，那就继续往下看咯，&lt;code&gt;ViewRootImpl&lt;/code&gt;这个类。&lt;code&gt;ViewRootImpl&lt;/code&gt;是&lt;code&gt;FrameWork&lt;/code&gt;层与&lt;code&gt;Native&lt;/code&gt;层的通信桥梁。在上面的代码中有实例化它,我们看看具体的实现.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public ViewRootImpl(Context context, Displaydisplay) {
+    // ① 从WindowManagerGlobal中获取一个IWindowSession的实例。它是ViewRootImpl和WMS进行通信的代理
+   mWindowSession= WindowManagerGlobal.getWindowSession(context.getMainLooper());
+    // ② 保存参数display，在后面setView()调用中将会把窗口添加到这个Display上
+   mDisplay= display;
+   CompatibilityInfoHolder cih = display.getCompatibilityInfo();
+   mCompatibilityInfo = cih != null ? cih : new CompatibilityInfoHolder();
+    // ③ 保存当前线程到mThread。这个赋值操作体现了创建ViewRootImpl的线程如何成为UI主线程。在ViewRootImpl处理来自控件树的请求时（如请求重新布局，请求重绘，改变焦点等），会检查发起请求的thread与这个mThread是否相同。倘若不同则会拒绝这个请求并抛出一个异常
+    mThread= Thread.currentThread();
+    ......
+    // ④ mDirty用于收集窗口中的无效区域。**所谓无效区域是指由于数据或状态发生改变时而需要进行重绘的区域。举例说明，当应用程序修改了一TextView的文字时，TextView会将自己的区域标记为无效区域，并通invalidate()方法将这块区域收集到这里的mDirty中。当下次绘制时，TextView便可以将新的文字绘制在这块区域上
+    mDirty =new Rect();
+    mTempRect = new Rect();
+    mVisRect= new Rect();
+    // ⑤ mWinFrame，描述了当前窗口的位置和尺寸。与WMS中WindowState.mFrame保持着一致
+    mWinFrame = new Rect();
+    // ⑥ 创建一个W类型的实例，W是IWindow.Stub的子类。即它将在WMS中作为新窗口的ID，以及接收来自WMS的回调
+    mWindow= new W(this);
+    ......
+    // ⑦ 创建mAttachInfo。mAttachInfo是控件系统中很重要的对象。它存储了此当前控件树所以贴附的窗口的各种有用的信息，并且会派发给控件树中的每一个控件。这些控件会将这个对象保存在自己的mAttachInfo变量中。mAttachInfo中所保存的信息有WindowSession，窗口的实例（即mWindow）， ViewRootImpl实例，窗口所属的Display，窗口的Surface以及窗口在屏幕上的位置等等。所以，当要需在一个View中查询与当前窗口相关的信息时，非常值得在mAttachInfo中搜索一下
+    mAttachInfo = new View.AttachInfo(mWindowSession, mWindow, display,this, mHandler, this);
+    // ⑧ 创建FallbackEventHandler。**这个类如同PhoneWindowManger一样定义在android.policy包中，其实现为PhoneFallbackEventHandler。FallbackEventHandler是一个处理未经任何人消费的输入事件的场所。在6.5.4节中将会介绍它
+    mFallbackEventHandler =PolicyManager.makeNewFallbackEventHandler(context);
+    ......
+    //⑨ 创建一个依附于当前线程，即主线程的Choreographer，用于通过VSYNC特性安排重绘行为
+    mChoreographer= Choreographer.getInstance();
+    ......
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;以上分析来源于&lt;a href=&#34;https://wizardforcel.gitbooks.io/deepin-android-vol3/content/6.html&#34;&gt;GITBOOK&lt;/a&gt;.接着看看&lt;code&gt;mWindowSession&lt;/code&gt;是怎么来的。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public static IWindowSession getWindowSession() {
+     //代码删除干扰部分
+     InputMethodManager imm = InputMethodManager.getInstance();
+     IWindowManager windowManager = getWindowManagerService();
+     sWindowSession = windowManager.openSession(
+             new IWindowSessionCallback.Stub() {
+                   @Override
+                   public void onAnimatorScaleChanged(float scale) {
+                          ValueAnimator.setDurationScale(scale);
+                   }
+             },
+             imm.getClient(),
+             imm.getInputContext());
+     return sWindowSession;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;通过Google搜索，我们发现&lt;code&gt;IWindowManager&lt;/code&gt;其实是一个&lt;code&gt;AIDL&lt;/code&gt;文件,&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/view/IWindowManager.aidl&#34;&gt;代码在此&lt;/a&gt;,也就是说，这里的实现其实是进程间的通信，继续跟进下&lt;code&gt;getWindowManagerService()&lt;/code&gt;的实现。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public static IWindowManager getWindowManagerService() {
+        synchronized (WindowManagerGlobal.class) {
+            if (sWindowManagerService == null) {
+                sWindowManagerService = IWindowManager.Stub.asInterface(
+                        ServiceManager.getService(&amp;quot;window&amp;quot;));
+                ......        
+            }
+            return sWindowManagerService;
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;根据我们已有的AIDL的知识，我们知道&lt;code&gt;ServiceManager.getService(&amp;quot;window&amp;quot;)&lt;/code&gt;返回的其实是一个&lt;code&gt;IBinder&lt;/code&gt;,这里接着看看到底返回的是什么？&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base/+/0e2d281/core/java/android/os/ServiceManager.java#49&#34;&gt;在源码中&lt;/a&gt;查看。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public static IBinder getService(String name) {
+     ...
+     return getIServiceManager().getService(name);
+     ...
+}
+public static void addService(String name, IBinder service) {
+    getIServiceManager().addService(name, service, false);
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;所以，所有的服务都是通过&lt;code&gt;addService&lt;/code&gt;添加到&lt;code&gt;ServiceManager&lt;/code&gt;,然后通过&lt;code&gt;getService&lt;/code&gt;取出，但是是怎么添加，每个服务具体的类是什么？我们只要看看哪里调用&lt;code&gt;addService&lt;/code&gt;即可。&lt;a href=&#34;https://android.googlesource.com/platform/frameworks/base.git/+/22f7dfd23490a3de2f21ff96949ba47003aac8f8/services/java/com/android/server/SystemServer.java#97&#34;&gt;源码&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;try {
+  power = new PowerManagerService();
+  ServiceManager.addService(Context.POWER_SERVICE, power);
+  ....
+  wm = WindowManagerService.main(context, power,
+                   factoryTest != SystemServer.FACTORY_TEST_LOW_LEVEL);
+  ServiceManager.addService(Context.WINDOW_SERVICE, wm);//Context.WINDOW_SERVICE = &amp;quot;window&amp;quot;
+}
+...
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;在&lt;code&gt;WindowManagerService.main(...)&lt;/code&gt;中，我们可以看到返回的其实是	&lt;code&gt;WindowManagerService&lt;/code&gt;。而&lt;code&gt;WindowManagerService&lt;/code&gt;的声明为&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class WindowManagerService extends IWindowManager.Stub
+        implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs{}
+
+class IWindowManager.Stub extends android.os.Binder{}
+
+public class Binder implements IBinder{}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;这里可以看到,这是很普通的一个AIDL的实现.回到函数&lt;code&gt;getWindowSession()&lt;/code&gt;,&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;IWindowManager windowManager = getWindowManagerService();
+sWindowSession = windowManager.openSession(
+        new IWindowSessionCallback.Stub() {
+              @Override
+              public void onAnimatorScaleChanged(float scale) {
+                     ValueAnimator.setDurationScale(scale);
+              }
+        },
+        imm.getClient(),
+        imm.getInputContext());
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;我们知道了&lt;code&gt;windowManager&lt;/code&gt;其实是&lt;code&gt;WindowManagerService&lt;/code&gt;,所以看看&lt;code&gt;openSession&lt;/code&gt;的具体实现。&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Override
+public IWindowSession openSession(IWindowSessionCallback callback, IInputMethodClient client,IInputContext inputContext) {
+    if (client == null) throw new IllegalArgumentException(&amp;quot;null client&amp;quot;);
+    if (inputContext == null) throw new IllegalArgumentException(&amp;quot;null inputContext&amp;quot;);
+    Session session = new Session(this, callback, client, inputContext);
+    return session;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;可以看见&lt;code&gt;Session&lt;/code&gt;的签名如下,我们知道它是&lt;code&gt;IWindowSession.aidl&lt;/code&gt;的具体实现.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;final class Session extends IWindowSession.Stub
+        implements IBinder.DeathRecipient{}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;blockquote&gt;
+&lt;p&gt;This class represents an active client session.  There is generally one&lt;br&gt;
+Session object per process that is interacting with the window manager.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;code&gt;WindowManagerGlobal&lt;/code&gt;的&lt;code&gt;addView()&lt;/code&gt;最终调用的了&lt;code&gt;ViewRootImpl&lt;/code&gt;的&lt;code&gt;setView()&lt;/code&gt;方法,那么这个方法又是做什么用的?&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Schedule the first layout -before- adding to the window
+// manager, to make sure we do the relayout before receiving
+// any other events from the system.
+requestLayout();
+...
+try {
+    ...
+    res = mWindowSession.addToDisplay(mWindow, mSeq, mWindowAttributes,
+            getHostVisibility(), mDisplay.getDisplayId(),
+            mAttachInfo.mContentInsets, mAttachInfo.mStableInsets,
+            mAttachInfo.mOutsets, mInputChannel);
+} catch (RemoteException e) {} finally {}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;上面代码中的&lt;code&gt;requestLayout()&lt;/code&gt;会调用&lt;code&gt;scheduleTraversals()&lt;/code&gt;方法,而该方法最终会调用&lt;code&gt;performTraversals()&lt;/code&gt;,该函数就是android系统View树遍历工作的核心。执行过程可简单概括为根据之前所有设置好的状态，判断是否需要计算视图大小（measure）、是否需要重新安置视图的位置（layout），以及是否需要重绘（draw）视图,这里我不会进一步分析.下面看看&lt;code&gt;mWindowSession.addToDisplay()&lt;/code&gt;的调用,我们知道&lt;code&gt;mWindowSession&lt;/code&gt;就是&lt;code&gt;Session&lt;/code&gt;,这个函数的实现为&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Override
+public int addToDisplay(IWindow window, int seq, WindowManager.LayoutParams attrs,
+        int viewVisibility, int displayId, Rect outContentInsets, Rect outStableInsets,
+        Rect outOutsets, InputChannel outInputChannel) {
+          //mService 是WindowManagerService ,构造函数中赋的值
+    return mService.addWindow(this, window, seq, attrs, viewVisibility, displayId,
+            outContentInsets, outStableInsets, outOutsets, outInputChannel);
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;可以看出，Window的添加请求就交给WindowManagerService去处理了。addView大概一个过程如下：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;WindowManagerImpl——&amp;gt;WindowManagerGobal——&amp;gt;ViewRootImpl——&amp;gt;Session——&amp;gt;WindowManagerService&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;参考&#34;&gt;参考&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://wizardforcel.gitbooks.io/deepin-android-vol3/content/6.html&#34;&gt;深入理解控件（ViewRoot）系统&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://blog.csdn.net/qianhaifeng2012/article/details/51737370&#34;&gt;Android中的ViewRootImpl类源码解析&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&pic="https://blog.blinkstar.cn/images/avatar.png"><i class="fa fa-weibo"></i></a>
+&nbsp
+&nbsp
+<a id="daxiao" href="javascript:void(0);" onclick="change();" title="调整字体大小"><i class="fa fa-font"></i></a>
+&nbsp
+&nbsp
+<a id="lan" href="javascript:void(0);" onclick="lan();" title="调整简繁体">繁</a>
+</div>
+  </div>
+
+  <div class="post_content markdown">
+  &nbsp
+  <img id="mememe" src="//source.unsplash.com/800x400/?arts,weather">
+    <div name="show" id="show">
+	<p class="md_block"><span class="md_line md_line_start md_line_end"><h1 id="windowsmanager">WindowsManager</h1>
 <h2 id="window的type">Window的type</h2>
 <blockquote>
 <p>The general type of window.  There are three main classes of<br>
@@ -464,10 +1435,78 @@ public int addToDisplay(IWindow window, int seq, WindowManager.LayoutParams attr
 <!-- more -->
 <!-- more -->
 <!-- more -->
+</span></p></div>
+	<br>
+	<hr>
+<div style="color: #ccc;font-size:14px;"><i class="fa fa-user"></i>本文由<a rel="license" href="/">KuTeat</a>创作</div>	
+<div style="color: #ccc;font-size:14px;"><i class="fa fa-cc"></i>该文章采用<a rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可。转载请注明出处！</div>
+<div style="color: #ccc;font-size:14px;"><i class="fa fa-clock-o"></i>发布时间为：2016-09-20</div>    
+	 <p class="md_block">
+    <div class="reward"><div class="reward-button">赏 <span class="reward-code"> <span class="alipay-code"> <img class="alipay-img" src="https://kutear.github.io/media/images/alipay.png"><b>支付宝扫码打赏</b> </span> <span class="wechat-code"> <img class="wechat-img" src="https://kutear.github.io/media/images/wechat.png"><b>微信打赏</b> </span> </span></div></div>
+<div style="text-align:center;color: #ccc;font-size:14px;">如果觉得这篇文章对您有帮助，可以请作者喝一杯饮料哦🥤</div>    
+</p> 
+</div>
+</div>
 
-              </div>
-              <div class="toc-container">
-                <ul class="markdownIt-TOC">
+<style type="text/css">
+#mememe {
+	border:3px;
+	border-radius:5px;
+    background-repeat: no-repeat;
+    height: 100%;
+	width: 100%;
+	display: inline-block;
+	border-radius:5px; 
+}
+</style>
+
+<script>
+var link = "" ;
+$("img").each( (i,o) => {
+	var o = $(o);
+	if( o.attr("src").indexOf("sinaimg") > 0 || o.attr("src").indexOf("qpic") > 0 || o.attr("src").indexOf("baidu") > 0 || o.attr("src").indexOf("sinaimg") > 0){
+		o.attr("referrerpolicy","no-referrer");
+		link = o.attr("src");
+		o.attr("src",link);
+	}
+});
+</script>
+
+<div style="width:100%;overflow:hidden">
+
+          <div style="float:right;text-align:right;color:#ccc;font-size:18px;width:50%;">
+            下一篇
+            <a href="https://kutear.github.io/post/2016-09-12-View_Touch_Event_1">
+              <h3 class="post-title">
+                ViewGroup事件分发1
+              </h3>
+            </a>
+          </div>
+
+
+
+          <div style="float:left;text-align:left;color:#ccc;font-size:18px;width:50%;">
+            上一篇
+            <a href="https://kutear.github.io/post/2016-10-05-Android_Animation_Principle">
+              <h3 class="post-title">
+                Android View动画实现绘制原理
+              </h3>
+            </a>
+          </div>
+
+</div>
+
+<div class="doc_comments">
+
+</div>
+
+  </div>
+</div>
+
+
+      </div>
+<div class="toc-container">
+<ul class="markdownIt-TOC">
 <li><a href="#windowsmanager">WindowsManager</a>
 <ul>
 <li><a href="#window%E7%9A%84type">Window的type</a></li>
@@ -478,72 +1517,78 @@ public int addToDisplay(IWindow window, int seq, WindowManager.LayoutParams attr
 </li>
 </ul>
 
-              </div>
-            </div>
-          </article>
-        </div>
-
-        
-          <div class="next-post">
-            <div class="next">下一篇</div>
-            <a href="https://kutear.github.io/post/2016-09-12-View_Touch_Event_1">
-              <h3 class="post-title">
-                ViewGroup事件分发1
-              </h3>
-            </a>
-          </div>
-        
-
-        
-
-        <div class="site-footer">
-  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
-  <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
 </div>
+    </div>
+	
+   <div class="footer">
+<div class="site_footer_wrap"><div class="site_footer">
 
+      <div class="mysocials"><div class="my_socials">
+		   
+			   
+    
+			   
+    
+			   
+    
+			   
+    
+			   
+    
+			   
+    
+</div>
+      </div>
+
+      <div class="copyright" id="copyright">
+	  <script>
+		var date=new Date;
+		var year=date.getFullYear(); 
+		document.write("Copyright © "+year+" " + "KuTeat. ");
+		</script>
+		Powered by Gridea.
+		<br>
+		本站已稳定运行了
+		<strong><script type="text/javascript">
+		var urodz= new Date("10/28/2018");
+		var now = new Date();
+		var ile = now.getTime() - urodz.getTime();
+		var dni = Math.floor(ile / (1000 * 60 * 60 * 24));
+		document.write(+dni)
+		</script>
+		</strong>天
+		<br>
+		本站总访问量为 <strong><span id="busuanzi_value_site_uv"></span></strong> 次
+	  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+      </div>
+	  <img src="https://kutear.github.io/media/images/font.svg">
+
+    </div>
+
+<script type="text/javascript" src="https://kutear.github.io/media/scripts/love.js"></script>
+<script type="text/javascript" src="https://kutear.github.io/media/scripts/darkmode.js"></script>
 <script>
-  hljs.initHighlightingOnLoad()
+var options = {
+  bottom: '64px', // default: '32px'
+  right: '32px', // default: '32px'
+  left: 'unset', // default: 'unset'
+  time: '0.5s', // default: '0.3s'
+  mixColor: '#fff', // default: '#fff'
+  backgroundColor: '#fff',  // default: '#fff'
+  buttonColorDark: '#100f2c',  // default: '#100f2c'
+  buttonColorLight: '#fff', // default: '#fff'
+  saveInCookies: false, // default: true,
+  label: '🌓', // default: ''
+  autoMatchOsTheme: true // default: true
+}
 
-  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
-
-  // This should probably be throttled.
-  // Especially because it triggers during smooth scrolling.
-  // https://lodash.com/docs/4.17.10#throttle
-  // You could do like...
-  // window.addEventListener("scroll", () => {
-  //    _.throttle(doThatStuff, 100);
-  // });
-  // Only not doing it here to keep this Pen dependency-free.
-
-  window.addEventListener("scroll", event => {
-    let fromTop = window.scrollY;
-
-    mainNavLinks.forEach((link, index) => {
-      let section = document.getElementById(decodeURI(link.hash).substring(1));
-      let nextSection = null
-      if (mainNavLinks[index + 1]) {
-        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
-      }
-      console.log('section.offsetHeight', section.offsetHeight);
-      if (section.offsetTop <= fromTop) {
-        if (nextSection) {
-          if (nextSection.offsetTop > fromTop) {
-            link.classList.add("current");
-          } else {
-            link.classList.remove("current");    
-          }
-        } else {
-          link.classList.add("current");
-        }
-      } else {
-        link.classList.remove("current");
-      }
-    });
-  });
-
+const darkmode = new Darkmode(options);
+darkmode.showWidget();
+</script>
+<script>
+hljs.initHighlightingOnLoad();
 </script>
 
-      </div>
-    </div>
-  </body>
+</body>
+
 </html>
