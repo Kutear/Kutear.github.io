@@ -1,1091 +1,831 @@
-
+<!DOCTYPE html>
 <html>
-  <head lang="zh">
-   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/>
-<meta content="yes" name="apple-mobile-web-app-capable"/>
-<meta content="black" name="apple-mobile-web-app-status-bar-style"/>
-<meta content="telephone=no" name="format-detection"/>
-<meta name="renderer" content="webkit">
+  <head>
+    <meta charset="utf-8" >
+
+<title>文章归档 | KuTeat</title>
 <meta name="description" content="温故而知新">
-<meta http-equiv="Access-Control-Allow-Origin" content="*">
 
-<title>KuTeat</title>
-<link href="https://kutear.github.io/styles/main.css" type="text/css" rel="stylesheet"/>
-<link rel="stylesheet" href="//cdn.bootcss.com/KaTeX/0.10.2/katex.min.css"/>
-<script src="//cdn.bootcss.com/KaTeX/0.10.2/katex.min.js"></script>
-<script src="//cdn.bootcss.com/KaTeX/0.10.2/contrib/auto-render.min.js"></script>
-<script type="text/javascript" src="https://kutear.github.io/media/scripts/jquery.js"></script>
-<script type="text/javascript" src="https://kutear.github.io/media/scripts/jquery.pjax.min.js"></script>
-<script type="text/javascript" src="https://kutear.github.io/media/scripts/basic.js"></script>
-<script type="text/javascript" src="//cdn.bootcss.com/gitalk/1.5.0/gitalk.min.js"></script>
-<script src="//cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
-<script async type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-<script async type="text/javascript" src="https://kutear.github.io/media/scripts/search.js"></script>
-<script type="text/javascript">
-$(document).pjax('a[target!=_blank]', '#pjax-container', {
-	fragment: '#pjax-container',
-	timeout: 5000,
-	cache: false
-});
-$(document).on('pjax:complete', function(){  	
-	pjax();
-});
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-$(window).on('popstate.pjax', function () {
-	pjax();
-})
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1573118771078">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
 
-function pjax() {
-	$.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js");
 
-	if (("#gitalk-container").length > 0 ) {
-	$('#mememe').attr('src','//source.unsplash.com/800x400/?arts,weather?'+Math.random());
-	$.getScript("//cdn.bootcss.com/KaTeX/0.10.2/katex.min.js");
-	$.getScript("//cdn.bootcss.com/KaTeX/0.10.2/contrib/auto-render.min.js");
-	$('pre code').each(function(i, block) {
-        hljs.highlightBlock(block);
-    	});
-	}
-}
-</script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
 
   </head>
-
   <body>
-    <div class="header">
-      <div class="logo_title">
-		  
-        <div class="title animated fadeInDown"><img id="img1" style="display:inline-block;" src="https://kutear.github.io/images/avatar.png"/>
-<script>
-var r = 0;
-    window.onload = function(){
-        var current = 0;
-        document.getElementById('img1').onclick = function(){
-            current = (current+90)%360;
-            this.style.transform = 'rotate('+current+'deg)';
-        }
-    };
-</script>
-          <h1 title="KuTeat" class="weaklink"><a  href="/">KuTeat</a>
+    <div id="app" class="main">
 
-          </h1>
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://kutear.github.io">
+        <img src="https://kutear.github.io/images/avatar.png?v=1573118771078" class="site-logo">
+        <h1 class="site-title">KuTeat</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      温故而知新
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://kutear.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
 
-          <div class="navbar weaklink">
-            <div class="normal_nav">
 
-<div class="bitcron_nav_container">
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          
 
+          <h2 class="archives-title">文章归档</h2>
+          <div class="archives-container">
+            
+              <h2 class="year" data-aos="fade-in" data-aos-delay="500">2018</h2>
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2018-01-19-Android-Build-Instant_Run">
+                      <h2 class="post-title">
+                        Instance Run 原理分析
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+            
+              <h2 class="year" data-aos="fade-in" data-aos-delay="500">2017</h2>
+              
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2017-07-01-Android_Retrofit">
+                      <h2 class="post-title">
+                        Retrofit 原理分析
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2017-05-30-Android_Leakcanary">
+                      <h2 class="post-title">
+                        LeakCanary 原理分析
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2017-04-21-Android_Volley">
+                      <h2 class="post-title">
+                        抛开源码讲流程-Volley
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2017-04-20-Android_AsyncTask">
+                      <h2 class="post-title">
+                        抛开源码讲流程-AsyncTask
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2017-04-19-Android_Handler">
+                      <h2 class="post-title">
+                        抛开源码讲流程-Handler
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2017-04-17-Android_Advanced">
+                      <h2 class="post-title">
+                        Android知识点总结
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2017-04-17-React_React-Native_Base">
+                      <h2 class="post-title">
+                        React和ReactNative基础
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2017-04-13-Android_RecyclerView">
+                      <h2 class="post-title">
+                        Android RecyclerView使用中的问题记录
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2017-02-15-Android_Apk_install">
+                      <h2 class="post-title">
+                        Android Apk安装过程
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+            
+              <h2 class="year" data-aos="fade-in" data-aos-delay="500">2016</h2>
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-12-22-Go_Base_study">
+                      <h2 class="post-title">
+                        Golang基础学习
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-12-20-Android_Dev_Problem">
+                      <h2 class="post-title">
+                        最近开发过程中遇到的问题
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-11-15-Gradle_Share">
+                      <h2 class="post-title">
+                        Gradle分享
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-10-27-PMS-1">
+                      <h2 class="post-title">
+                        PackageManagerService学习--上
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-10-09-Android_Xml_Parser">
+                      <h2 class="post-title">
+                        Android中View,Drawable,Animation从XML中解析生成的过程
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-10-08-Android_Property_Animator">
+                      <h2 class="post-title">
+                        Android属性动画原理
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-10-05-Android_Animation_Principle">
+                      <h2 class="post-title">
+                        Android View动画实现绘制原理
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-09-20-Android-Windows">
+                      <h2 class="post-title">
+                        对Window/WindowManager和WindowManagerSystem的理解
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-09-12-View_Touch_Event_1">
+                      <h2 class="post-title">
+                        ViewGroup事件分发1
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-08-30-SparseArray">
+                      <h2 class="post-title">
+                        SparseArray 原理分析
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-08-22-EventBus">
+                      <h2 class="post-title">
+                        EventBus源码分析
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-07-28_Android_WebView_Comication_With_Js">
+                      <h2 class="post-title">
+                        Android WebView同Js的交互方案
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-07-26_Android_Hot_Fix">
+                      <h2 class="post-title">
+                        Android 热修复
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-07-24-c_list_study">
+                      <h2 class="post-title">
+                        单链表学习
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-07-18-Android_Studio">
+                      <h2 class="post-title">
+                        Android Studio使用指南(Windows/Linux)
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-07-07-design_pattern">
+                      <h2 class="post-title">
+                        设计模式概述
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-05-01-android_four_components">
+                      <h2 class="post-title">
+                        Android开发艺术探索-第九章-四大组件的工作过程
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-04-20-android_window_and_windowmanager">
+                      <h2 class="post-title">
+                        Android开发艺术探索-第八章-理解Window和WindowManager
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-04-10-android_animation">
+                      <h2 class="post-title">
+                        Android开发艺术探索-第七章-Android的动画深入分析
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-04-05-android_drawable">
+                      <h2 class="post-title">
+                        Android开发艺术探索-第六章-Android的Drawable
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-04-01-android_remoteviews">
+                      <h2 class="post-title">
+                        Android开发艺术探索-第五章-理解RemoteViews
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-01-08-android_view_event">
+                      <h2 class="post-title">
+                        Android开发艺术探索-第三章-View的事件体系
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2016-01-04-android_art_2_android_ipc">
+                      <h2 class="post-title">
+                        Android开发艺术探索-第二章-Android常用进程间通信
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+            
+              <h2 class="year" data-aos="fade-in" data-aos-delay="500">2015</h2>
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-12-28-activity_and_fragment">
+                      <h2 class="post-title">
+                        单一Activity与多个Fragment
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-12-23-android_useful_note">
+                      <h2 class="post-title">
+                        Android中有用笔记
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-12-13-android_mosaics">
+                      <h2 class="post-title">
+                        Android 马赛克(Mosaics)效果
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-12-01-android_device_monitor_1">
+                      <h2 class="post-title">
+                        Android Device Monitor工具的使用
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-10-25-cocos_2d-x_with_android_and_qtcreate">
+                      <h2 class="post-title">
+                        Cocos 2d-x 3.8 在ubuntu下使用QtCreator和Android Studio开发环境搭建
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-09-05-Android_Desigin_Library">
+                      <h2 class="post-title">
+                        Android Desigin Library
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-08-15-android_background_setting">
+                      <h2 class="post-title">
+                        Android背景设置
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-06-10-android_developer_details">
+                      <h2 class="post-title">
+                        Android开发的小细节
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-05-26-bug_for_android">
+                      <h2 class="post-title">
+                        Android开发中遇到的坑
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+                
+                  <article class="post">
+                    <a href="https://kutear.github.io/post/2015-05-01-android_activity_launch_mode">
+                      <h2 class="post-title">
+                        关于Activity launch mode的理解
+                      </h2>
+                    </a>
+                  </article>
+                
+              
+            
+          </div>
 
-  <div class="bitcron_nav">
-    <div class="mixed_site_nav_wrap site_nav_wrap">
-		
-      <ul class="mixed_site_nav site_nav sm sm-base">
-	  
- 
-  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/" class="selected active current nav__item" >首页</a>
-  </li>
+          <div class="pagination-container">
   
- 
-  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/archives" class="selected active current nav__item" >归档</a>
-  </li>
   
- 
-  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/tags" class="selected active current nav__item" >标签</a>
-  </li>
-  
- 
-  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/post/about" class="selected active current nav__item" >关于</a>
-  </li>
-  
- 
- <li>
-
-      </ul>
-	  
-
-      <div class="clear clear_nav_inline_end"></div>
-<div class="search">
-    <i class="search-icon fa fa-search search-start"></i>
-    <input type="text" class="search-input" placeholder="Searching..." />
-    <i class="search-icon fa fa-refresh search-clear"></i>
-	<div class="search-results"></div>
-</div>
-    </div>
-
-  </div>
-
-
-
-  <div class="clear clear_nav_end"></div>
-
 </div>
 
-            </div>
-			
-			<div class="hamberger"><i class="fa fa-bars"></i>
-<i class="fa fa-times"></i>
-
-			</div>
-
-          </div>
-
         </div>
-
       </div>
-
-      <div class="hidden_nav animated fadeInDown">
-
-<div class="bitcron_nav_container">
-
-
-  <div class="bitcron_nav">
-    <div class="mixed_site_nav_wrap site_nav_wrap">
-      <ul class="mixed_site_nav site_nav sm sm-base">
-	
-  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/" class="selected active current nav__item" >首页</a>
-
-  </li>
-
-
-  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/archives" class="selected active current nav__item" >归档</a>
-
-  </li>
-
-
-  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/tags" class="selected active current nav__item" >标签</a>
-
-  </li>
-
-
-  <li><a id="d2ef19af68cc211e98f8a0242ac110003" href="/post/about" class="selected active current nav__item" >关于</a>
-
-  </li>
-
-
-
-
-      </ul>
-
-      <div class="clear clear_nav_inline_end"></div>
     </div>
 
-  </div>
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
+<script type="application/javascript">
 
+AOS.init();
 
-  <div class="clear clear_nav_end"></div>
+hljs.initHighlightingOnLoad()
 
-</div>
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
 
-      </div>
-
-    </div>
-
-<style type="text/css">
-.search {
-    position: relative;
-    height: 30px;
-    text-align: right;
-    line-height: 30px;
-    padding-right: 10px;
-}
-
-.search .search-icon {
-    float: right;
-    height: 100%;
-    margin: 0 10px;
-    line-height: 30px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.search .search-input {
-    float: right;
-    width: 30%;
-    height: 30px;
-    line-height: 30px;
-    margin: 0;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    box-sizing: border-box;
-}
-
-.search .search-clear {
-    display: none;
-}
-
-.search .search-results {
-    display: block;
-    z-index: 1000;
-    position: absolute;
-    top: 30px;
-    right: 50px;
-    width: 50%;
-    max-height: 400px;
-    overflow: auto;
-    text-align: left;
-    border-radius: 5px;
-    box-shadow: 0 .3rem .5rem #333;
-}
-
-.search .search-results .result-item {
-    color: #000;
-    margin: 5px;
-    padding: 3px;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
-</style>
-
-
-    <div class="main" id="pjax-container">
-      <div class="main-inner">
-
-
-<div class="content">
-	
-	
-  <div class="list_with_title">
-
-    <div class="listing_title">2018</div>
-
-	  
-    <div class="listing">
-      <div class="listing-item">
-		  
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2018-01-19-Android-Build-Instant_Run" title="Instance Run 原理分析" >Instance Run 原理分析</a>
-
-          <div class="post_date"><span class="date">2018-01-19</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-      </div>
-
-
-		
-		
-		
-    </div>
-
-
-  </div>
-
-  <div class="list_with_title">
-
-    <div class="listing_title">2017</div>
-
-	  
-    <div class="listing">
-      <div class="listing-item">
-		  
-                                
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2017-07-01-Android_Retrofit" title="Retrofit 原理分析" >Retrofit 原理分析</a>
-
-          <div class="post_date"><span class="date">2017-07-01</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2017-05-30-Android_Leakcanary" title="LeakCanary 原理分析" >LeakCanary 原理分析</a>
-
-          <div class="post_date"><span class="date">2017-05-30</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2017-04-21-Android_Volley" title="抛开源码讲流程-Volley" >抛开源码讲流程-Volley</a>
-
-          <div class="post_date"><span class="date">2017-04-21</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2017-04-20-Android_AsyncTask" title="抛开源码讲流程-AsyncTask" >抛开源码讲流程-AsyncTask</a>
-
-          <div class="post_date"><span class="date">2017-04-20</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2017-04-19-Android_Handler" title="抛开源码讲流程-Handler" >抛开源码讲流程-Handler</a>
-
-          <div class="post_date"><span class="date">2017-04-19</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2017-04-17-Android_Advanced" title="Android知识点总结" >Android知识点总结</a>
-
-          <div class="post_date"><span class="date">2017-04-17</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2017-04-17-React_React-Native_Base" title="React和ReactNative基础" >React和ReactNative基础</a>
-
-          <div class="post_date"><span class="date">2017-04-17</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2017-04-13-Android_RecyclerView" title="Android RecyclerView使用中的问题记录" >Android RecyclerView使用中的问题记录</a>
-
-          <div class="post_date"><span class="date">2017-04-13</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2017-02-15-Android_Apk_install" title="Android Apk安装过程" >Android Apk安装过程</a>
-
-          <div class="post_date"><span class="date">2017-02-15</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-      </div>
-
-
-		
-		
-		
-    </div>
-
-
-  </div>
-
-  <div class="list_with_title">
-
-    <div class="listing_title">2016</div>
-
-	  
-    <div class="listing">
-      <div class="listing-item">
-		  
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-12-22-Go_Base_study" title="Golang基础学习" >Golang基础学习</a>
-
-          <div class="post_date"><span class="date">2016-12-22</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-12-20-Android_Dev_Problem" title="最近开发过程中遇到的问题" >最近开发过程中遇到的问题</a>
-
-          <div class="post_date"><span class="date">2016-12-20</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-11-15-Gradle_Share" title="Gradle分享" >Gradle分享</a>
-
-          <div class="post_date"><span class="date">2016-11-15</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-10-27-PMS-1" title="PackageManagerService学习--上" >PackageManagerService学习--上</a>
-
-          <div class="post_date"><span class="date">2016-10-27</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-10-09-Android_Xml_Parser" title="Android中View,Drawable,Animation从XML中解析生成的过程" >Android中View,Drawable,Animation从XML中解析生成的过程</a>
-
-          <div class="post_date"><span class="date">2016-10-10</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-10-08-Android_Property_Animator" title="Android属性动画原理" >Android属性动画原理</a>
-
-          <div class="post_date"><span class="date">2016-10-09</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-10-05-Android_Animation_Principle" title="Android View动画实现绘制原理" >Android View动画实现绘制原理</a>
-
-          <div class="post_date"><span class="date">2016-10-05</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-09-20-Android-Windows" title="对Window/WindowManager和WindowManagerSystem的理解" >对Window/WindowManager和WindowManagerSystem的理解</a>
-
-          <div class="post_date"><span class="date">2016-09-20</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-09-12-View_Touch_Event_1" title="ViewGroup事件分发1" >ViewGroup事件分发1</a>
-
-          <div class="post_date"><span class="date">2016-09-12</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-08-30-SparseArray" title="SparseArray 原理分析" >SparseArray 原理分析</a>
-
-          <div class="post_date"><span class="date">2016-08-30</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-08-22-EventBus" title="EventBus源码分析" >EventBus源码分析</a>
-
-          <div class="post_date"><span class="date">2016-08-22</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-07-28_Android_WebView_Comication_With_Js" title="Android WebView同Js的交互方案" >Android WebView同Js的交互方案</a>
-
-          <div class="post_date"><span class="date">2016-07-28</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-07-26_Android_Hot_Fix" title="Android 热修复" >Android 热修复</a>
-
-          <div class="post_date"><span class="date">2016-07-26</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-07-24-c_list_study" title="单链表学习" >单链表学习</a>
-
-          <div class="post_date"><span class="date">2016-07-24</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-07-18-Android_Studio" title="Android Studio使用指南(Windows/Linux)" >Android Studio使用指南(Windows/Linux)</a>
-
-          <div class="post_date"><span class="date">2016-07-18</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-07-07-design_pattern" title="设计模式概述" >设计模式概述</a>
-
-          <div class="post_date"><span class="date">2016-07-07</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-05-01-android_four_components" title="Android开发艺术探索-第九章-四大组件的工作过程" >Android开发艺术探索-第九章-四大组件的工作过程</a>
-
-          <div class="post_date"><span class="date">2016-05-01</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-04-20-android_window_and_windowmanager" title="Android开发艺术探索-第八章-理解Window和WindowManager" >Android开发艺术探索-第八章-理解Window和WindowManager</a>
-
-          <div class="post_date"><span class="date">2016-04-20</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-04-10-android_animation" title="Android开发艺术探索-第七章-Android的动画深入分析" >Android开发艺术探索-第七章-Android的动画深入分析</a>
-
-          <div class="post_date"><span class="date">2016-04-10</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-04-05-android_drawable" title="Android开发艺术探索-第六章-Android的Drawable" >Android开发艺术探索-第六章-Android的Drawable</a>
-
-          <div class="post_date"><span class="date">2016-04-05</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-04-01-android_remoteviews" title="Android开发艺术探索-第五章-理解RemoteViews" >Android开发艺术探索-第五章-理解RemoteViews</a>
-
-          <div class="post_date"><span class="date">2016-04-01</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-01-08-android_view_event" title="Android开发艺术探索-第三章-View的事件体系" >Android开发艺术探索-第三章-View的事件体系</a>
-
-          <div class="post_date"><span class="date">2016-01-08</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2016-01-04-android_art_2_android_ipc" title="Android开发艺术探索-第二章-Android常用进程间通信" >Android开发艺术探索-第二章-Android常用进程间通信</a>
-
-          <div class="post_date"><span class="date">2016-01-04</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-      </div>
-
-
-		
-		
-		
-    </div>
-
-
-  </div>
-
-  <div class="list_with_title">
-
-    <div class="listing_title">2015</div>
-
-	  
-    <div class="listing">
-      <div class="listing-item">
-		  
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-12-28-activity_and_fragment" title="单一Activity与多个Fragment" >单一Activity与多个Fragment</a>
-
-          <div class="post_date"><span class="date">2015-12-28</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-12-23-android_useful_note" title="Android中有用笔记" >Android中有用笔记</a>
-
-          <div class="post_date"><span class="date">2015-12-23</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-12-13-android_mosaics" title="Android 马赛克(Mosaics)效果" >Android 马赛克(Mosaics)效果</a>
-
-          <div class="post_date"><span class="date">2015-12-13</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-12-01-android_device_monitor_1" title="Android Device Monitor工具的使用" >Android Device Monitor工具的使用</a>
-
-          <div class="post_date"><span class="date">2015-12-01</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-10-25-cocos_2d-x_with_android_and_qtcreate" title="Cocos 2d-x 3.8 在ubuntu下使用QtCreator和Android Studio开发环境搭建" >Cocos 2d-x 3.8 在ubuntu下使用QtCreator和Android Studio开发环境搭建</a>
-
-          <div class="post_date"><span class="date">2015-10-25</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-09-05-Android_Desigin_Library" title="Android Desigin Library" >Android Desigin Library</a>
-
-          <div class="post_date"><span class="date">2015-09-05</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-08-15-android_background_setting" title="Android背景设置" >Android背景设置</a>
-
-          <div class="post_date"><span class="date">2015-08-15</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-06-10-android_developer_details" title="Android开发的小细节" >Android开发的小细节</a>
-
-          <div class="post_date"><span class="date">2015-06-10</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-05-26-bug_for_android" title="Android开发中遇到的坑" >Android开发中遇到的坑</a>
-
-          <div class="post_date"><span class="date">2015-05-26</span>
-
-          </div>
-
-        </div>
- 
-                            
-                                
-        <div class="listing_post"><a href="https://kutear.github.io/post/2015-05-01-android_activity_launch_mode" title="关于Activity launch mode的理解" >关于Activity launch mode的理解</a>
-
-          <div class="post_date"><span class="date">2015-05-01</span>
-
-          </div>
-
-        </div>
- 
-                            
-      </div>
-
-
-		
-		
-		
-    </div>
-
-
-  </div>
-
-</div>
-
-
-
-      </div>
-
-    </div>
-    <div class="footer">
-<div class="site_footer_wrap"><div class="site_footer">
-
-      <div class="mysocials"><div class="my_socials">
-		   
-			   
-    
-			   
-    
-			   
-    
-			   
-    
-			   
-    
-			   
-    
-</div>
-      </div>
-
-      <div class="copyright" id="copyright">
-	  <script>
-		var date=new Date;
-		var year=date.getFullYear(); 
-		document.write("Copyright © "+year+" " + "KuTeat. ");
-		</script>
-		Powered by Gridea.
-		<br>
-		本站已稳定运行了
-		<strong><script type="text/javascript">
-		var urodz= new Date("10/28/2018");
-		var now = new Date();
-		var ile = now.getTime() - urodz.getTime();
-		var dni = Math.floor(ile / (1000 * 60 * 60 * 24));
-		document.write(+dni)
-		</script>
-		</strong>天
-		<br>
-		本站总访问量为 <strong><span id="busuanzi_value_site_uv"></span></strong> 次
-	  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
-      </div>
-	  <img src="https://kutear.github.io/media/images/font.svg">
-
-    </div>
-
-<script type="text/javascript" src="https://kutear.github.io/media/scripts/love.js"></script>
-<script type="text/javascript" src="https://kutear.github.io/media/scripts/darkmode.js"></script>
-<script>
-var options = {
-  bottom: '64px', // default: '32px'
-  right: '32px', // default: '32px'
-  left: 'unset', // default: 'unset'
-  time: '0.5s', // default: '0.3s'
-  mixColor: '#fff', // default: '#fff'
-  backgroundColor: '#fff',  // default: '#fff'
-  buttonColorDark: '#100f2c',  // default: '#100f2c'
-  buttonColorLight: '#fff', // default: '#fff'
-  saveInCookies: false, // default: true,
-  label: '🌓', // default: ''
-  autoMatchOsTheme: true // default: true
-}
-
-const darkmode = new Darkmode(options);
-darkmode.showWidget();
-</script>
-<script>
-hljs.initHighlightingOnLoad();
 </script>
 
-</body>
 
+
+
+  </body>
 </html>
