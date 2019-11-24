@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1574579584130">
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1574579664159">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://kutear.github.io">
-        <img src="https://kutear.github.io/images/avatar.png?v=1574579584130" class="site-logo">
+        <img src="https://kutear.github.io/images/avatar.png?v=1574579664159" class="site-logo">
         <h1 class="site-title">KuTeat</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -90,8 +90,8 @@
             <div class="post-date">2016-09-20</div>
             
             <div class="post-content">
-              <h1 id="windowsmanage">WindowsManage</h1>
-<h2 id="window的type">Window的type</h2>
+              <h2 id="windowsmanage">WindowsManage</h2>
+<h3 id="window的type">Window的type</h3>
 <blockquote>
 <p>The general type of window.  There are three main classes of<br>
 window types:<br>
@@ -114,7 +114,7 @@ be used by applications, and a special permission is required<br>
 to use them.</p>
 </blockquote>
 <p>以上来源<a href="https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/core/java/android/view/WindowManager.java#199">WindowManager#LayoutParams</a>，介绍了Window分为<code>Application windows</code>，<code>Sub-windows</code>，<code>System windows</code>三种。</p>
-<h2 id="getsystemservicestr的实现原理">getSystemService(str)的实现原理</h2>
+<h3 id="getsystemservicestr的实现原理">getSystemService(str)的实现原理</h3>
 <p>我们知道<code>Context</code>的实现类是<code>ContextImpl</code>，通过查看源码，得到函数的实现为<a href="https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/ContextImpl.java#1538">源码</a>。</p>
 <pre><code class="language-java">    //ContextImpl.java
     @Override
@@ -171,7 +171,7 @@ to use them.</p>
         return service;
 </code></pre>
 <p>看到这里，我们知道平时使用<code>WindowManager</code>的真实对象其实是<code>WindowManagerImpl</code>。</p>
-<h2 id="window的添加过程">Window的添加过程</h2>
+<h3 id="window的添加过程">Window的添加过程</h3>
 <p>根据上面的分析，知道了<code>WindowManagerImpl</code>才是幕后的凶手，但是真的是这样的吗？我们接着分析。在它的源码中，我们可以看看<a href="https://android.googlesource.com/platform/frameworks/base/+/0e2d281/core/java/android/view/WindowManagerImpl.java">源码</a></p>
 <pre><code class="language-java">public final class WindowManagerImpl implements WindowManager {
     private final WindowManagerGlobal mGlobal = WindowManagerGlobal.getInstance();
@@ -453,9 +453,6 @@ public int addToDisplay(IWindow window, int seq, WindowManager.LayoutParams attr
 <li><a href="https://wizardforcel.gitbooks.io/deepin-android-vol3/content/6.html">深入理解控件（ViewRoot）系统</a></li>
 <li><a href="http://blog.csdn.net/qianhaifeng2012/article/details/51737370">Android中的ViewRootImpl类源码解析</a></li>
 </ul>
-<!-- more -->
-<!-- more -->
-<!-- more -->
 
             </div>
             
