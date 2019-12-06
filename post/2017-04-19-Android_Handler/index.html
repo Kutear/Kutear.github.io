@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1574580541382">
+<link rel="shortcut icon" href="https://kutear.github.io/favicon.ico?v=1575607418581">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://kutear.github.io/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://kutear.github.io">
-        <img src="https://kutear.github.io/images/avatar.png?v=1574580541382" class="site-logo">
+        <img src="https://kutear.github.io/images/avatar.png?v=1575607418581" class="site-logo">
         <h1 class="site-title">KuTeat</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -105,6 +105,11 @@
 <h2 id="其他小细节">其他小细节</h2>
 <p>MessageQueue的实现其实是通过链表来实现的，而链表的节点就是上文的Message对象。</p>
 <p>Handler的removeCallbacks实现原理其实就是把MessageQueue链表中的某些节点移除掉。具体实现参见链表移除某个节点。</p>
+<h2 id="拓展">拓展</h2>
+<h3 id="epoll">epoll</h3>
+<p><a href="http://gityuan.com/2019/01/06/linux-epoll/">源码解读epoll内核机制</a></p>
+<h3 id="selectpoll">select/poll</h3>
+<p><a href="http://gityuan.com/2015/12/06/linux_epoll/">select/poll/epoll对比分析</a></p>
 
             </div>
             
