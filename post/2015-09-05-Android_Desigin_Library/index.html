@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1578574213043">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1578574477169">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://www.kutear.com">
-        <img src="https://www.kutear.com/images/avatar.png?v=1578574213043" class="site-logo">
+        <img src="https://www.kutear.com/images/avatar.png?v=1578574477169" class="site-logo">
         <h1 class="site-title">KuTeat</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -105,7 +105,7 @@ exitUntilCollapsed - 向上滚动时收缩View，但可以固定Toolbar一直在
 enterAlwaysCollapsed -当你的View已经设置minHeight属性又使用此标志时，你的View只能以最小高度进入，只有当滚动视图到达顶部时才扩大到完整高度。</p>
 </blockquote>
 <p>AppBarLayout在APP上的显示大体上为如下,当然只是外面的框的部分<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/5cbaf4ca72f175e4882b0111ff1e3f12.png" alt="App中的显示"><br>
+<img src="http://kutear.qiniudn.com/2016/03/21/5cbaf4ca72f175e4882b0111ff1e3f12.png" alt="App中的显示" loading="lazy"><br>
 上图中的阴影部分可以通过app:elevation=&quot;&quot;来进行设置，默认为0</p>
 <h2 id="2collapsingtoolbarlayout">2.CollapsingToolbarLayout</h2>
 <p>顾名思义，可以折叠的ToolBar的布局， CollapsingToolbarLayout作用是提供了一个可以折叠的Toolbar，它继承至FrameLayout，给它设置layout_scrollFlags，它可以控制包含在CollapsingToolbarLayout中的控件(如：ImageView、Toolbar)在响应layout_behavior事件时作出相应的scrollFlags滚动事件(移除屏幕或固定在屏幕顶端)。<br>
@@ -120,13 +120,13 @@ layout_collapseParallaxMultiplier(视差因子) - 设置视差滚动因子，值
 </blockquote>
 <p>当设置了layout_behavior的控件响应起了CollapsingToolbarLayout中的layout_scrollFlags事件时，ImageView会有视差效果的向上滚动移除屏幕，当开始折叠时CollapsingToolbarLayout的背景色(也就是Toolbar的背景色)就会变为我们设置好的背景色，Toolbar也一直会固定在最顶端。<br>
 具体在App中的效果可以为<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/8bea39c98f4a879f357cc55a5ebb36e6.gif" alt="Google Android Image"></p>
+<img src="http://kutear.qiniudn.com/2016/03/21/8bea39c98f4a879f357cc55a5ebb36e6.gif" alt="Google Android Image" loading="lazy"></p>
 <h2 id="3coordinatorlayout">3.CoordinatorLayout</h2>
 <p>作为以上布局的父布局来是用，主要就是控制各个组件之间的协同处理，相互相应。</p>
 <h2 id="4floatingactionbutton">4.FloatingActionButton</h2>
 <p>在Google发布官方库之前就以及有很多的类似的组件，比如<a href="https://github.com/makovkastar/FloatingActionButton">makovkastar/FloatingActionButton</a> 和 <a href="https://github.com/futuresimple/android-floating-action-button">futuresimple/android-floating-action-button</a><br>
 效果图为：<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/beb505abcfac7153faf1218554f6f88e.gif" alt="FAB"><br>
+<img src="http://kutear.qiniudn.com/2016/03/21/beb505abcfac7153faf1218554f6f88e.gif" alt="FAB" loading="lazy"><br>
 当然这里的动画效果是自己设置的。</p>
 <h2 id="5navigationview">5.NavigationView</h2>
 <p>使用非常的简单，看官方的实例<a href="https://developer.android.com/reference/android/support/design/widget/NavigationView.html">NavigationView</a></p>
