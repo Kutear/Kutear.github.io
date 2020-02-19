@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1578574477169">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1582133366577">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://www.kutear.com">
-        <img src="https://www.kutear.com/images/avatar.png?v=1578574477169" class="site-logo">
+        <img src="https://www.kutear.com/images/avatar.png?v=1582133366577" class="site-logo">
         <h1 class="site-title">KuTeat</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -108,14 +108,14 @@
     }
 </code></pre>
 <p>实现以上的函数,我们知道,当值行点击的时候会递归调用 functionInvoke() 1000次,这需要一定的时间吧.</p>
-<p><img src="http://kutear.qiniudn.com/2015/12/09/fc9627c29dfb94212456f8188433b1bf.png" alt="Screenshot from 2015-12-09 23-06-56.png" loading="lazy"><br>
+<p><img src="http://kutear.qiniudn.com/2015/12/09/fc9627c29dfb94212456f8188433b1bf.png" alt="Screenshot from 2015-12-09 23-06-56.png"><br>
 App启动后,在点击触发之前,在Monitor左面板选择APP的包名,点击Monitor左面板上方的start method profilling开始记录(按钮上标由红变黑),点击APP的触发控件,开始记录,估摸着执行完毕后在点击Monitor上刚才点点按钮.得到一个trace文件,并会自动在中间面板打开.</p>
 <p>现在分析该内容关于使用方法和参数含义参见<a href="http://www.cnblogs.com/sunzn/p/3192231.html">博客</a></p>
-<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2015/12/09/6f6c11214150dc9fd841b15b14c663c7.png" alt="Screenshot from 2015-12-09 23-12-26.png" loading="lazy"></figure>
+<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2015/12/09/6f6c11214150dc9fd841b15b14c663c7.png" alt="Screenshot from 2015-12-09 23-12-26.png"></figure>
 <p>现在得到这个界面,我们从中选择我自己的函数</p>
-<figure data-type="image" tabindex="2"><img src="http://kutear.qiniudn.com/2015/12/09/ca87f505494b58a26d78c051057f4a8f.png" alt="Screenshot from 2015-12-09 23-20-32.png" loading="lazy"></figure>
+<figure data-type="image" tabindex="2"><img src="http://kutear.qiniudn.com/2015/12/09/ca87f505494b58a26d78c051057f4a8f.png" alt="Screenshot from 2015-12-09 23-20-32.png"></figure>
 <p>在这里我们可以看见调用他的是onClick,她调用的有functionInvoke(),相比普通的调用,这里多了递归调用的parent和child,并且都为本身,这从函数的实现可以看出.</p>
-<figure data-type="image" tabindex="3"><img src="http://kutear.qiniudn.com/2015/12/09/82de959da3b505d495ba85434971e5de.png" alt="Screenshot from 2015-12-09 23-29-16.png" loading="lazy"></figure>
+<figure data-type="image" tabindex="3"><img src="http://kutear.qiniudn.com/2015/12/09/82de959da3b505d495ba85434971e5de.png" alt="Screenshot from 2015-12-09 23-29-16.png"></figure>
 <p>在这里需要分析的是上图,第一字段说明了9.2%的时间在执行该函数(不含内部调用的别的函数执行的时间,比如在functionInvoke()在调用Log.v(TAG,&quot;msg&quot;)是不计算v(...)的执行时间的),这里的时间是总的,包括1000次递归的时间,第二字段把9.2%换成具体时间第三四字段就是包括了内部函数的执行时间,其含义同一二字段.Call+recurCalls/Tool表示递归执行的次数,<br>
 Real Time/Call 表示单次执行的时间</p>
 

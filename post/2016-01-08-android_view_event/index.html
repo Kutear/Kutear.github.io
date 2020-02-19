@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1578574477169">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1582133366577">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://www.kutear.com">
-        <img src="https://www.kutear.com/images/avatar.png?v=1578574477169" class="site-logo">
+        <img src="https://www.kutear.com/images/avatar.png?v=1582133366577" class="site-logo">
         <h1 class="site-title">KuTeat</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -98,7 +98,7 @@
 <p>###位置参数<br>
 top、left、right、bottom,在3.0之后增加了x、y、translationX、translationY.这里的所有参数都是相对其父布局来说的.<br>
 下面是具体的含义表示<br>
-<img src="http://kutear.qiniudn.com/2016/01/11/d7703f08d57e948678974e2f9c1b5739.jpg" alt="View参数" loading="lazy"><br>
+<img src="http://kutear.qiniudn.com/2016/01/11/d7703f08d57e948678974e2f9c1b5739.jpg" alt="View参数"><br>
 其中参数的关系</p>
 <pre><code class="language-java">    x = left + translationX
     y = top + translationY
@@ -129,9 +129,9 @@ VelocityTracker的使用方式：</p>
 </code></pre>
 <p>GestureDetector用于辅助检测用户的单击、滑动、长按、双击等行为。GestureDetector的使用比较简单，主要也是辅助检测常见的触屏事件。<br>
 作者建议：如果只是监听滑动相关的事件在onTouchEvent中实现；如果要监听双击这种行为的话，那么就使用GestureDetector。<br>
-<img src="http://kutear.qiniudn.com/2016/01/11/a1299625b8319e50461217f2759d4e1f.png" alt="GestureDetector" loading="lazy"><br>
-<img src="http://kutear.qiniudn.com/2016/01/11/46b26a1755e5c7042b857b94c269df73.png" alt="DoubleTabListener" loading="lazy"><br>
-<img src="http://kutear.qiniudn.com/2016/01/11/03548fff20bb95df0e6eb6f31c782104.png" alt="GestureListener" loading="lazy"></p>
+<img src="http://kutear.qiniudn.com/2016/01/11/a1299625b8319e50461217f2759d4e1f.png" alt="GestureDetector"><br>
+<img src="http://kutear.qiniudn.com/2016/01/11/46b26a1755e5c7042b857b94c269df73.png" alt="DoubleTabListener"><br>
+<img src="http://kutear.qiniudn.com/2016/01/11/03548fff20bb95df0e6eb6f31c782104.png" alt="GestureListener"></p>
 <pre><code class="language-java">//自定义的View,实现相关接口(onGestureListener,onDoubleTabListener)
 GestureDetector mGestureDetector =
           new GestureDetector(this/*context*/,listener/*onGestureListener*/);
@@ -196,7 +196,7 @@ return mGestureDetector.onTouchEvent(event)
 <p>动画部分在<a href="http://www.kutear.com/android/2015/12/12/android_animation/">Android群英传-第七章 Android动画机制与使用技巧</a>中已经有比较详细的说明,在这里就不做说明.</p>
 <h3 id="viewdraghelper">ViewDragHelper</h3>
 <p>ViewDragHelper的使用过程其实也是比较简单的,主要用户控制部分都在Callback中.CallBack中的函数比较多<br>
-<img src="http://kutear.qiniudn.com/2016/01/11/f20ae020fc9558eebb7a4a16203b6f9c.png" alt="CallBack" loading="lazy"><br>
+<img src="http://kutear.qiniudn.com/2016/01/11/f20ae020fc9558eebb7a4a16203b6f9c.png" alt="CallBack"><br>
 下面是一个简单的栗子:</p>
 <pre><code class="language-java">                //初始化
                 mDragHelper = ViewDragHelper.create(this/*要处理的ViewGroup*/,
