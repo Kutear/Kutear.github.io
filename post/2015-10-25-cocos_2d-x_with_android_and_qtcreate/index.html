@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1582133461591">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1584452849330">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://www.kutear.com">
-        <img src="https://www.kutear.com/images/avatar.png?v=1582133461591" class="site-logo">
+        <img src="https://www.kutear.com/images/avatar.png?v=1584452849330" class="site-logo">
         <h1 class="site-title">KuTear</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -99,12 +99,12 @@
 因为我是做Android开发的,这一块很熟练了,没问题.<br>
 2.NDK的安装<br>
 在Android Studio中<code>Files-&gt;other settings-&gt;default Settings-&gt;System Setting-&gt;Android SDK-&gt;SDK Tools</code>选择<em>Android NDK</em>下载,需要科学上网.下载完成后在SDK的根目录下.<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/275aff1661d45b2d0cb63fd9c9130260.png" alt="Android Studio"><br>
+<img src="http://kutear.qiniudn.com/2016/03/21/275aff1661d45b2d0cb63fd9c9130260.png" alt="Android Studio" loading="lazy"><br>
 3.Cocos 2d-x的安装<br>
 在官网<a href="http://www.cocos2d-x.org/download">Cocos.org</a>下载,下载Ant构建工具<br>
 在cocos目录下运行download-deps.py下载 ****.zip<br>
 运行setup.py 根据提示设置ANDROID_SDK_ROOT NDK_ROOT ANT_ROOT,也可以直接写入环境变量.<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/5466e88c6a1a5d53b4f77320ce461954.png" alt="目录与安装"><br>
+<img src="http://kutear.qiniudn.com/2016/03/21/5466e88c6a1a5d53b4f77320ce461954.png" alt="目录与安装" loading="lazy"><br>
 4.新建项目<br>
 运行 cocos new -h可以看到帮助<br>
 主要指定 -p PACKAGE_NAME -l cpp</p>
@@ -112,19 +112,19 @@
 <p>cocos new -p cm.kutear -l cpp &quot;MyCppGame&quot;</p>
 </blockquote>
 <p>运行后得到下面目录<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/5466e88c6a1a5d53b4f77320ce461954.png" alt="新工程"><br>
+<img src="http://kutear.qiniudn.com/2016/03/21/5466e88c6a1a5d53b4f77320ce461954.png" alt="新工程" loading="lazy"><br>
 QtCreator引入<br>
 下载qtcreate:官网下比较麻烦,命令sudo apt-get install qtcreator<br>
 运行qtcreator,FIles -&gt; open file or project选择CMakeLists.txt<br>
 在Run CMake步骤直接Run CMake,不需要参数.<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/275aff1661d45b2d0cb63fd9c9130260.png" alt=""><br>
+<img src="http://kutear.qiniudn.com/2016/03/21/275aff1661d45b2d0cb63fd9c9130260.png" alt="" loading="lazy"><br>
 完成后就导入完成,运行,时间第一次时间有点久<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/096c9930ef3690a96609ac4bce1ae933.png" alt="运行效果"><br>
+<img src="http://kutear.qiniudn.com/2016/03/21/096c9930ef3690a96609ac4bce1ae933.png" alt="运行效果" loading="lazy"><br>
 Android Studio引入<br>
 运行Android Studio,导入proj.android-studio<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/9396fc7559613eabf49e3a46816a1493.png" alt="AS"><br>
+<img src="http://kutear.qiniudn.com/2016/03/21/9396fc7559613eabf49e3a46816a1493.png" alt="AS" loading="lazy"><br>
 如果你是在模拟器测试,请更改下面部分<br>
-<img src="http://kutear.qiniudn.com/2016/03/21/900f1372ea5e5f39eb64eb43b882ed80.png" alt="Modify"><br>
+<img src="http://kutear.qiniudn.com/2016/03/21/900f1372ea5e5f39eb64eb43b882ed80.png" alt="Modify" loading="lazy"><br>
 现在在工程目录下,也就是MyCppGame下运行</p>
 <blockquote>
 <p>cocos compile -p android --android-studio</p>
@@ -135,21 +135,21 @@ Android Studio引入<br>
 <blockquote>
 <p>cocos run -p android --android-studio</p>
 </blockquote>
-<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2016/03/21/d8bf58b4556530075c90146140878344.png" alt="Android 运行效果"></figure>
+<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2016/03/21/d8bf58b4556530075c90146140878344.png" alt="Android 运行效果" loading="lazy"></figure>
 
             </div>
             
               <div class="tag-container">
                 
-                  <a href="https://www.kutear.com/tag/gILhVUT7Ko" class="tag">
+                  <a href="https://www.kutear.com/tag/gILhVUT7Ko/" class="tag">
                     Cocos 2d-x
                   </a>
                 
-                  <a href="https://www.kutear.com/tag/CKosjv0ytl" class="tag">
+                  <a href="https://www.kutear.com/tag/CKosjv0ytl/" class="tag">
                     环境搭建
                   </a>
                 
-                  <a href="https://www.kutear.com/tag/2bhUImQpoP" class="tag">
+                  <a href="https://www.kutear.com/tag/2bhUImQpoP/" class="tag">
                     Android
                   </a>
                 
@@ -158,7 +158,7 @@ Android Studio引入<br>
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://www.kutear.com/post/2015-09-05-Android_Desigin_Library">
+                <a href="https://www.kutear.com/post/2015-09-05-Android_Desigin_Library/">
                   <h3 class="post-title">
                     Android Desigin Library
                   </h3>
