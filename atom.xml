@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://www.kutear.com</id>
     <title>KuTear</title>
-    <updated>2020-03-20T02:40:41.549Z</updated>
+    <updated>2020-03-20T06:53:09.753Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://www.kutear.com"/>
     <link rel="self" href="https://www.kutear.com/atom.xml"/>
