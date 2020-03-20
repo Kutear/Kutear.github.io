@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://www.kutear.com</id>
     <title>KuTear</title>
-    <updated>2020-03-20T02:24:59.853Z</updated>
+    <updated>2020-03-20T02:25:50.780Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://www.kutear.com"/>
     <link rel="self" href="https://www.kutear.com/atom.xml"/>
@@ -10,6 +10,13 @@
     <logo>https://www.kutear.com/images/avatar.png</logo>
     <icon>https://www.kutear.com/favicon.ico</icon>
     <rights>All rights reserved 2020, KuTear</rights>
+    <entry>
+        <title type="html"><![CDATA[企鹅电竞高性能弹幕组件-实现以及优化]]></title>
+        <id>https://www.kutear.com/post/2020-03-20-egame-danmaku-opt/</id>
+        <link href="https://www.kutear.com/post/2020-03-20-egame-danmaku-opt/">
+        </link>
+        <updated>2020-03-17T14:07:00.000Z</updated>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Instance Run 原理分析]]></title>
         <id>https://www.kutear.com/post/2018-01-19-Android-Build-Instant_Run/</id>
@@ -72,12 +79,5 @@
         <link href="https://www.kutear.com/post/2017-04-13-Android_RecyclerView/">
         </link>
         <updated>2017-04-13T02:24:00.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Android Apk安装过程]]></title>
-        <id>https://www.kutear.com/post/2017-02-15-Android_Apk_install/</id>
-        <link href="https://www.kutear.com/post/2017-02-15-Android_Apk_install/">
-        </link>
-        <updated>2017-02-15T02:24:00.000Z</updated>
     </entry>
 </feed>
