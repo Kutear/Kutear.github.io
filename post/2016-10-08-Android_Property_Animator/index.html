@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586184940317">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586186769000">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://www.kutear.com">
-        <img src="https://www.kutear.com/images/avatar.png?v=1586184940317" class="site-logo">
+        <img src="https://www.kutear.com/images/avatar.png?v=1586186769000" class="site-logo">
         <h1 class="site-title">KuTear</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -94,31 +94,7 @@
             <div class="post-date">2016-10-09</div>
             
             <div class="post-content">
-              <div class=wsd wsd_style="default">
-  <pre>
-      title Animator调用时序图API 23
-<pre><code>  ObjectAnimator-&gt;+ValueAnimator: start()
-  ValueAnimator-&gt;+AnimationHandler:start(false)
-  AnimationHandler-&gt;+Choreographer:scheduleAnimation()
-  Choreographer-&gt;+Runnable:postCallback()
-  Runnable-&gt;AnimationHandler:run()
-  AnimationHandler-&gt;ValueAnimator:doAnimationFrame(long)
-  AnimationHandler-&gt;+Choreographer:scheduleAnimation()
-  note over AnimationHandler,Choreographer: 循环执行
-  ValueAnimator-&gt;ValueAnimator:doAnimationFrame(long)
-  ValueAnimator-&gt;ObjectAnimator:【重载#1】animationFrame(long)
-  # note left of ObjectAnimator:ObjectAnimator时调用为target设置属性值
-  ValueAnimator-&gt;ValueAnimator:【重载#1】animationFrame(long)
-  ValueAnimator-&gt;ValueAnimator:【重载#2】animateValue(fraction)
-  note right of ValueAnimator:ValueAnimator时调用分发给Listener
-  ObjectAnimator-&gt;+PropertyValuesHolder:【重载#2】animateValue(fraction)
-  PropertyValuesHolder-&gt;+Target:setAnimatedValue(target)
-  note right of PropertyValuesHolder:属性设置
-  Target-&gt;Target:setter()
-</code></pre>
-  </pre>
-</div>
-<script type="text/javascript" src="http://www.websequencediagrams.com/service.js"></script>
+              <figure data-type="image" tabindex="1"><img src="https://www.kutear.com/post-images/1586186288370.png" alt="" loading="lazy"></figure>
 <h1 id="valueanimator">ValueAnimator</h1>
 <p>本身不会产生任何的动画,它的作用是根据输入的值区间,产生一个在某个时间点的具体值。下面用个通俗的例子来说明。</p>
 <blockquote>
