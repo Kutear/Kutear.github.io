@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586189510637">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586191298203">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://www.kutear.com">
-        <img src="https://www.kutear.com/images/avatar.png?v=1586189510637" class="site-logo">
+        <img src="https://www.kutear.com/images/avatar.png?v=1586191298203" class="site-logo">
         <h1 class="site-title">KuTear</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -243,8 +243,8 @@ while ((c = inputStream.read()) != -1) {
 }
 </code></pre>
 <h1 id="文件通道与缓冲器">文件通道与缓冲器</h1>
-<p><img src="http://kutear.qiniudn.com/2016/08/05/e50f9f44ee36fecd47982796ea4c05f3.png" alt="" loading="lazy"><br>
-文件读取</p>
+<figure data-type="image" tabindex="1"><img src="https://www.kutear.com/post-images/1586191000477.png" alt="" loading="lazy"></figure>
+<h2 id="文件读取">文件读取</h2>
 <pre><code class="language-java">//第一步：获取通道
 FileInputStream fin = new FileInputStream( &quot;G:/test.txt&quot; );
 //第二步：创建缓冲区
@@ -258,7 +258,7 @@ while (charBuffer.hasRemaining()) {
       System.out.print(charBuffer.get());
 }
 </code></pre>
-<p>文件写入</p>
+<h2 id="文件写入">文件写入</h2>
 <pre><code class="language-java">FileOutputStream outputStream = new FileOutputStream(&quot;G:/test.txt&quot;);
 FileChannel channel = outputStream.getChannel();
 ByteBuffer buffer = ByteBuffer.allocate(2);
@@ -267,8 +267,8 @@ charBuffer.put('C');
 channel.write(buffer);
 buffer.flip();
 </code></pre>
-<p>Buffer的结构<br>
-<img src="http://kutear.qiniudn.com/2016/08/05/ddbada42147645a4b0be97343351ea30.png" alt="" loading="lazy"><br>
+<h2 id="buffer的结构">Buffer的结构</h2>
+<p><img src="https://www.kutear.com/post-images/1586191072968.png" alt="" loading="lazy"><br>
 基本函数说明</p>
 <ul>
 <li>flip()</li>

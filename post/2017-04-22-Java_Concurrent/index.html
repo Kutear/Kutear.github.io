@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586189510637">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586191298203">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://www.kutear.com">
-        <img src="https://www.kutear.com/images/avatar.png?v=1586189510637" class="site-logo">
+        <img src="https://www.kutear.com/images/avatar.png?v=1586191298203" class="site-logo">
         <h1 class="site-title">KuTear</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -121,8 +121,8 @@ i = k
 <p>synchronized就不一样了，它不仅可以保证可见性，同时还保证原子性。在进入锁住的代码块时，synchronized指定的对象的锁会被当前线程拿到，当别的线程访问这个代码块时会因为拿不到锁而处于等待状态，故synchronized代码块统一时间只能有一个线程访问，保证原子性操作。</p>
 <h2 id="threadpoolexecutor原理">ThreadPoolExecutor原理</h2>
 <p>在创建线程池的时候会指定corePollSize,runnableTaskQueue,maxinunPoolSize,ThreadFactory，RejectedExecutionHandler以及keepAliveTime等。</p>
-<p>在使用线程池的时候我们通常是直接执行execute()方法，下面就分析这个方法的执行过程。如果现在线程池中的存活线程数量小于corePollSize，那么就会通过一个名为Worker的类利用ThreadFactory创建一个新的线程并在运行这个线程之前把当前要执行的任务添加到指定的runnableTaskQueue，线程运行起来之后就会在这个队列中循环获取任务(无任务时阻塞)并执行任务。如果线程池中的存活线程数量为[corePollSize,maxinunPoolSize]之间并且还可以向runnableTaskQueue加入任务就直接加入,不能加入runnableTaskQueue时如果线程数小于maxinunPoolSize就会新建非核心线程来处理,如果还是不行就使用RejectedExecutionHandler来处理了。</p>
-<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2017/04/21/5b32d5e6024e999cdd75d4a0cd0e0a1e.jpg" alt="" loading="lazy"></figure>
+<p>在使用线程池的时候我们通常是直接执行execute()方法，下面就分析这个方法的执行过程。如果现在线程池中的存活线程数量小于corePollSize，那么就会通过一个名为Worker的类利用ThreadFactory创建一个新的线程并在运行这个线程之前把当前要执行的任务添加到指定的runnableTaskQueue，线程运行起来之后就会在这个队列中循环获取任务(无任务时阻塞)并执行任务。如果线程池中的存活线程数量为[corePollSize,maxinunPoolSize]之间并且还可以向runnableTaskQueue加入任务就直接加入,不能加入runnableTaskQueue时如果线程数小于maxinunPoolSize就会新建非核心线程来处理,如果还是不行就使用RejectedExecutionHandler来处理了。<br>
+<img src="https://www.kutear.com/post-images/1586191136063.jpg" alt="" loading="lazy"></p>
 <h3 id="线程超时退出实现">线程超时退出实现</h3>
 <p>在<a href="http://www.kutear.com/post/android/2017-04-21-android_volley">这篇文章中</a>,对于阻塞队列有提到过使用poll(time,unit)来实现超时退出，ThreadPoolExecutor的实现中在从runnableTaskQueue中提取任务的时候也是使用这个来实现的。</p>
 <pre><code class="language-java">/**
