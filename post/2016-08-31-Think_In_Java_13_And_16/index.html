@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Thinking In Java 第13章 字符串 &amp; 16章 数组 | KuTear</title>
+<meta name="description" content="温故而知新">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586189510637">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1586189510637" class="site-logo">
+        <h1 class="site-title">KuTear</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/kutear" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      温故而知新
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Thinking In Java 第13章 字符串 &amp; 16章 数组</h2>
+            <div class="post-date">2016-08-31</div>
+            
+            <div class="post-content">
+              <h1 id="数组">数组</h1>
+<h2 id="粗糙数组">粗糙数组</h2>
+<blockquote>
+<p>数组中构成矩阵的每个向量都可以具有任意的长度</p>
+</blockquote>
+<pre><code class="language-java"> int[][] array = new int[][]{
+        new int[]{1, 2, 3},
+        new int[]{1, 2}
+ };
+ System.out.println(Arrays.deepToString(array));//输出 [[1, 2, 3], [1, 2]]
+ System.out.println(array[1][2]);// java.lang.ArrayIndexOutOfBoundsException: 2
+</code></pre>
+<h2 id="基础">基础</h2>
+<ul>
+<li>新生成一个数组，其中所有引用被自动初始化为null，基本类型被初始化为0（boolean是false）</li>
+</ul>
+<h2 id="arrays">Arrays</h2>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>equals()</td>
+<td>比较两个数字是否相等</td>
+</tr>
+<tr>
+<td>deepEquals()</td>
+<td>用于多维数组比较</td>
+</tr>
+<tr>
+<td>fill()</td>
+<td>填充数组</td>
+</tr>
+<tr>
+<td>sort()</td>
+<td>数组排序</td>
+</tr>
+<tr>
+<td>binarySearch()</td>
+<td>在已经排序的数组中查找元素</td>
+</tr>
+<tr>
+<td>toString</td>
+<td>产生数组的String表示</td>
+</tr>
+<tr>
+<td>hashCode()</td>
+<td>产生数组的散列码</td>
+</tr>
+<tr>
+<td>asList()</td>
+<td>接受任意的序列或数组作为其参数，并转换为List容器</td>
+</tr>
+</tbody>
+</table>
+<h2 id="数组与泛型">数组与泛型</h2>
+<blockquote>
+<p>通常，数组与泛型不能很好结合，你不能实例化具有参数化类型的数组。<code>Peel&lt;Banana&gt;[] peels = new Peel&lt;&gt;[10]</code>不合法，擦除会移除参数类型信息，而数组必须知道它们所持有的确切类型，以强制保证类型安全。</p>
+</blockquote>
+<h3 id="类型擦除">类型擦除</h3>
+<pre><code class="language-java">Class c1 = new ArrayList&lt;Integer&gt;().getClass();
+Class c2 = new ArrayList&lt;String&gt;().getClass();
+System.out.println(c1 == c2); //Output: true
+</code></pre>
+<h3 id="参数化方法">参数化方法</h3>
+<pre><code class="language-java">private &lt;T&gt; Class get(T data){
+        return data.getClass();
+}
+</code></pre>
+<h3 id="参数化类">参数化类</h3>
+<pre><code class="language-java">public class Container&lt;K, V&gt; {
+    private K key;
+    private V value;
+
+    public Container(K k, V v) {
+        key = k;
+        value = v;
+    }
+}
+</code></pre>
+<h3 id="泛型自动打包拆包">泛型自动打包拆包</h3>
+<pre><code class="language-java">HashMap&lt;String,Integer&gt; map = new HashMap&lt;&gt;();
+map.put(&quot;one&quot;,1);  //  int ---&gt; Integer
+int value = map.get(&quot;one&quot;); // Integer ---&gt; int
+</code></pre>
+<p>通过反编译查看实现</p>
+<pre><code class="language-java">public class Main {
+  public Main();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object.&quot;&lt;init&gt;&quot;:()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: new           #2                  // class java/util/HashMap
+       3: dup
+       4: invokespecial #3                  // Method java/util/HashMap.&quot;&lt;init&gt;&quot;:()V
+       7: astore_1
+       8: aload_1
+       9: ldc           #4                  // String one
+      11: iconst_1
+      12: invokestatic  #5                  // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;[打包]
+      15: invokevirtual #6                  // Method java/util/HashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/
+lang/Object;
+      18: pop
+      19: aload_1
+      20: ldc           #4                  // String one
+      22: invokevirtual #7                  // Method java/util/HashMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      25: checkcast     #8                  // class java/lang/Integer
+      28: invokevirtual #9                  // Method java/lang/Integer.intValue:()I [拆包]
+      31: istore_2
+      32: return
+}
+</code></pre>
+<h1 id="字符串">字符串</h1>
+<h2 id="string对象不可变">String对象不可变</h2>
+<p>任意的包含改变String的方法其实都是重新生成对象</p>
+<pre><code class="language-java">//String.java
+public String substring(int beginIndex, int endIndex) {
+        if (beginIndex &lt; 0) {
+            throw new StringIndexOutOfBoundsException(beginIndex);
+        }
+        if (endIndex &gt; value.length) {
+            throw new StringIndexOutOfBoundsException(endIndex);
+        }
+        int subLen = endIndex - beginIndex;
+        if (subLen &lt; 0) {
+            throw new StringIndexOutOfBoundsException(subLen);
+        }
+        return ((beginIndex == 0) &amp;&amp; (endIndex == value.length)) ? this
+                : new String(value, beginIndex, subLen);
+}
+</code></pre>
+<h2 id="重载原理">&quot;+&quot;重载原理</h2>
+<pre><code class="language-java">String result1 = &quot;AAA&quot; + &quot;BBB&quot;;
+String result2 = &quot;AAABBB&quot;;
+</code></pre>
+<p>上面的<code>result1==result2</code>.<br>
+通过反编译可得</p>
+<pre><code class="language-java">public static void main(java.lang.String[]);
+  Code:
+     0: ldc           #2                  // String AAABBB
+     2: astore_1
+     3: ldc           #2                  // String AAABBB
+     5: astore_2
+     6: return
+</code></pre>
+<p>java编译器对它进行了优化.</p>
+<pre><code class="language-java">public static void main(String[] args) {
+       String result1 = new String(&quot;AAA&quot;);
+	   String result2 = result1+&quot;BBB&quot;;
+}
+</code></pre>
+<pre><code class="language-java">  public static void main(java.lang.String[]);
+    Code:
+       0: new           #2                  // class java/lang/String
+       3: dup
+       4: ldc           #3                  // String AAA
+       6: invokespecial #4                  // Method java/lang/String.&quot;&lt;init&gt;&quot;:(Ljava/lang/String;)V
+       9: astore_1
+      10: new           #5                  // class java/lang/StringBuilder
+      13: dup
+      14: invokespecial #6                  // Method java/lang/StringBuilder.&quot;&lt;init&gt;&quot;:()V
+      17: aload_1
+      18: invokevirtual #7                  // Method java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      21: ldc           #8                  // String BBB
+      23: invokevirtual #7                  // Method java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      26: invokevirtual #9                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      29: astore_2
+      30: return
+}
+</code></pre>
+<p>由上可以看出&quot;+&quot;的实现是利用<code>StringBuilder</code>的<code>append()</code>实现</p>
+<pre><code class="language-java">for(int i = 0; i &lt; fields.length; i++) {
+			result += fields[i];
+}
+</code></pre>
+<p>根据上面的原理知道这里的<code>+=</code>会生成临时<code>StringBuilder</code>N多个,会造成不必要的消耗,这时应主动用<code>StringBuilder</code></p>
+<pre><code class="language-java">StringBuilder result = new StringBuilder();
+for(int i = 0; i &lt; fields.length; i++) {
+	result.append(fields[i]);
+}
+return result.toString();
+</code></pre>
+<h2 id="stringbuilder-stringbuffer">StringBuilder &amp; StringBuffer</h2>
+<blockquote>
+<p>StringBuffer是线程安全的，速度慢些；StringBuilder是线程不安全的，但是速度快些；</p>
+</blockquote>
+<p>性能: <strong>StringBuilder &gt; StringBuffer &gt; String</strong></p>
+<h2 id="字符格式化">字符格式化</h2>
+<ul>
+<li><code>System.out.println(&quot;%d %f&quot;, x, y);</code></li>
+<li><code>System.out.printf(&quot;%d %f&quot;, x, y);</code></li>
+<li><code>java.util.Formatter</code></li>
+<li><code>String.format(&quot;%d %f&quot;, x, y);</code></li>
+</ul>
+<h2 id="正则表达式">正则表达式</h2>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>说明</th>
+<th>符号</th>
+<th>说明</th>
+<th>符号</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>^</td>
+<td>一行的起始</td>
+<td>\W</td>
+<td>非字母数字</td>
+<td>\w</td>
+<td>字母数字</td>
+</tr>
+<tr>
+<td>$</td>
+<td>一行的末尾</td>
+<td>\D</td>
+<td>非数字</td>
+<td>\d</td>
+<td>数字</td>
+</tr>
+<tr>
+<td>+</td>
+<td>&gt;=1</td>
+<td>?</td>
+<td>0或1次</td>
+<td>*</td>
+<td>任意次</td>
+</tr>
+<tr>
+<td>.</td>
+<td>非换行任意字符</td>
+<td>[^x]</td>
+<td>非X字符的任意字符</td>
+<td>\S</td>
+<td>任意非空白符字符</td>
+</tr>
+</tbody>
+</table>
+<h1 id="补充">补充</h1>
+<h2 id="java中的string内存分析">Java中的String内存分析</h2>
+<blockquote>
+<p>栈(Stack) ：存放基本类型的变量数据和对象的引用，但对象本身不存放在栈中，而是存放在堆（new 出来的对象）或者常量池中（字符串常量对象存放在常量池中）<br>
+堆(heap)：存放所有new出来的对象和数组。<br>
+常量池(constant pool)：在堆中分配出来的一块存储区域，存放储显式的String常量和基本类型常量(float、int等)。另外，可以存储不经常改变的东西(public static final)。常量池中的数据可以共享。<br>
+静态存储：存放静态成员（static定义的）。</p>
+</blockquote>
+<p>Java中字符串对象创建有两种形式，一种为字面量形式，如<code>String str = &quot;droid&quot;</code>;，另一种就是使用new这种标准的构造对象的方法，如<code>String str = new String(&quot;droid&quot;)</code>.<br>
+当代码中出现<strong>字面量</strong>形式创建字符串对象时，JVM首先会对这个字面量进行检查，如果字符串常量池中存在相同内容的字符串对象的引用，则将这个引用返回，否则新的字符串对象被创建，然后将这个引用放入字符串常量池，并返回该引用。<br>
+当我们使用了<strong>new</strong>来构造字符串对象的时候，不管字符串常量池中有没有相同内容的对象的引用，新的字符串对象都会创建。</p>
+<pre><code class="language-java">String str1 = &quot;droid&quot;;
+String str2 = &quot;droid&quot;;
+String str3 = new String(&quot;droid&quot;);
+System.out.println(str1 == str2); //true
+System.out.println(str1 == str3);//false
+</code></pre>
+<p>使用<code>new</code>创建对象,会在<strong>堆</strong>中创建对象(真正的内存占用),同时会在<strong>栈</strong>中创建指向堆中该对象的首地址的一个引用(相当于指针,同样占一小部分内存),当程序运行到该变量的作用域之后,栈中的引用会被置为空,但是此时堆中的内存并没有被即可释放,会根据程序所占用的内存Java GC在合适的时候回收堆中的内存.</p>
+<p>对于<code>String</code>的比较问题,我们需要记住</p>
+<pre><code class="language-java">String a = new String(&quot;A&quot;);
+String b = new String(&quot;A&quot;);
+</code></pre>
+<p>对于<code>new</code>出来的对象,<code>==</code>操作是不相等的.</p>
+<pre><code class="language-java">String a = &quot;A&quot;;
+String b = a + &quot;B&quot;;
+
+String c = &quot;A&quot; + &quot;B&quot;;
+</code></pre>
+<p>通过反编译,发现<code>b</code>这里其实利用<code>StringBuilder</code>,最后用<code>StringBuilder#toString()</code>方法生成<code>String</code>,是经过<code>new</code>出来的,而前面说过,<code>new</code>出来的对象是栈中的引用指向堆中的地址,而字面量形式是栈中的引用指向常量区的地址.当然是不相等的.<br>
+而<code>c</code>经编译器优化等同于<code>String c = &quot;AB&quot;</code>.</p>
+<pre><code class="language-java">//StringBuilder.java
+@Override
+public String toString() {
+    // Create a copy, don't share the array
+    return new String(value, 0, count);
+}
+</code></pre>
+<h1 id="参考">参考</h1>
+<ul>
+<li><a href="http://howiefh.github.io/2014/10/30/thinking-in-java-note-5/">Java编程思想笔记五</a></li>
+<li><a href="https://segmentfault.com/a/1190000003831229">Java泛型：类型擦除</a></li>
+<li><a href="http://droidyue.com/blog/2014/12/21/string-literal-pool-in-java/">Java中的字符串常量池</a></li>
+</ul>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://www.kutear.com/tag/m8i70eBHPt/" class="tag">
+                    Thinking In Java
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://www.kutear.com/post/2016-08-30-SparseArray/">
+                  <h3 class="post-title">
+                    SparseArray 原理分析
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

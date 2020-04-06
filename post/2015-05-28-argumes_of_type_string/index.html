@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Java String作为参数的情况 | KuTear</title>
+<meta name="description" content="温故而知新">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586189510637">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1586189510637" class="site-logo">
+        <h1 class="site-title">KuTear</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/kutear" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      温故而知新
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Java String作为参数的情况</h2>
+            <div class="post-date">2015-05-28</div>
+            
+            <div class="post-content">
+              <h2 id="string是不可以被修改的">String是不可以被修改的</h2>
+<p>一旦String对象创建之后,我们是不能修改他的值的(这里的修改是指在内存的同一位置).我们可以从JDK的String类里看到<br>
+比如substring()方法</p>
+<pre><code class="language-java">    public String substring(int beginIndex, int endIndex) {
+        if (beginIndex &lt; 0) {
+            throw new StringIndexOutOfBoundsException(beginIndex);
+        }
+        if (endIndex &gt; value.length) {
+            throw new StringIndexOutOfBoundsException(endIndex);
+        }
+        int subLen = endIndex - beginIndex;
+        if (subLen &lt; 0) {
+            throw new StringIndexOutOfBoundsException(subLen);
+        }
+        return ((beginIndex == 0) &amp;&amp; (endIndex == value.length)) ? this
+                : new String(value, beginIndex, subLen);
+    }
+</code></pre>
+<p>在最后,我们发现他返回的String是重新new的一个对象,而不是在原对象的基础上修改</p>
+<h2 id="基本类型做参数传的是值对象传递的是相当于引用">基本类型做参数传的是值,对象传递的是相当于引用</h2>
+<p>传值是不会导致数据的改变的,但是当传递的是引用,在方法中改变了对象的某字段,会导致方法外部的变量也改变<br>
+example:</p>
+<pre><code class="language-java">    public class Test {
+    	public int i = 0;
+    	public void chaneg(Test t) {
+    		t.i = 10;
+    	}
+    	public static void main(String[] args) {
+    		Test test = new Test();
+    		System.out.println(test.i);
+    		test.chaneg(test);
+    		System.out.println(test.i);
+    	}
+    }
+</code></pre>
+<blockquote>
+<p>output: 0  10</p>
+</blockquote>
+<p>说明在方法内改变变量值导致外部改变<br>
+但是对于String当值的改变是,内存地址已改变<br>
+则相当于下面的example:</p>
+<pre><code class="language-java">    public class Test {
+    	public int i = 0;
+    	public void chaneg(Test t) {
+    		t = new Test();//改变内存地址
+    		t.i = 10;
+    	}
+    	public static void main(String[] args) {
+    		Test test = new Test();
+    		System.out.println(test.i);
+    		test.chaneg(test);
+    		System.out.println(test.i);
+    	}
+    }
+</code></pre>
+<blockquote>
+<p>output: 0 0</p>
+</blockquote>
+<p>也就是说没有改变外部的值</p>
+<h2 id="总结">总结</h2>
+<p>当在方法中该变量对象的内存地址之后,是不会影响外部的值,但是如果只是改变了某字段的值,外部的值会跟着改变.</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://www.kutear.com/tag/UuCyGiTvd0/" class="tag">
+                    String
+                  </a>
+                
+                  <a href="https://www.kutear.com/tag/axXj1-xBL/" class="tag">
+                    Java
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://www.kutear.com/post/2015-05-26-bug_for_android/">
+                  <h3 class="post-title">
+                    Android开发中遇到的坑
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

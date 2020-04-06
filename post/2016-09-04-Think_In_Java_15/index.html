@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Thinking In Java 第15章 泛型 | KuTear</title>
+<meta name="description" content="温故而知新">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586189510637">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1586189510637" class="site-logo">
+        <h1 class="site-title">KuTear</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/kutear" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      温故而知新
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Thinking In Java 第15章 泛型</h2>
+            <div class="post-date">2016-09-04</div>
+            
+            <div class="post-content">
+              <h2 id="元组">元组</h2>
+<pre><code class="language-java">public class TwoTuple&lt;A,B&gt; {
+    public final A first;
+    public final B second;
+    public TwoTuple(A a, B b){first = a; second = b;}
+}
+</code></pre>
+<h2 id="泛型接口">泛型接口</h2>
+<pre><code class="language-java">public interface Generator&lt;T&gt;{
+	T next();
+}
+</code></pre>
+<h2 id="泛型方法">泛型方法</h2>
+<pre><code class="language-java">public &lt;T&gt; void function(T i){ //将泛型参数列表置于返回类型之前
+} 
+</code></pre>
+<h2 id="泛型类">泛型类</h2>
+<pre><code class="language-java">public class Generator&lt;T&gt;{
+    private T mVar;
+    public void set(T var){
+      this.mVar = var;
+    }
+    public T get(){
+      return mVar;
+    }
+}
+</code></pre>
+<h2 id="擦除">擦除</h2>
+<p>java中泛型擦除的原因</p>
+<blockquote>
+<p>假设某个应用程序具有两个类库 X/Y，并且 Y 还要使用类库 Z。随着 Java SE5的出现，这个应用程序和这些类库的创建者最终可能希望迁移到泛型上。但是，迁移是个大工程，不能为了迁移而迁移。所以，<strong>为了实现迁移兼容性，每个类库和应用程序都必须与其他所有的部分是否使用了泛型无关</strong>。这样，它们不能拥有探测其他类库是否使用了泛型的能信。因此，某个特定的类库使用了泛型这样的证据必须被“擦除”。试想，如果没有某种类型的迁移途径，所有已经构建了很长时间的类库就需要与希望迁移到 Java 泛型的开发者们说再见了。正因为类库对于编程语言极其重要，所以这不是一种可以接受的代价。擦除是否是最佳的或者唯一的迁移途径，还需要时间来检验。</p>
+</blockquote>
+<p>在泛型代码内部，无法获得任何有关泛型参数类型的信息。<br>
+Java泛型是使用擦除来实现的，这意味着当你在使用泛型时，任何具体的类型信息都被擦除了，你唯一知道的就是你在使用一个对象。因此List&lt; String &gt;和List&lt; Integer &gt;在运行时事实上是相同的类型。</p>
+<pre><code class="language-java">List&lt;Integer&gt; intList = new ArrayList&lt;&gt;();
+List&lt;String&gt; stringList = new ArrayList&lt;&gt;();
+System.out.println(intList.getClass() == stringList.getClass()); //true
+</code></pre>
+<p>既然泛型类的内部持有类型被抹掉，那么为什么我们在调用<code>Generator#get()</code>的时候还能够得到它所持有的具体类型呢？下面就看看是如何实现的。</p>
+<h2 id="擦除的补偿">擦除的补偿</h2>
+<p>Java泛型在instanceof、创建类型实例，创建数组、转型时都会有问题。有时必须通过引入类型标签（即你的类型的Class对象）进行补偿。使用动态的isInstance()方法，而不是instanceof。</p>
+<pre><code class="language-java">public class _15_GenericHolder&lt;T&gt; {
+    private T obj;
+
+    public void set(T obj) {
+        this.obj = obj;
+    }
+
+    public T get() {
+        return obj;
+    }
+
+    public static void main(String[] args) {
+        _15_GenericHolder&lt;String&gt; holder = new _15_GenericHolder&lt;String&gt;();
+        holder.set(&quot;Item&quot;);
+        // 这里没有转型了，但是我们知道传递给 set()的值在编译期还是会接受检查
+        String s = holder.get();
+    }
+}
+
+// 反编译：
+public class Chapter15._15_GenericHolder&lt;T&gt; {
+  public Chapter15._15_GenericHolder();
+    Code:
+       0: aload_0
+       1: invokespecial #12                 // Method java/lang/Object.&quot;&lt;init&gt;&quot;:()V
+       4: return
+
+  public void set(T);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #23                 // Field obj:Ljava/lang/Object;
+       5: return
+
+  public T get();
+    Code:
+       0: aload_0
+       1: getfield      #23                 // Field obj:Ljava/lang/Object;
+       4: areturn
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: new           #1                  // class Chapter15/_15_GenericHolder
+       3: dup
+       4: invokespecial #30                 // Method &quot;&lt;init&gt;&quot;:()V
+       7: astore_1
+       8: aload_1
+       9: ldc           #31                 // String Item
+      11: invokevirtual #33                 // Method set:(Ljava/lang/Object;)V
+      14: aload_1
+      15: invokevirtual #35                 // Method get:()Ljava/lang/Object;
+      18: checkcast     #37                 // class java/lang/String
+      21: astore_2
+      22: return
+}
+</code></pre>
+<p>上面的代码中可以在<code>main</code>的18行看见，有一次类型的强转，这是通过编译器实现的，也就是说当我们编译的时候代码其实就已经对它指定了返回类型，而不是在运行时判断返回类型。<br>
+我们知道，实际的持有对象已经向上转型成为<code>Object</code>,也就是说我们的泛型只能使用<code>Object</code>的方法，而不能获取到真正的持有类的方法，于是，擦除边界就诞生了。</p>
+<pre><code class="language-java">public class Base{
+  public void func(){
+     System.out.println(“This is Base”)；
+  }
+}
+
+public class Holder&lt;T extends Base&gt;{
+  T mVar;
+  public void set(T var){
+    this.mVar = var;
+  }
+  public func(){
+  	this.mVar.func();
+  }
+}
+</code></pre>
+<p>通过这样，我们的持有类型其实就由原本的<code>Object</code>变为了<code>Base</code>,这样我们就可以调用<code>Base</code>中的方法。同时还可以<code>extends</code>多个接口。</p>
+<pre><code class="language-java">interface Animal{
+    public void speek();
+}
+interface Fish{
+    public void bubble();
+}
+class GoldenFish implements Animal, Fish{
+    @Override
+    public void bubble() {
+        System.out.println(&quot;O。.&quot;);
+    }
+    @Override
+    public void speek() {
+        System.out.println(&quot;wow~&quot;);
+    }
+}
+class HoldItem&lt;T&gt;{
+    T item;
+    HoldItem(T item){ this.item = item; }
+    T getItem() { return item; }
+}
+class Item1&lt;T extends Animal &amp; Fish&gt; extends HoldItem&lt;T&gt;{
+    Item1(T item){ super(item); }
+    public void doSomething(){
+        item.speek();
+        item.bubble();
+    }
+}
+</code></pre>
+<p>这里的<code>Item</code>的持有对象必须是<code>Animal</code>和<code>Fish</code>。<br>
+为了在泛型类中能够判断类型，可以引入类型标签.</p>
+<pre><code class="language-java">class ClassTypeCapture&lt;T&gt; {
+    Class&lt;T&gt; kind;
+    public ClassTypeCapture(Class&lt;T&gt; kind){
+        this.kind = kind;
+    }
+    public boolean f(Object arg){
+        return kind.isInstance(arg);
+    }
+    public static void main(String[] args){
+        ClassTypeCapture&lt;String&gt; ctc = new ClassTypeCapture&lt;String&gt;(String.class);
+        System.out.println(ctc.f(&quot;art&quot;)); // true
+        System.out.println(ctc.f(1));  // false
+    }
+}
+</code></pre>
+<p>泛型数组</p>
+<pre><code class="language-java">public class ArrayItem&lt;T&gt;{};
+public class Demo{
+  private ArrayItem&lt;Integer&gt; array;
+  public Demo(int size){
+    //this.array = (ArrayItem&lt;Integer&gt;[])new Object[size];//运行时错误：ClassCastException
+    this.array = (ArrayItem&lt;Integer&gt;[])new ArrayItem[size];
+  }
+}
+</code></pre>
+<blockquote>
+<p>成功创建泛型数组的唯一方式就是创建一个被擦除类型的新数组，然后对其转型。</p>
+</blockquote>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="http://howiefh.github.io/2014/10/17/thinking-in-java-note-4/">Java编程思想笔记四</a></li>
+</ul>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://www.kutear.com/tag/m8i70eBHPt/" class="tag">
+                    Thinking In Java
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://www.kutear.com/post/2016-09-03-Think_In_Java_14/">
+                  <h3 class="post-title">
+                    Thinking in Java 第14章 类型信息
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

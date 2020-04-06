@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Thinking in Java 第14章 类型信息 | KuTear</title>
+<meta name="description" content="温故而知新">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586189510637">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1586189510637" class="site-logo">
+        <h1 class="site-title">KuTear</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/kutear" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      温故而知新
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Thinking in Java 第14章 类型信息</h2>
+            <div class="post-date">2016-09-03</div>
+            
+            <div class="post-content">
+              <h2 id="class">Class</h2>
+<h3 id="构造器static块初始化顺序">构造器/Static块初始化顺序</h3>
+<p>单一类的情况（没有继承）</p>
+<blockquote>
+<p>对于静态变量、静态初始化块、变量、初始化块、构造器，它们的初始化顺序依次是（静态变量、静态初始化块）&gt;（变量、初始化块）&gt;构造器。</p>
+</blockquote>
+<pre><code class="language-java">public class InitialOrderTest {
+        /* 静态变量 */
+    public static String staticField = &quot;静态变量&quot;;
+        /* 变量 */
+    public String field = &quot;变量&quot;;
+        /* 静态初始化块 */
+    static {
+        System.out.println( staticField );
+        System.out.println( &quot;静态初始化块&quot; );
+    }
+        /* 初始化块 */
+    {
+        System.out.println( field );
+        System.out.println( &quot;初始化块&quot; );
+    }
+        /* 构造器 */
+    public InitialOrderTest(){
+        System.out.println( &quot;构造器&quot; );
+    }
+
+
+    public static void main( String[] args ){
+        new InitialOrderTest();
+    }
+}
+</code></pre>
+<p>输出</p>
+<blockquote>
+<p>静态变量<br>
+静态初始化块<br>
+变量<br>
+初始化块<br>
+构造器</p>
+</blockquote>
+<p>包含继承关系的时候</p>
+<pre><code class="language-java">static class Parent {
+        /* 静态变量 */
+        public static String p_StaticField = &quot;父类--静态变量&quot;;
+        /* 变量 */
+        public String    p_Field = &quot;父类--变量&quot;;
+        protected int    i    = 9;
+        protected int    j    = 0;
+        /* 静态初始化块 */
+        static {
+            System.out.println( p_StaticField );
+            System.out.println( &quot;父类--静态初始化块&quot; );
+        }
+        /* 初始化块 */
+        {
+            System.out.println( p_Field );
+            System.out.println( &quot;父类--初始化块&quot; );
+        }
+        /* 构造器 */
+        public Parent(){
+            System.out.println( &quot;父类--构造器&quot; );
+            System.out.println( &quot;i=&quot; + i + &quot;, j=&quot; + j );
+            j = 20;
+        }
+    }
+
+    public static class SubClass extends Parent {
+        /* 静态变量 */
+        public static String s_StaticField = &quot;子类--静态变量&quot;;
+        /* 变量 */
+        public String s_Field = &quot;子类--变量&quot;;
+        /* 静态初始化块 */
+        static {
+            System.out.println( s_StaticField );
+            System.out.println( &quot;子类--静态初始化块&quot; );
+        }
+        /* 初始化块 */
+        {
+            System.out.println( s_Field );
+            System.out.println( &quot;子类--初始化块&quot; );
+        }
+        /* 构造器 */
+        public SubClass(){
+            System.out.println( &quot;子类--构造器&quot; );
+            System.out.println( &quot;i=&quot; + i + &quot;,j=&quot; + j );
+        }
+    }
+</code></pre>
+<p>现在实例化一个<code>SubClass</code>将得到以下的输出</p>
+<blockquote>
+<p>父类--静态变量<br>
+父类--静态初始化块<br>
+子类--静态变量<br>
+子类--静态初始化块<br>
+父类--变量<br>
+父类--初始化块<br>
+父类--构造器<br>
+i=9, j=0<br>
+子类--变量<br>
+子类--初始化块<br>
+子类--构造器<br>
+i=9,j=20</p>
+</blockquote>
+<p>由此我们知道父类构造器先于子类构造器调用，当在父类构造器中添加钩子函数时要注意，有可能子类实现的钩子函数中用到的参数没有被初始化。</p>
+<pre><code class="language-java">abstract class Parent{
+  public Parent(){
+    hook();
+  }
+  public abstract void hook();
+}
+
+class Sub extends Parent{
+  private SomeVar mVar;
+  public Sub(){
+     mVar = new SomeVar(); 
+  }
+  public void hook(){
+    mVar.doSomeThing();  //当调用时 mVar==null
+  }
+}
+</code></pre>
+<h3 id="常用方法">常用方法</h3>
+<table>
+<thead>
+<tr>
+<th>常用方法</th>
+<th>方法说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isInterface()</td>
+<td>判断是否在接口</td>
+</tr>
+<tr>
+<td>getInterfaces()</td>
+<td>获取class实现的所有接口</td>
+</tr>
+<tr>
+<td>getSuperclass()</td>
+<td>获取class的直接父类</td>
+</tr>
+<tr>
+<td>newInstance()</td>
+<td>实例化对象，必须含有默认构造器</td>
+</tr>
+<tr>
+<td>getPrimitiveClass(String)</td>
+<td>获取原始类型对应的Class(Integer.TYPE等的实现)</td>
+</tr>
+<tr>
+<td>cast(Object)</td>
+<td>转化Object为具体的类型(Class&lt; T &gt; 中的T)</td>
+</tr>
+<tr>
+<td>isAssignableFrom(Class&lt;?&gt;)</td>
+<td>判断传入的class是否为当前class的子类或就是当前类</td>
+</tr>
+<tr>
+<td>getModifiers()</td>
+<td>返回当前class的修饰符(public/private/protect等等)</td>
+</tr>
+<tr>
+<td>getMethod(String, Class&lt;?&gt;...)</td>
+<td>根据方法名字参数类型获取方法</td>
+</tr>
+</tbody>
+</table>
+<h2 id="类字面常量">类字面常量</h2>
+<p>使用类必须要准备三个步骤：</p>
+<ol>
+<li>加载，这是由类加载器执行的。该步骤还将查找字节码，并从这些字节码中创建一个Class对象；</li>
+<li>链接。在链接阶段将验证类中的字节码，为静态域分配存储空间，并且如果必须的话，将解析这个类的创建的对其他类的所有引用。</li>
+<li>初始化，如果该类有超类，则对其初始化，执行静态初始化器和静态初始化块。</li>
+</ol>
+<p>字面常量就是<code>ClassName.class</code>的形式。在<strong>Android</strong>启动<code>Activity</code>的时候经常都有使用。</p>
+<h3 id="类加载">类加载</h3>
+<pre><code class="language-java">Class clazz1 = OneClass.class
+Class clazz2 = Class.forName(&quot;OnClass&quot;);
+</code></pre>
+<p>上面的代码中，<code>clazz1</code>不会加载<code>OneClass</code>到<strong>JVM</strong>，然而<code>clazz2</code>回加载。<br>
+初始化被延迟到了对静态方法(构造器也是隐式静态方法)或非常数静态域进行首次引用才执行。</p>
+<pre><code class="language-java">clas Initable{
+ public final static int staticFinal = 1; //常数静态域,不会加载class
+ public final static double staticFinal2 = Math.random();
+ public static double staticVar = 1; 
+}
+</code></pre>
+<h2 id="动态代理">动态代理</h2>
+<pre><code class="language-java">    public static void main(String[] args) {
+        A a = new A();
+        IA proxyA = (IA) Proxy.newProxyInstance(a.getClass().getClassLoader(),new Class[]{
+            IA.class
+        },new ProxyA(a));
+        proxyA.doSomeThing();
+    }
+
+    public static interface IA{
+        public void doSomeThing();
+    }
+
+    public static class A implements IA{
+        @Override
+        public void doSomeThing(){
+            System.out.println(&quot;do some thing&quot;);
+        }
+    }
+
+    public static class ProxyA implements InvocationHandler{
+
+        private Object real;
+        public ProxyA(Object real) {
+            this.real = real;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args)
+                throws Throwable {
+            System.out.println(&quot;before do some thing&quot;);
+            return method.invoke(real,args);
+        }
+    }
+</code></pre>
+<p>输出</p>
+<blockquote>
+<p>before do some thing<br>
+do some thing</p>
+</blockquote>
+<p>通过使用代理，我们可以在函数调用前执行一些操作。</p>
+<h2 id="qa">QA</h2>
+<h3 id="判断一个class是否为抽象类接口">判断一个Class是否为抽象类/接口?</h3>
+<p>判断接口</p>
+<pre><code class="language-java">  Class a = IA.class;
+  System.out.println(a.isInterface());
+</code></pre>
+<p>判断抽象类</p>
+<pre><code class="language-java">  Class a = AbstractA.class;
+  int modifier =  a.getModifiers(); //获取修饰符
+  System.out.println(Modifier.isAbstract(modifier));
+</code></pre>
+<h3 id="一个class被加载到jvm后会不会再重jvm中移除">一个class被加载到JVM后会不会再重JVM中移除?</h3>
+<p>这个问题是看书过程中想到的，查阅资料才发现需要深入了解JVM,这里只是初步说明。<br>
+关于java虚拟机规范中时如何阐述类型卸载(unloading)的：</p>
+<blockquote>
+<p>A class or interface may be unloaded if and only if its class loader is unreachable. The bootstrap class loader is always reachable; as a result， system classes may never be unloaded.</p>
+</blockquote>
+<p>再看一下Java语言规范提供的关于类型卸载的更详细的信息(部分摘录)：</p>
+<blockquote>
+<ol>
+<li>An implementation of the Java programming language may unload classes.</li>
+<li>Class unloading is an optimization that helps reduce memory use. Obviously，the semantics of a program should not depend  on whether and how a system chooses to implement an optimization such as class unloading.</li>
+<li>Consequently，whether a class or interface has been unloaded or not should be transparent to a program</li>
+</ol>
+</blockquote>
+<p>通过以上我们可以得出结论： 类型卸载(unloading)仅仅是作为一种减少内存使用的性能优化措施存在的，具体和虚拟机实现有关，对开发者来说是透明的</p>
+<h3 id="instaceof原理">instaceof原理</h3>
+<p><code>instaceof</code>表示“你是这个类吗，或者是它的子类吗”<br>
+<code>==</code>则仅仅表示“你是这个类吗”<br>
+深入了解请看<a href="https://www.zhihu.com/question/21574535/answer/18998914">RednaxelaFX的知乎回答</a>。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="http://github.thinkingbar.com/thinking_in_java_chapter14/">Java编程思想 - 第十四章、类型信息</a></li>
+<li><a href="http://www.blogjava.net/zhuxing/archive/2008/07/24/217285.html">Java虚拟机类型卸载和类型更新解析</a></li>
+</ul>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://www.kutear.com/tag/m8i70eBHPt/" class="tag">
+                    Thinking In Java
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://www.kutear.com/post/2016-08-31-Think_In_Java_13_And_16/">
+                  <h3 class="post-title">
+                    Thinking In Java 第13章 字符串 &amp; 16章 数组
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

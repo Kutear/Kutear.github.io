@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Java中的并发 | KuTear</title>
+<meta name="description" content="温故而知新">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1586189510637">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1586189510637" class="site-logo">
+        <h1 class="site-title">KuTear</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/kutear" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      温故而知新
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Java中的并发</h2>
+            <div class="post-date">2017-04-22</div>
+            
+            <div class="post-content">
+              <h2 id="volatile与synchronized">volatile与synchronized</h2>
+<h3 id="原子性">原子性</h3>
+<blockquote>
+<p>即一个操作或者多个操作 要么全部执行并且执行的过程不会被任何因素打断，要么就都不执行。</p>
+</blockquote>
+<h3 id="可见性">可见性</h3>
+<blockquote>
+<p>可见性是指当多个线程访问同一个变量时，一个线程修改了这个变量的值，其他线程能够立即看得到修改的值。</p>
+</blockquote>
+<h3 id="有序性">有序性</h3>
+<blockquote>
+<p>程序执行的顺序按照代码的先后顺序执行。</p>
+</blockquote>
+<h3 id="指令重排序">指令重排序</h3>
+<blockquote>
+<p>在Java内存模型中，允许编译器和处理器对指令进行重排序，但是重排序过程不会影响到单线程程序的执行，却会影响到多线程并发执行的正确性。</p>
+</blockquote>
+<p>java编程语言允许线程访问共享变量，为了确保共享变量能被准确和一致的更新，线程应该确保通过排他锁单独获得这个变量。Java语言提供了volatile，在某些情况下比锁更加方便。如果一个字段被声明成volatile，java线程内存模型确保所有线程看到这个变量的值是一致的。</p>
+<p>简单的来说就是每次在读取volatile标记的变量时都会从主存中读取，每次写入时都会同步到主存，也是就说满足上文中的可见性，但是volatile不能保证原子性。假设定义<code>private volatile int i = 0;</code> ,当执行<code>i++</code>时，因为<code>i++</code>操作是多条指令组成</p>
+<pre><code>j = i
+k = j + 1
+i = k
+</code></pre>
+<p>由于不能保证原子性，这几条指令在执行过程中可能被插入其他线程的指令，即其他线程可能会在中途修改了i的值，而最后一条指令重新向主存写入了错误的数据。</p>
+<p>synchronized就不一样了，它不仅可以保证可见性，同时还保证原子性。在进入锁住的代码块时，synchronized指定的对象的锁会被当前线程拿到，当别的线程访问这个代码块时会因为拿不到锁而处于等待状态，故synchronized代码块统一时间只能有一个线程访问，保证原子性操作。</p>
+<h2 id="threadpoolexecutor原理">ThreadPoolExecutor原理</h2>
+<p>在创建线程池的时候会指定corePollSize,runnableTaskQueue,maxinunPoolSize,ThreadFactory，RejectedExecutionHandler以及keepAliveTime等。</p>
+<p>在使用线程池的时候我们通常是直接执行execute()方法，下面就分析这个方法的执行过程。如果现在线程池中的存活线程数量小于corePollSize，那么就会通过一个名为Worker的类利用ThreadFactory创建一个新的线程并在运行这个线程之前把当前要执行的任务添加到指定的runnableTaskQueue，线程运行起来之后就会在这个队列中循环获取任务(无任务时阻塞)并执行任务。如果线程池中的存活线程数量为[corePollSize,maxinunPoolSize]之间并且还可以向runnableTaskQueue加入任务就直接加入,不能加入runnableTaskQueue时如果线程数小于maxinunPoolSize就会新建非核心线程来处理,如果还是不行就使用RejectedExecutionHandler来处理了。</p>
+<figure data-type="image" tabindex="1"><img src="http://kutear.qiniudn.com/2017/04/21/5b32d5e6024e999cdd75d4a0cd0e0a1e.jpg" alt="" loading="lazy"></figure>
+<h3 id="线程超时退出实现">线程超时退出实现</h3>
+<p>在<a href="http://www.kutear.com/post/android/2017-04-21-android_volley">这篇文章中</a>,对于阻塞队列有提到过使用poll(time,unit)来实现超时退出，ThreadPoolExecutor的实现中在从runnableTaskQueue中提取任务的时候也是使用这个来实现的。</p>
+<pre><code class="language-java">/**
+ * Retrieves and removes the head of this queue, waiting up to the
+ * specified wait time if necessary for an element to become available.
+ *
+ * @param timeout how long to wait before giving up, in units of
+ *        {@code unit}
+ * @param unit a {@code TimeUnit} determining how to interpret the
+ *        {@code timeout} parameter
+ * @return the head of this queue, or {@code null} if the
+ *         specified waiting time elapses before an element is available
+ * @throws InterruptedException if interrupted while waiting
+ */
+E poll(long timeout, TimeUnit unit) throws InterruptedException;
+</code></pre>
+<p>而在线程loop的条件是<code>while (task != null || (task = getTask()) != null)</code> ,getTask()的实现中就是通过poll()读取的任务，当返回为null时，线程就会退出loop,也就意味着线程终止了。</p>
+<h3 id="核心线程数的分配">核心线程数的分配</h3>
+<blockquote>
+<p>任务性质不同的任务可以用不同规模的线程池分开处理。CPU密集型任务配置尽可能小的线程，如配置cpu+1个线程的线程池。IO密集型任务则由于线程并不是一直在执行任务，则配置尽可能多的线程，如2*cpu。混合型的任务，如果可以拆分，则将其拆分成一个CPU密集型任务和一个IO密集型任务，只要这两个任务执行的时间相差不是太大，那么分解后执行的吞吐率要高于串行执行的吞吐率，如果这两个任务执行时间相差太大，则没必要进行分解。我们可以通过Runtime.getRuntime().availableProcessors()方法获得当前设备的CPU个数。</p>
+</blockquote>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://www.kutear.com/tag/uu0BprRE0/" class="tag">
+                    ThreadPoolExecutor
+                  </a>
+                
+                  <a href="https://www.kutear.com/tag/axXj1-xBL/" class="tag">
+                    Java
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://www.kutear.com/post/2017-04-21-Android_Volley/">
+                  <h3 class="post-title">
+                    抛开源码讲流程-Volley
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
