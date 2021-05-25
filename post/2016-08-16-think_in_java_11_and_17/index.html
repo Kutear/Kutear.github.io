@@ -9,9 +9,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://kutear.github.com/favicon.ico?v=1621950712868">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1621950876832">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
-<link rel="stylesheet" href="https://kutear.github.com/styles/main.css">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
 
 
@@ -29,8 +29,8 @@
       <div class="sidebar" :class="{ 'full-height': menuVisible }">
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
-      <a class="site-title-container" href="https://kutear.github.com">
-        <img src="https://kutear.github.com/images/avatar.png?v=1621950712868" class="site-logo">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1621950876832" class="site-logo">
         <h1 class="site-title">KuTear</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -87,7 +87,7 @@
       温故而知新
     </div>
     <div class="site-footer">
-      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://kutear.github.com/atom.xml" target="_blank">RSS</a>
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
     </div>
   </div>
 </div>
@@ -125,11 +125,11 @@ List lists2 = Collections.addAll(list);
 <li>Map 使用KV保存两组值</li>
 </ul>
 <h1 id="具体介绍">具体介绍</h1>
-<figure data-type="image" tabindex="1"><img src="https://kutear.github.com/post-images/1586190421963.png" alt="集合类图" loading="lazy"></figure>
+<figure data-type="image" tabindex="1"><img src="https://www.kutear.com/post-images/1586190421963.png" alt="集合类图" loading="lazy"></figure>
 <h2 id="list">List</h2>
 <p>相比<code>Collection</code>,多 了一些方法,如<code>listIterator()</code>等.</p>
 <h3 id="arraylist">ArrayList</h3>
-<figure data-type="image" tabindex="2"><img src="https://kutear.github.com/post-images/1586190540386.png" alt="ArrayList包含函数" loading="lazy"></figure>
+<figure data-type="image" tabindex="2"><img src="https://www.kutear.com/post-images/1586190540386.png" alt="ArrayList包含函数" loading="lazy"></figure>
 <h4 id="概述">概述</h4>
 <p>根据类图可以知道<code>ArrayList</code>的继承结构,<code>RandomAccess</code>是一个说明性接口,没有任何的方法实现.<code>ArrayList</code>的底层实现任然是数组,当容量达到一定时,会新建一个数组,再把原来的数据拷贝过去,所以性能并不是太好.下面详细的看看.</p>
 <h4 id="准备">准备</h4>
@@ -339,7 +339,7 @@ public E get(int index) {
 </code></pre>
 <p>最后看看函数<code>listIterator()</code>和函数<code>iterator()</code>,他们分别返回一个双向迭代器和单向迭代器.本质他们的遍历过程还是数组的遍历,想要了解详情可以去看看具体的源码,这里就不介绍了.</p>
 <h3 id="linkedlist">LinkedList</h3>
-<p>![LinkedList包含函数]<img src="https://kutear.github.com/post-images/1586190597886.png" alt="" loading="lazy"></p>
+<p>![LinkedList包含函数]<img src="https://www.kutear.com/post-images/1586190597886.png" alt="" loading="lazy"></p>
 <h4 id="概述-2">概述</h4>
 <p><code>inkedList</code>实现了<code>List</code>、<code>Deque</code>、<code>Cloneable</code>以及<code>Serializable</code>接口。其中<code>Deque</code>是双端队列接口，所以<code>LinkedList</code>可以当作是栈、队列或者双端队队列。在使用它的时候,通常可以把它向上转型为<code>List</code>,<code>Queue</code>已达到缩小她的接口的功能(限制了不需要的方法).</p>
 <h4 id="源码阅读-2">源码阅读</h4>
@@ -513,7 +513,7 @@ Node&lt;E&gt; node(int index) {
 <p>但是<code>Java</code>中任然提供了<code>Stack</code>类,而且实现方式与上面的完全不同,它的内部存储结构是数组,基本的实现其实还是和<code>ArrayList</code>差不多,而且在<code>&lt;&lt;Think In Java&gt;&gt;</code>中并不建议使用它,因此这里不讲了.</p>
 <h2 id="map">Map</h2>
 <h3 id="hashmap">HashMap</h3>
-<figure data-type="image" tabindex="3"><img src="https://kutear.github.com/post-images/1586190658034.png" alt="HasgMap包含函数" loading="lazy"></figure>
+<figure data-type="image" tabindex="3"><img src="https://www.kutear.com/post-images/1586190658034.png" alt="HasgMap包含函数" loading="lazy"></figure>
 <p>本文的代码均来至于JDK1.8,<code>HashMap</code>与前面版本的变化比较大,Android SDK V23中的是旧版本的</p>
 <h4 id="源码阅读-3">源码阅读</h4>
 <pre><code class="language-java">    transient Node&lt;K,V&gt;[] table;
@@ -661,7 +661,7 @@ final Node&lt;K,V&gt; getNode(int hash, Object key) {
 </code></pre>
 <p>这个函数大家可能也会有一点困惑,为什么这里就只讨论了链表的情况,并根据<code>next()</code>遍历整个链表?其实<code>TreeNode</code>是继承至<code>Node</code>,并且在生成红黑树的时候并没有修改<code>next</code>的指向,所以通过<code>next()</code>遍历就没问题了.</p>
 <h3 id="treemap">TreeMap</h3>
-<p><img src="https://kutear.github.com/post-images/1586190697585.png" alt="TreeMap包含函数" loading="lazy"><br>
+<p><img src="https://www.kutear.com/post-images/1586190697585.png" alt="TreeMap包含函数" loading="lazy"><br>
 <code>TreeMap</code>的底层实现也是基于红黑树的.</p>
 <h4 id="源码阅读-4">源码阅读</h4>
 <p>还是老规矩,先看最常用的方法<code>put()</code>.</p>
@@ -786,7 +786,7 @@ final Entry&lt;K,V&gt; getEntryUsingComparator(Object key) {
 </code></pre>
 <p>这样输入的数据就是按照红黑树中序遍历的数据,也就是有序数据.</p>
 <h3 id="linkedhashmap">LinkedHashMap</h3>
-<figure data-type="image" tabindex="4"><img src="https://kutear.github.com/post-images/1586190779061.png" alt="LinkedHashMap函数列表" loading="lazy"></figure>
+<figure data-type="image" tabindex="4"><img src="https://www.kutear.com/post-images/1586190779061.png" alt="LinkedHashMap函数列表" loading="lazy"></figure>
 <p>根据最上面的继承关系图我们知道<code>LinkedHashMap</code>继承至<code>HashMap</code>,所以重复型的东西我就不说了,<code>LinkedHashMap</code>的核心功能就是维持了原有的输入顺序或者指定为访问顺序<code>(LRU)</code>.下面也是主要看看这个功能的实现.</p>
 <h4 id="源码阅读-5">源码阅读</h4>
 <p><code>LinkedHashMap</code>中的字段</p>
@@ -876,7 +876,7 @@ final LinkedHashMap.Entry&lt;K,V&gt; nextNode() {
 <h2 id="set">Set</h2>
 <p><code>Set</code>是一个不包含重复元素的<code>Collection</code>。更确切地讲，<code>Set</code> 不包含满足 <code>e1.equals(e2)</code> 的元素对 <code>e1</code> 和 <code>e2</code>，并且最多包含一个 <code>null</code> 元素.</p>
 <h3 id="hashset">HashSet</h3>
-<figure data-type="image" tabindex="5"><img src="https://kutear.github.com/post-images/1586190837486.png" alt="HashSet函数列表" loading="lazy"></figure>
+<figure data-type="image" tabindex="5"><img src="https://www.kutear.com/post-images/1586190837486.png" alt="HashSet函数列表" loading="lazy"></figure>
 <p><code>HashSet</code>的底部是使用一个<code>HashMap</code>,把值存在<code>HashMap</code>的<code>KEY</code>,<code>HashMap</code>的<code>VALUE</code>字段为固定的值,根据<code>HashMap</code>的<code>KEY</code>的唯一性,可以保证<code>HashSet</code>的值得唯一性.额外,有一个构造器使用的是<code>LinkedHashMap</code>,只有包权限,是后面要讲的<code>LinkedHashSet</code>的实现.</p>
 <pre><code class="language-java">//dummy 参数只是使用来区别构造函数
 HashSet(int initialCapacity, float loadFactor, boolean dummy) {
@@ -901,7 +901,7 @@ public boolean contains(Object o) {
 </code></pre>
 <p>由于这些方法前面都已经说过了,这里就不说了.</p>
 <h3 id="treeset">TreeSet</h3>
-<figure data-type="image" tabindex="6"><img src="https://kutear.github.com/post-images/1586190860373.png" alt="TreeSet函数列表" loading="lazy"></figure>
+<figure data-type="image" tabindex="6"><img src="https://www.kutear.com/post-images/1586190860373.png" alt="TreeSet函数列表" loading="lazy"></figure>
 <p>有了上面<code>HashSet</code>的介绍,可能你已经猜到<code>TreeSet</code>的实现方式是基于<code>TreeMap</code>了.将值存放在<code>TreeMap</code>的<code>KEY</code>中,保证了不会重复并且有序,最后只需要遍历<code>TreeSet</code>的<code>KEY</code>就行了.具体的操作可以看看<code>TreeMap</code>.</p>
 <h3 id="linkedhashset">LinkedHashSet</h3>
 <p>它的实现是最简单的,继承至<code>HashSet</code>,调用前面说的特殊构造器,相当于把<code>HashSet</code>的<code>HashMap</code>换成了<code>LinkedHashMap</code>,并且按照插入顺序排序.</p>
@@ -909,7 +909,7 @@ public boolean contains(Object o) {
 <h3 id="linkedlist-2">LinkedList</h3>
 <p>这个上面已经分析过了，这里跳过。</p>
 <h3 id="priorityqueue">PriorityQueue</h3>
-<figure data-type="image" tabindex="7"><img src="https://kutear.github.com/post-images/1586190916092.png" alt="PriorityQueue函数" loading="lazy"></figure>
+<figure data-type="image" tabindex="7"><img src="https://www.kutear.com/post-images/1586190916092.png" alt="PriorityQueue函数" loading="lazy"></figure>
 <h4 id="准备-2">准备</h4>
 <p>在数据结构的课程中，我们都学过用数组表示完全二叉树，这里有一些固定的公式</p>
 <pre><code>Index(parent) = (Index(Child)-1) &gt;&gt; 1   //索引0开始
@@ -1187,23 +1187,23 @@ if(obj instanceof Object){
             
               <div class="tag-container">
                 
-                  <a href="https://kutear.github.com/tag/CYmE9pKR5/" class="tag">
+                  <a href="https://www.kutear.com/tag/CYmE9pKR5/" class="tag">
                     java
                   </a>
                 
-                  <a href="https://kutear.github.com/tag/djjwHmqctK/" class="tag">
+                  <a href="https://www.kutear.com/tag/djjwHmqctK/" class="tag">
                     collection
                   </a>
                 
-                  <a href="https://kutear.github.com/tag/fWa3pLSvf0/" class="tag">
+                  <a href="https://www.kutear.com/tag/fWa3pLSvf0/" class="tag">
                     list
                   </a>
                 
-                  <a href="https://kutear.github.com/tag/ZfFGR2UFRy/" class="tag">
+                  <a href="https://www.kutear.com/tag/ZfFGR2UFRy/" class="tag">
                     set
                   </a>
                 
-                  <a href="https://kutear.github.com/tag/lMQvSVXhss/" class="tag">
+                  <a href="https://www.kutear.com/tag/lMQvSVXhss/" class="tag">
                     map
                   </a>
                 
@@ -1212,7 +1212,7 @@ if(obj instanceof Object){
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://kutear.github.com/post/2016-08-01-Think_In_Java_18/">
+                <a href="https://www.kutear.com/post/2016-08-01-Think_In_Java_18/">
                   <h3 class="post-title">
                     Thinking In Java 第18章 Java I/O
                   </h3>

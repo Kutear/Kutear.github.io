@@ -9,9 +9,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://kutear.github.com/favicon.ico?v=1621950712868">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1621950876832">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
-<link rel="stylesheet" href="https://kutear.github.com/styles/main.css">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
 
 
@@ -29,8 +29,8 @@
       <div class="sidebar" :class="{ 'full-height': menuVisible }">
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
-      <a class="site-title-container" href="https://kutear.github.com">
-        <img src="https://kutear.github.com/images/avatar.png?v=1621950712868" class="site-logo">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1621950876832" class="site-logo">
         <h1 class="site-title">KuTear</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -87,7 +87,7 @@
       温故而知新
     </div>
     <div class="site-footer">
-      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://kutear.github.com/atom.xml" target="_blank">RSS</a>
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
     </div>
   </div>
 </div>
@@ -106,33 +106,33 @@
 <p>在开始介绍新的弹幕组件之前，我们先看一下B站弹幕组件的原理及问题。<br>
 B站弹幕支持<code>View</code>,<code>TextureView</code>,<code>SurfaceView</code>三种方式进行绘制，其中<code>TextureView</code>,<code>SurfaceView</code>都是采用<code>lockCanvas()</code>的方式，该方式本质都是向<code>Surface</code>申请一块Buffer，再向Buffer写数据，该操作是软绘制，所以我们项目中实际使用的是基于<code>View</code>的绘制方案。每次添加弹幕首先会复用一个大小合适(没有时创建)的Bitmap,使用异步线程利用CPU将弹幕内容绘制到Bitmap中，等到了上屏的时机利用<code>View</code>的<code>onDraw(...)</code>进行绘制，通常情况下这都是使用硬件绘制，那么这会存在什么问题呢？Android的View的硬件绘制的流程是在主线程构建Display List，然后在Render Thread进行指令合并与执行纹理上传渲染(OpenGL)，在大量弹幕的情况下会出现大量纹理上传，纹理上传过程中通常主线程会wait保证数据一致，这会导致主线线卡顿已经以及Render Thread绘制超时，另外弹幕占用的内存显存也是非常的大。为此我们希望可以优化卡顿，内存/显存的占用。<br>
 新弹幕组件采用一张Bitmap承载多条弹幕的方式，减少多Bitmap纹理上传的的次数，在OpenGL中渲染每一条弹幕的时候，在从纹理中扣取每条弹幕的位置信息(纹理坐标)进行渲染。要使用OpenGL我们考虑使用TextureView或是SurfaceView(GLSurfaceView)，由于业务中弹幕处于View的中间层，SurfaceView无法嵌入，所以使用的时候我们会使用TextureView(SurfaceView绘制也实现了)。由于一批弹幕生成的BItmap尺寸相对于单条弹幕大了很多，所以在做纹理上传的时候需要考虑非渲染线程异步执行。<br>
-<img src="https://kutear.github.com/post-images/1584686473976.png" alt="弹幕原理说明" loading="lazy"></p>
+<img src="https://www.kutear.com/post-images/1584686473976.png" alt="弹幕原理说明" loading="lazy"></p>
 <h1 id="优化">优化</h1>
 <h2 id="动态弹幕的支持">动态弹幕的支持</h2>
 <p>使用上面的方案我们可以很容易的完成所有静态弹幕的展示，但是业务需求中通常会出现一些高级弹幕，这种弹幕通常自身就带有动效(比如背景是张webp等动图)，这是如果还是走基于一张Bitmap的方案，就的将动图的每一帧预先绘制到Bitmap并需要自己控制显示的时机，这样操作过于复杂且扩展性不够，因此排除这个方案。我们采用最直接方式-支持View插入到弹幕系统中，这样我们不需要控制View的内容到底是怎样个动法，我们只关心他在整个弹幕系统中的位置，我们的排版逻辑依旧是可用的，我们只需要添加一种展示方式，为此我们将弹幕展示分为静态弹幕展示层与动态弹幕展示层。<br>
-<img src="https://kutear.github.com/post-images/1584670393074.webp" alt="弹幕展示层次结构" loading="lazy"></p>
+<img src="https://www.kutear.com/post-images/1584670393074.webp" alt="弹幕展示层次结构" loading="lazy"></p>
 <h2 id="内存显存的占用">内存/显存的占用</h2>
 <p>使用这个方案实现弹幕组件之后，FPS以及CPU的占用上面都优于B站弹幕库，但是在显存的占用上面却比B站弹幕多出一部分。<br>
-<img src="https://kutear.github.com/post-images/1584672574953.png" alt="" loading="lazy"><br>
+<img src="https://www.kutear.com/post-images/1584672574953.png" alt="" loading="lazy"><br>
 主要多出来显存开销其实来源于TextureView自身环境的开销，TextureView运行会创建Surface,Surface有一个双缓冲或三缓冲的Buffer,他的大小和TextureView的大小以及Buffer的数量有关，可以使用<code>adb shell dumpsys meminfo pkg</code>来进行查看(下图中的<code>EGL mtrack</code>)，这个值初始化好之后就是固定的，对于我们业务侧很难去减少这块显存的占用，所以我们的优化主要都集中在我们自己的纹理/内存上面。<br>
-<img src="https://kutear.github.com/post-images/1584670865587.webp" alt="meminfo" loading="lazy"></p>
+<img src="https://www.kutear.com/post-images/1584670865587.webp" alt="meminfo" loading="lazy"></p>
 <h3 id="bitmap填充率">Bitmap填充率</h3>
 <p>我们采用一张大的Bitmap绘制弹幕，那么这张Bitmap的利用率是非常重要的，他不仅影响在native的大小，更重要的是影响显存，毕竟显存占用是我们需要突破的一个点。我们需要每一批弹幕近可能的占用更小的Bitmap(Bitmap的利用率提升)，考虑到Bitmap的复用问题，我们不可能每次都创建一个恰好合适的Bitmap，我们对选取的Bitmap的尺寸进行理合到多个尺寸上。</p>
 <h3 id="纹理上传时机选择">纹理上传时机选择</h3>
 <p>因为弹幕预排版的缘故，一批弹幕添加到系统可能被排在离屏M的位置，在这个时候我们依旧把它绘制到Bitmap上面并进行了纹理的上传，但是这个时候其实没有这个必要，因为这批弹幕这个时候并没有需要上屏渲染，还需要（M/V)的时间才会出现在屏幕之上，这时绘制和上传之后，这个纹理的存活周期被拉长了，导致一定时间内存在的纹理的数量增加。<br>
-<img src="https://kutear.github.com/post-images/1584670903935.webp" alt="自研弹幕-弹幕优化-延迟上传" loading="lazy"><br>
+<img src="https://www.kutear.com/post-images/1584670903935.webp" alt="自研弹幕-弹幕优化-延迟上传" loading="lazy"><br>
 有了这个想法之后，我们可以修改Bitmap绘制和纹理上传的时机，把这个过程移到该批弹幕快要上屏的时刻在执行，这个具体的阈值距离可以在运行中统计Bitmap绘制+纹理上传的时间来进行动态调整，只要在保证到达屏幕边缘的时候可以有纹理可用就行。</p>
 <h3 id="重复弹幕复用">重复弹幕复用</h3>
 <p>在直播场景中经常会出现同一时刻出现很多相同弹幕的场景(游戏胜利/抽奖)，弹幕量大并且弹幕的内容相同，这是如果依然把每条弹幕绘制到Bitmap上再进行上传展示将浪费CPU内存显存资源。为了应对这种情况，我们复用相同弹幕，对于相同的弹幕我们只在Bitmap上面绘制一次，其他相同的弹幕都引用这同一块区域，然后在OpenGL绘制的时候，在根据纹理坐标绘制复原出多条弹幕。当然，在此基础之后，还可以做“子序列”类型的弹幕复用，不过实现相对麻烦，没有实现。<br>
-<img src="https://kutear.github.com/post-images/1584670938629.webp" alt="弹幕复用" loading="lazy"></p>
+<img src="https://www.kutear.com/post-images/1584670938629.webp" alt="弹幕复用" loading="lazy"></p>
 <h3 id="bitmap通道复用">Bitmap通道复用</h3>
 <p>在采用 了以上方案之后，可以缓解部分问题，是否还存在更大的优化空间呢？这是我们想到是否可以采用只在Bitmap上面绘制透明度，将具体的着色的效果交由Shader完成，这样我们在Bitmap的创建以及纹理的上传只需要只有透明通道的Bitmap，这样理论上内存/显存大小可以降低到原来的4倍(采用ARGB_4444的也会被强制转为ARGB_8888)，但是采用单个透明通道绘制出来的多颜色弹幕(如弹幕中含有表情😊)的彩色信息会被丢弃掉。为此我们还是选择ARGB4通道的Bitmap来进行绘制，对于多颜色弹幕还是按照普通的绘制方案，对于单一颜色的弹幕我们将他的透明度透射到ARGB中的一个通道。经过对我们外网弹幕的分析，大约<code>70%</code>的弹幕都属于单一颜色弹幕，为此理想情况下会有减少<strong>3倍</strong>以上的内存显存占用(0.3 * 1 + 0.7  * 4)。<br>
 如何才能实现不同弹幕在同一像素上的不同通道呢，其实Android已经已经有相关的方案，在绘制Bitmap的时候通过给paint设置<code>Xfermode</code>可以实现不同的叠加效果，寻找一圈就会发现<a href="https://developer.android.com/reference/android/graphics/PorterDuff.Mode.html#ADD">PorterDuff.Mode.ADD</a>基本满足我们的需求。<br>
-<img src="https://kutear.github.com/post-images/1584674381264.png" alt="PorterDuff.Mode.ADD" loading="lazy"><br>
+<img src="https://www.kutear.com/post-images/1584674381264.png" alt="PorterDuff.Mode.ADD" loading="lazy"><br>
 对于两次叠加他的Alpha通道和Color通道都取值大的，但在实际操作中发现对于全透明的情况是会被忽略掉，比如(FF000000和00FF0000叠加还是FF000000，不是我们所期望的FFFF0000)，所以Alpha通道的复用行不通，都得填充FF。基于这个样的操作，我们将弹幕原本的Alpha通道绘制到Bitmap的RGB通道之一中去，就可以得到如下的Bitmap。<br>
-<img src="https://kutear.github.com/post-images/1584670990231.png" alt="原图" loading="lazy"><br>
+<img src="https://www.kutear.com/post-images/1584670990231.png" alt="原图" loading="lazy"><br>
 使用工具分离出ARGB各自的信息，可以得到各个通道的图像信息。<br>
-<img src="https://kutear.github.com/post-images/1584704657139.png" alt="" loading="lazy"><br>
+<img src="https://www.kutear.com/post-images/1584704657139.png" alt="" loading="lazy"><br>
 有了这些信息，我们在Shader中就可以利用弹幕的真正颜色(RGB)和纹理中的某个通道(A)合并成像素点的真实颜色信息。<br>
 注：该实现因为Bitmap的Alpha通道无法使用，不能给弹幕添加阴影效果，如果有阴影会退化成多颜色弹幕处理。</p>
 <h1 id="后记">后记</h1>
@@ -153,7 +153,7 @@ B站弹幕支持<code>View</code>,<code>TextureView</code>,<code>SurfaceView</co
             
               <div class="tag-container">
                 
-                  <a href="https://kutear.github.com/tag/2bhUImQpoP/" class="tag">
+                  <a href="https://www.kutear.com/tag/2bhUImQpoP/" class="tag">
                     Android
                   </a>
                 
@@ -162,7 +162,7 @@ B站弹幕支持<code>View</code>,<code>TextureView</code>,<code>SurfaceView</co
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://kutear.github.com/post/2018-01-19-Android-Build-Instant_Run/">
+                <a href="https://www.kutear.com/post/2018-01-19-Android-Build-Instant_Run/">
                   <h3 class="post-title">
                     Instance Run 原理分析
                   </h3>

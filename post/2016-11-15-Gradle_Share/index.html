@@ -9,9 +9,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://kutear.github.com/favicon.ico?v=1621950712868">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1621950876832">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
-<link rel="stylesheet" href="https://kutear.github.com/styles/main.css">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
 
 
@@ -29,8 +29,8 @@
       <div class="sidebar" :class="{ 'full-height': menuVisible }">
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
-      <a class="site-title-container" href="https://kutear.github.com">
-        <img src="https://kutear.github.com/images/avatar.png?v=1621950712868" class="site-logo">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1621950876832" class="site-logo">
         <h1 class="site-title">KuTear</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -87,7 +87,7 @@
       温故而知新
     </div>
     <div class="site-footer">
-      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://kutear.github.com/atom.xml" target="_blank">RSS</a>
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
     </div>
   </div>
 </div>
@@ -104,9 +104,9 @@
 <h2 id="gradle在哪里">Gradle在哪里？</h2>
 <p>刚开始使用gradle来构建项目的时候，我们都可能困惑，我又没有安装gradle,那么gradle是怎样运行的?考虑到用户可能使用不同的gradle版本，所以gradle没用使用传统的先安装在使用的方式，而是采取通过用户配置的版本在首次运行是下载对应的gradle版本的方式，从而避开了版本不一致导致的构建问题。</p>
 <p>我们知道新建工程的的目录结构如下</p>
-<figure data-type="image" tabindex="1"><img src="https://kutear.github.com/post-images/1586186063936.png" alt="Android Studio项目结构" loading="lazy"></figure>
+<figure data-type="image" tabindex="1"><img src="https://www.kutear.com/post-images/1586186063936.png" alt="Android Studio项目结构" loading="lazy"></figure>
 <p>我们发现这里包含一个<code>gradle/wrapper</code>的目录,这个目录包含两个文件，一个是gradle-wrapper.properties，另一个是gradle-wrapper.jar，其中<code>gradle-wrapper.properties</code>指定需要下载的gradle的版本号，这里这个文件的内容如下,这里就是指定gradle的版本为<code>2.14.1</code> ，而<code>gradle-wrapper.jar</code> 就是执行并运行具体的下载任务。</p>
-<figure data-type="image" tabindex="2"><img src="https://kutear.github.com/post-images/1586186102362.png" alt="gradle-wrapper.properties" loading="lazy"></figure>
+<figure data-type="image" tabindex="2"><img src="https://www.kutear.com/post-images/1586186102362.png" alt="gradle-wrapper.properties" loading="lazy"></figure>
 <p>另外这里还有一个脚本文件，在Linux/Mac下是<code>gradlew</code>，在window下是<code>gradlew.bat</code>，那么这个脚本文件又是做什么的呢？通过阅读其代码，我们可以发现它的作用其实有两个点：</p>
 <ol>
 <li>
@@ -117,7 +117,7 @@
 </li>
 </ol>
 <p>对于第一点其实主要就是检测<code>java</code>环境。第二点就是上文提及的下载对应版本的<code>gradle</code>,然后执行传入的命令。下载的后的默认存储位置是用户目录下的<code>.gradle</code>，这点可以在<a href="https://github.com/gradle/gradle/blob/master/subprojects/wrapper/src/main/java/org/gradle/wrapper/GradleUserHomeLookup.java">GradleUserHomeLookup</a>中看见。</p>
-<figure data-type="image" tabindex="3"><img src="https://kutear.github.com/post-images/1586186149493.png" alt="GradleUserHomeLookup" loading="lazy"></figure>
+<figure data-type="image" tabindex="3"><img src="https://www.kutear.com/post-images/1586186149493.png" alt="GradleUserHomeLookup" loading="lazy"></figure>
 <p>对于传入的参数最终就由指定的版本的<code>gradle</code>命令执行，这个命令的位置在<code>userhome/.gradle/wrapper/dists/gradle-2.14.1-all/***********/gradle-2.14.1/bin</code>下面。到这里我们就明白了为什么没有安装<code>gradle</code>都能正常运行。</p>
 <h1 id="当点击运行按钮android-studio到底做了什么">当点击运行按钮Android Studio到底做了什么？</h1>
 <p>当我们点击运行按钮是，Android Studio首先进行App的编译过程，然后就是把编译输出App安装到手机。</p>
@@ -173,7 +173,7 @@
             
               <div class="tag-container">
                 
-                  <a href="https://kutear.github.com/tag/rLx6fFtM0X/" class="tag">
+                  <a href="https://www.kutear.com/tag/rLx6fFtM0X/" class="tag">
                     Gradle
                   </a>
                 
@@ -182,7 +182,7 @@
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://kutear.github.com/post/2016-10-27-PMS-1/">
+                <a href="https://www.kutear.com/post/2016-10-27-PMS-1/">
                   <h3 class="post-title">
                     PackageManagerService学习--上
                   </h3>

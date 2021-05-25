@@ -9,9 +9,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://kutear.github.com/favicon.ico?v=1621950712868">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1621950876832">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
-<link rel="stylesheet" href="https://kutear.github.com/styles/main.css">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
 
 
 
@@ -29,8 +29,8 @@
       <div class="sidebar" :class="{ 'full-height': menuVisible }">
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
-      <a class="site-title-container" href="https://kutear.github.com">
-        <img src="https://kutear.github.com/images/avatar.png?v=1621950712868" class="site-logo">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1621950876832" class="site-logo">
         <h1 class="site-title">KuTear</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -87,7 +87,7 @@
       温故而知新
     </div>
     <div class="site-footer">
-      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://kutear.github.com/atom.xml" target="_blank">RSS</a>
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
     </div>
   </div>
 </div>
@@ -128,7 +128,7 @@ i = k
 <h2 id="threadpoolexecutor原理">ThreadPoolExecutor原理</h2>
 <p>在创建线程池的时候会指定corePollSize,runnableTaskQueue,maxinunPoolSize,ThreadFactory，RejectedExecutionHandler以及keepAliveTime等。</p>
 <p>在使用线程池的时候我们通常是直接执行execute()方法，下面就分析这个方法的执行过程。如果现在线程池中的存活线程数量小于corePollSize，那么就会通过一个名为Worker的类利用ThreadFactory创建一个新的线程并在运行这个线程之前把当前要执行的任务添加到指定的runnableTaskQueue，线程运行起来之后就会在这个队列中循环获取任务(无任务时阻塞)并执行任务。如果线程池中的存活线程数量为[corePollSize,maxinunPoolSize]之间并且还可以向runnableTaskQueue加入任务就直接加入,不能加入runnableTaskQueue时如果线程数小于maxinunPoolSize就会新建非核心线程来处理,如果还是不行就使用RejectedExecutionHandler来处理了。<br>
-<img src="https://kutear.github.com/post-images/1586191136063.jpg" alt="" loading="lazy"></p>
+<img src="https://www.kutear.com/post-images/1586191136063.jpg" alt="" loading="lazy"></p>
 <h3 id="线程超时退出实现">线程超时退出实现</h3>
 <p>在<a href="http://www.kutear.com/post/android/2017-04-21-android_volley">这篇文章中</a>,对于阻塞队列有提到过使用poll(time,unit)来实现超时退出，ThreadPoolExecutor的实现中在从runnableTaskQueue中提取任务的时候也是使用这个来实现的。</p>
 <pre><code class="language-java">/**
@@ -155,11 +155,11 @@ E poll(long timeout, TimeUnit unit) throws InterruptedException;
             
               <div class="tag-container">
                 
-                  <a href="https://kutear.github.com/tag/uu0BprRE0/" class="tag">
+                  <a href="https://www.kutear.com/tag/uu0BprRE0/" class="tag">
                     ThreadPoolExecutor
                   </a>
                 
-                  <a href="https://kutear.github.com/tag/axXj1-xBL/" class="tag">
+                  <a href="https://www.kutear.com/tag/axXj1-xBL/" class="tag">
                     Java
                   </a>
                 
@@ -168,7 +168,7 @@ E poll(long timeout, TimeUnit unit) throws InterruptedException;
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://kutear.github.com/post/2017-04-21-Android_Volley/">
+                <a href="https://www.kutear.com/post/2017-04-21-Android_Volley/">
                   <h3 class="post-title">
                     抛开源码讲流程-Volley
                   </h3>
