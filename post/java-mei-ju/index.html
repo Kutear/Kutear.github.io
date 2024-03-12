@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Java 枚举 | KuTear技术之旅</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://www.kutear.com/favicon.ico?v=1710248463777">
+<link rel="stylesheet" href="https://www.kutear.com/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="
+默认枚举继承至Enum类,由于Java的单一继承机制,所以不能在继承至别的类.
+枚举中的元素实质为类的类部静态常量域. java public class EnumTest { enum Test { TEST_1(&quot;1&quo..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://www.kutear.com">
+        <img src="https://www.kutear.com/images/avatar.png?v=1710248463777" class="site-logo">
+        <h1 class="site-title">KuTear技术之旅</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      温故而知新
+    </div>
+    <div class="site-footer">
+      <a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备17120099号</a> | <a class="rss" href="https://www.kutear.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Java 枚举</h2>
+            <div class="post-date">2024-03-12</div>
+            
+            <div class="post-content" v-pre>
+              <ol>
+<li>默认枚举继承至Enum类,由于<code>Java</code>的单一继承机制,所以不能在继承至别的类.</li>
+<li>枚举中的元素实质为类的类部静态常量域. <code>java public class EnumTest { enum Test { TEST_1(&quot;1&quot;), TEST_2(&quot;2&quot;); private String descript; Test(String descript) { this.descript = descript; } } }</code> 该枚举通过反编译查看其内部(<code>javap EnumTest$Test.class</code>),另外,枚举类是<code>final</code>,不会有子类 <code>java Compiled from &quot;EnumTest.java&quot; final class EnumTest$Test extends java.lang.Enum&lt;EnumTest$Test&gt; { public static final EnumTest$Test TEST_1; public static final EnumTest$Test TEST_2; public static EnumTest$Test[] values(); public static EnumTest$Test valueOf(java.lang.String); static {}; }</code></li>
+<li>对于其构造函数,由于不允许用户自行实例化,构造器为<code>private</code>和<code>public</code>都是一样的.</li>
+<li>静态导入,如上面的例子.再别的地使用可以使用静态导入 <code>java import static EnumTest.Test.*</code></li>
+<li><code>Java</code>的<code>switch</code>子句支持的类型</li>
+</ol>
+<p>在Java7中引入的<code>String</code>本质上也是使用<code>int</code>来做判断的(<code>hashCode()</code>和<code>equals()</code>)<br>
+- short(Short)<br>
+- char(Charactor)<br>
+- byte(Byte)<br>
+- int(Integer)<br>
+- String<br>
+- enum<br>
+6. 枚举的<code>values()</code>静态函数是由编译器写入.向上转型为<code>Enum</code>后丢失.但可以通过<code>Class</code>的<code>getEnumContants()</code>获取到枚举元素.<br>
+7. 枚举实现抽象方法 <code>java enum FontConstant{ Blod{ @Override void show() { //TODO } }, Italilc{ @Override void show() { //TODO } }, Plain{ @Override void show() { //TODO } }; abstract void show(); }</code><br>
+8. <code>EnumSet</code>和<code>EnumMap</code>的使用</p>
+<p>由此可以看见,<code>EnumSet</code>的顺序是与<code>enum</code>的声明有关,并且只能添加不重复的对象<br>
+- EnumSet<br>
+内部的数据的顺序与<code>add(...)</code>时的顺序没有关系,而是与<code>enum</code>中声明的顺序一致,</p>
+<pre><code>```java
+public static void showEnumSet(){      EnumSet&lt;FontConstant&gt; enumSet = EnumSet.noneOf(FontConstant.class);      enumSet.add(FontConstant.Blod);      enumSet.add(FontConstant.Plain);      enumSet.add(FontConstant.Italilc);      enumSet.add(FontConstant.Blod);      for(Iterator&lt;FontConstant&gt; iter = enumSet.iterator(); iter.hasNext();){          System.out.println(iter.next());      }}
+```
+
+输出: &gt; Blod Italilc Plain
+
+- EnumMap`EnumMap`与`EnumSet`的顺序是一样的.
+</code></pre>
+<ol start="9">
+<li>
+<p>枚举责任链</p>
+<p>实现依赖与枚举的顺序</p>
+<pre><code class="language-java">enum Handler {     HANDLER_1 {         @Override         boolean handler(Action action) {             return action.action == 1;         }     },     HANDLER_2 {         @Override         boolean handler(Action action) {             return action.action == 2;         }     };     abstract boolean handler(Action action);}public static class Action{     int action;     public Action(int action) {         this.action = action;     }}public static void handler(Action action) {     for (Handler handler : Handler.values()) {         if (handler.handler(action)) {             System.out.println(handler.name() + &quot; Handle This Action&quot;);             return;         }     }     System.out.println(&quot;No One Can Handle&quot;);}public static void main(String[] args) {     Action a1 = new Action(1);     handler(a1);     Action a2 = new Action(2);     handler(a2);     Action a3 = new Action(3);     handler(a3);}
+</code></pre>
+<p>输出 &gt; HANDLER_1 Handle This Action HANDLER_2 Handle This Action No One Can Handle</p>
+</li>
+<li>
+<p>枚举状态机</p>
+<p>1个事件的完成要经过A-&gt;B-&gt;C-&gt;D四个状态,</p>
+<pre><code class="language-java">public void process(Status status){  switch(status.getStatus){    case A:       status.setStatus(B);       break;    case B:       status.setStatus(C);       break;    ...  }}
+</code></pre>
+<p>这是使用<code>(if/else)/switch</code>实现,我们还可以使用<code>enum</code>来实现</p>
+<pre><code class="language-java">enum Status {    A {        @Override        void process(Product pro) {            pro.status = B;        }    },    B {        @Override        void process(Product pro) {            System.out.println(&quot;OK&quot;);            pro.status = C;          //reset        }    },    ...    abstract void process(Product pro);}public static class Product{    private Status status = Status.A;    public void make(){        status.process(this);    }}public static void main(String[] args) {    Product product = new Product();    for (int i = 0; i &lt; 10; i++) {        System.out.println(product.status.name());        product.make();    }}
+</code></pre>
+</li>
+<li>
+<p>枚举多路分发<br>
+根据对象的类型而对方法进行的选择,就是分派(Dispatch)。</p>
+</li>
+</ol>
+<ul>
+<li>
+<p>静态分派(编译时) <code>java static class A {} static class B extends A {} static class C extends A {} public static void print(A obj){ System.out.println(&quot;A&quot;); } public static void print(B obj){ System.out.println(&quot;B&quot;); } public static void print(C obj){ System.out.println(&quot;C&quot;); } public static void main(String[] args) { A a = new A(); print(a); A b = new B(); print(b); A c = new C(); print(c); }</code> 输出 &gt; A &gt; A &gt; A</p>
+<ul>
+<li>
+<p>动态分派(运行时)</p>
+<pre><code class="language-java">static class A {    public void print(){        System.out.println(&quot;A&quot;);    }}static class B extends A {    @Override    public void print() {        System.out.println(&quot;B&quot;);    }}static class C extends A {    @Override    public void print() {        System.out.println(&quot;C&quot;);    }}public static void main(String[] args) {    A a = new A();    a.print();    A b = new B();    b.print();    A c = new C();    c.print();}
+</code></pre>
+<p>输出 &gt;A &gt;B &gt;C</p>
+</li>
+</ul>
+</li>
+<li>
+<p>两路分发</p>
+<pre><code class="language-java"> public enum Outcome { WIN, LOSE, DRAW } ///:~ interface Item {       Outcome compete(Item it);       Outcome eval(Paper p);       Outcome eval(Scissors s);       Outcome eval(Rock r); } class Paper implements Item {       public Outcome compete(Item it) {           return it.eval(this);       }       public Outcome eval(Paper p) {           return DRAW;       }       public Outcome eval(Scissors s) {           return WIN;       }       public Outcome eval(Rock r) {           return LOSE;       }       public String toString() {           return &quot;Paper&quot;;       }    }     class Scissors implements Item {         public Outcome compete(Item it) {             return it.eval(this);         }         public Outcome eval(Paper p) {             return LOSE;         }         public Outcome eval(Scissors s) {             return DRAW;         }         public Outcome eval(Rock r) {             return WIN;         }         public String toString() {             return &quot;Scissors&quot;;         }     }     class Rock implements Item {         public Outcome compete(Item it) {             return it.eval(this);         }         public Outcome eval(Paper p) {             return WIN;         }         public Outcome eval(Scissors s) {             return LOSE;         }         public Outcome eval(Rock r) {             return DRAW;         }         public String toString() {             return &quot;Rock&quot;;         } } public class RoShamBo1 {     static final int SIZE = 20;     private static Random rand = new Random(47);     public static Item newItem() {         switch (rand.nextInt(3)) {         default:         case 0:             return new Scissors();         case 1:             return new Paper();         case 2:             return new Rock();         }     }     public static void match(Item a, Item b) {         //在这里两个参数a和b的类型都不确切,         //通过动态调用a.compete()可以调到真实的a的compete(),         //而在具体类型的compete通过同样的方式,获取到b的确切类型         //在更具重载的方法调用到了具体的方法         System.out.println(a + &quot; vs. &quot; + b + &quot;: &quot; + a.compete(b));     }     public static void main(String[] args) {         for (int i = 0; i &lt; SIZE; i++)             match(newItem(), newItem());     } }
+</code></pre>
+<blockquote>
+<p>多路分发就是指在调用a.plus(b)，a和b都不知道确切类型，也能让他们正常交互。 如果想使用两路分发，那么必须有两个方法调用，第一个方法调用决定第一个未知类型，第二个方法调用决定第二个未知类型。要利用多路分发，程序员必须为每一个类型提供给一个实际的方法调用。一般而言，程序员需要设定好某种配置，以便一个方法调用能够引出更多的方法调用，从而能在这个过程中处理多个类型。</p>
+</blockquote>
+</li>
+</ul>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://www.kutear.com/post/android-xml-jie-xi/">
+                  <h3 class="post-title">
+                    Android XML解析
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
